@@ -14,7 +14,7 @@ export async function render(el, route) {
   mount(el,
     h('div', { class: 'page-head' },
       h('div', h('div', { class: 'eyebrow' }, 'Content Studio'),
-        h('h1', { style: { marginTop: '6px' } }, 'Strategy, ', h('span', { class: 'blue' }, 'ideas'), ' & ', h('span', { class: 'hl' }, 'scheduling')),
+        h('h1', { style: { marginTop: '6px' } }, 'Strategy, ', h('span', { class: 'blue' }, 'ideas'), ' & ', h('span', { class: 'blue' }, 'scheduling')),
         h('p', 'The system plans your strategy and generates the ideas and creation briefs. You add your voice and finalise each piece – then it’s published automatically at the time you choose.')),
       h('div', { class: 'pipeline-steps' }, ['Strategy', 'Ideas', 'Brief', 'You create', 'Finalise', 'Auto-publish'].map((s, i) => h('span', { class: `ps ${i === 3 || i === 4 ? 'on' : 'past'}` }, `${i + 1}. ${s}`)))),
     h('div', { class: 'tabs' }, TABS.map(([k, l]) => h('a', { href: `#/content/${k}`, class: k === tab ? 'active' : '' }, l))),
@@ -54,7 +54,7 @@ async function renderIdeas(el, query) {
       h('h3', 'Content ', h('span', { class: 'blue' }, 'mix'), ' across the customer journey'),
       h('span', { class: 'small muted' }, 'Target: 40% awareness · 30% consideration · 20% conversion · 10% retention')),
     h('div', { class: 'mix' }, Object.keys(STAGE_LABEL).map((k) => h('span', { style: { width: `${((stats.by_stage[k] || 0) / total) * 100}%` } }))),
-    h('div', { class: 'legend' }, Object.entries(STAGE_LABEL).map(([k, l], i) => h('span', h('i', { style: { background: ['var(--sky-600)', 'var(--sky-400)', 'var(--sky-300)', 'var(--sky-200)'][i] } }), `${l} ${Math.round(((stats.by_stage[k] || 0) / total) * 100)}%`))));
+    h('div', { class: 'legend' }, Object.entries(STAGE_LABEL).map(([k, l], i) => h('span', h('i', { style: { background: ['var(--blue-600)', 'var(--blue-400)', 'var(--blue-300)', 'var(--blue-200)'][i] } }), `${l} ${Math.round(((stats.by_stage[k] || 0) / total) * 100)}%`))));
 
   const filters = h('div', { class: 'row', style: { marginBottom: '14px' } },
     [['', 'All active'], ['idea', 'New'], ['shortlisted', '⭐ Shortlisted'], ['archived', 'Archived']].map(([k, l]) => h('a', { class: `chip ${(query.status || '') === k ? 'active' : ''}`, href: `#/content/ideas${k ? `?status=${k}` : ''}` }, l)));
@@ -115,7 +115,7 @@ async function renderWorkspace(el, ideaId) {
   const scheduleCard = () => {
     const when = h('input', { type: 'datetime-local', value: toLocalInput(slots[0]) });
     const boxes = channels.filter((c) => c.active).map((c) => h('label', { class: 'row', style: { gap: '8px', fontWeight: 600 } },
-      h('input', { type: 'checkbox', value: c.id, checked: c.platform === idea.platform, style: { width: '16px', accentColor: 'var(--sky-500)' } }), `${PLATFORM_LABELS[c.platform]} · ${c.handle}`));
+      h('input', { type: 'checkbox', value: c.id, checked: c.platform === idea.platform, style: { width: '16px', accentColor: 'var(--blue-500)' } }), `${PLATFORM_LABELS[c.platform]} · ${c.handle}`));
     return h('div', { class: 'card card-pad', style: { marginTop: '16px' } },
       h('h3', { style: { marginBottom: '10px' } }, '3. ', h('span', { class: 'blue' }, 'Schedule'), ' – we’ll publish it for you'),
       h('div', { class: 'stack' },
@@ -142,18 +142,18 @@ async function renderWorkspace(el, ideaId) {
         h('div', { class: 'eyebrow' }, '1. Your creation brief'),
         h('h2', { style: { margin: '6px 0 8px', fontSize: '21px' } }, idea.title),
         h('p', { class: 'muted' }, b.objective),
-        h('div', { class: 'brief-section' }, h('h4', 'Hook options (pick one)'), h('div', { class: 'stack', style: { gap: '6px' } }, (b.hooks || []).map((x, i) => h('div', { class: 'row', style: { gap: '8px', alignItems: 'flex-start' } }, h('span', { class: 'hl-box' }, i + 1), h('span', x))))),
+        h('div', { class: 'brief-section' }, h('h4', 'Hook options (pick one)'), h('div', { class: 'stack', style: { gap: '6px' } }, (b.hooks || []).map((x, i) => h('div', { class: 'row', style: { gap: '8px', alignItems: 'flex-start' } }, h('span', { class: 'num' }, i + 1), h('span', x))))),
         h('div', { class: 'brief-section' }, h('h4', 'Structure'), h('ol', { class: 'outline' }, (b.outline || []).map((x) => h('li', x)))),
         h('div', { class: 'brief-section grid g2' }, h('div', h('h4', 'Audience'), h('p', { class: 'small' }, b.audience)), h('div', h('h4', 'Tone of voice'), h('p', { class: 'small' }, b.tone))),
         h('div', { class: 'brief-section' }, h('h4', 'Call to action'), h('p', h('b', b.cta)), h('p', { class: 'small blue', style: { marginTop: '6px' } }, (b.hashtags || []).join(' '))),
         h('div', { class: 'brief-section' }, h('h4', `How to create this ${String(b.format_label || '').toLowerCase()}`), h('ol', { class: 'how' }, (b.creation_steps || []).map((x) => h('li', x))),
           b.lesson_key ? h('a', { href: `#/content/academy?lesson=${b.lesson_key}`, class: 'btn sm soft', style: { marginTop: '10px' } }, icon('book'), 'Open the full lesson') : null),
-        h('div', { class: 'brief-section' }, h('h4', 'Before you finalise'), (b.checklist || []).map((c) => h('label', { class: 'row small', style: { gap: '8px', marginBottom: '4px' } }, h('input', { type: 'checkbox', style: { width: '15px', accentColor: 'var(--sky-500)' } }), c)))),
+        h('div', { class: 'brief-section' }, h('h4', 'Before you finalise'), (b.checklist || []).map((c) => h('label', { class: 'row small', style: { gap: '8px', marginBottom: '4px' } }, h('input', { type: 'checkbox', style: { width: '15px', accentColor: 'var(--blue-500)' } }), c)))),
 
       h('div',
         h('div', { class: 'card card-pad' },
           h('div', { class: 'eyebrow' }, '2. You create & finalise'),
-          h('h2', { style: { margin: '6px 0 12px' } }, 'Your ', h('span', { class: 'hl' }, 'final version')),
+          h('h2', { style: { margin: '6px 0 12px' } }, 'Your ', h('span', { class: 'blue' }, 'final version')),
           h('div', { class: 'stack' },
             field('Caption / script', draft, { help: 'Start from the template and make it yours. This exact text is what gets published.' }),
             field('Media link', media),
@@ -294,7 +294,7 @@ async function renderAcademy(el, query) {
       h('p', { class: 'muted', style: { marginTop: '6px' } }, 'Short, practical lessons. Each creation brief links to the lesson for its format, so you always know exactly how to film, design or write it.')),
     h('div', { class: 'grid g3' }, lessons.map((l) => {
       const open = query.lesson === l.key;
-      return h('div', { class: 'card card-pad', id: `lesson-${l.key}`, style: open ? { borderColor: 'var(--sky-400)', boxShadow: '0 0 0 3px var(--sky-100)' } : {} },
+      return h('div', { class: 'card card-pad', id: `lesson-${l.key}`, style: open ? { borderColor: 'var(--blue-400)', boxShadow: '0 0 0 3px var(--blue-100)' } : {} },
         h('div', { class: 'row', style: { justifyContent: 'space-between' } }, h('span', { class: 'badge blue' }, icon('book'), `${l.minutes} min`), l.formats.length ? h('span', { class: 'small muted' }, l.formats.map((f) => meta.formats[f]).join(', ')) : h('span', { class: 'badge' }, 'Skill')),
         h('h3', { style: { margin: '10px 0 6px' } }, l.title),
         h('p', { class: 'small muted', style: { marginBottom: '12px' } }, l.summary),

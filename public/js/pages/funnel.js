@@ -12,7 +12,7 @@ async function renderList(el) {
   mount(el,
     h('div', { class: 'page-head' },
       h('div', h('div', { class: 'eyebrow' }, 'Build Funnel'),
-        h('h1', { style: { marginTop: '6px' } }, 'From ', h('span', { class: 'blue' }, 'idea'), ' to ', h('span', { class: 'hl' }, 'fully built')),
+        h('h1', { style: { marginTop: '6px' } }, 'From ', h('span', { class: 'blue' }, 'idea'), ' to ', h('span', { class: 'blue' }, 'fully built')),
         h('p', 'A guided, step-by-step path that takes any product or service idea through validation, offer design, pricing, building, systems and launch. Each step tells you why it matters, exactly what to do and when it’s done.')),
       h('button', { class: 'btn primary', onclick: newProject }, icon('plus'), 'New build')),
 
@@ -30,7 +30,7 @@ async function renderList(el) {
     h('div', { class: 'card' },
       h('div', { class: 'card-head' }, h('h3', 'The ', h('span', { class: 'blue' }, '9-stage'), ' journey every build follows')),
       h('div', { class: 'card-body' }, h('div', { class: 'grid g3' }, blueprint.map((s, i) => h('div', { class: 'card-pad', style: { border: '1px solid var(--line)', borderRadius: '12px' } },
-        h('div', { class: 'row' }, h('span', { class: 'hl-box' }, i + 1), h('h3', s.title)),
+        h('div', { class: 'row' }, h('span', { class: 'num' }, i + 1), h('h3', s.title)),
         h('p', { class: 'small muted', style: { margin: '8px 0' } }, s.goal),
         h('div', { class: 'small' }, `${s.steps.length} steps · ~${Math.round(s.steps.reduce((m, x) => m + x.minutes, 0) / 60)} hrs`)))))),
   );
@@ -151,7 +151,7 @@ function stepPanel(project, stage, step, onChange) {
     h('div', { class: 'card-body stack', style: { gap: '18px' } },
       h('div', { class: 'why' }, h('div', { class: 'eyebrow', style: { marginBottom: '4px' } }, 'Why this matters'), step.why),
       h('div', h('h3', { style: { marginBottom: '10px' } }, 'Do ', h('span', { class: 'blue' }, 'this')), h('ol', { class: 'how' }, step.how.map((x) => h('li', x)))),
-      h('div', h('h3', { style: { marginBottom: '10px' } }, 'Your ', h('span', { class: 'hl' }, 'worksheet')), inputs),
+      h('div', h('h3', { style: { marginBottom: '10px' } }, 'Your ', h('span', { class: 'blue' }, 'worksheet')), inputs),
       extras,
       h('div', { class: 'done-when' }, icon('flag'), h('div', h('b', 'Done when: '), step.doneWhen)),
       step.missing.length && step.status !== 'done' ? h('p', { class: 'small muted' }, 'Still needed: ', step.missing.join(', ')) : null,

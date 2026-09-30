@@ -116,7 +116,7 @@ async function toggleNotifications(wrap) {
 function authShell(form) {
   return h('div', { class: 'auth' },
     h('div', { class: 'auth-hero' },
-      h('div', { class: 'row' }, h('div', { class: 'brand-mark', style: { background: '#fff', color: 'var(--sky-600)' } }, 'CM'), h('b', 'CM Automations')),
+      h('div', { class: 'row' }, h('div', { class: 'brand-mark', style: { background: '#fff', color: 'var(--blue-600)' } }, 'CM'), h('b', 'CM Automations')),
       h('div',
         h('h1', 'Build it. Grow it. Automate the rest.'),
         h('ul', { style: { paddingLeft: '18px', fontSize: '16px' } },
@@ -158,7 +158,7 @@ async function renderRegister() {
       router();
     } catch (err) { showError(err); }
   } },
-  h('div', h('div', { class: 'eyebrow' }, 'Get started'), h('h1', { style: { marginTop: '6px' } }, 'Set up your ', h('span', { class: 'hl' }, 'business'))),
+  h('div', h('div', { class: 'eyebrow' }, 'Get started'), h('h1', { style: { marginTop: '6px' } }, 'Set up your ', h('span', { class: 'blue' }, 'business'))),
   field('Your name', h('input', { name: 'name', required: true })),
   field('Email', h('input', { name: 'email', type: 'email', required: true })),
   field('Password', h('input', { name: 'password', type: 'password', minLength: 8, required: true }), { help: 'At least 8 characters' }),

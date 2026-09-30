@@ -11,7 +11,7 @@ export async function render(el) {
   mount(el,
     h('div', { class: 'page-head' },
       h('div', h('div', { class: 'eyebrow' }, 'Automation engine'),
-        h('h1', { style: { marginTop: '6px' } }, 'The mundane stuff, ', h('span', { class: 'hl' }, 'handled')),
+        h('h1', { style: { marginTop: '6px' } }, 'The mundane stuff, ', h('span', { class: 'blue' }, 'handled')),
         h('p', 'Every automation follows a simple rule: ', h('b', { class: 'blue' }, 'WHEN'), ' something happens, ', h('b', { class: 'blue' }, 'IF'), ' it matches, ', h('b', { class: 'blue' }, 'THEN'), ' do the work. They connect the funnel, content, CRM and tasks so your team can focus on real work.')),
       canEdit ? h('button', { class: 'btn primary', onclick: () => builder(null, meta, team, reload) }, icon('plus'), 'New automation') : null),
 
@@ -19,7 +19,7 @@ export async function render(el) {
       h('div', { class: 'card card-pad span2' },
         h('div', { class: 'row', style: { justifyContent: 'space-between' } },
           h('h3', 'Time ', h('span', { class: 'blue' }, 'saved'), ' – last 30 days'),
-          h('span', { class: 'hl-box' }, `${(impact.total_minutes / 60).toFixed(1)} hours`)),
+          h('span', { class: 'num' }, `${(impact.total_minutes / 60).toFixed(1)} hours`)),
         h('div', { class: 'bars' }, impact.days.map((d) => h('div', { class: 'bar', style: { height: `${(d.minutes / max) * 100}%` }, 'data-tip': `${date(d.day)} · ${d.minutes} min · ${d.runs} runs` }))),
         h('div', { class: 'row small muted', style: { justifyContent: 'space-between', marginTop: '6px' } }, h('span', impact.days[0] ? date(impact.days[0].day) : ''), h('span', 'Today'))),
       h('div', { class: 'card kpi accent' },
@@ -90,7 +90,7 @@ function builder(rule, meta, team, reload) {
   };
 
   const addAct = (a = { type: 'create_task' }) => {
-    const box = h('div', { class: 'card card-pad', style: { boxShadow: 'none', background: 'var(--sky-50)' } });
+    const box = h('div', { class: 'card card-pad', style: { boxShadow: 'none', background: 'var(--blue-50)' } });
     const type = select('type', Object.entries(meta.actions).map(([k, v]) => [k, v.label]), a.type);
     const fields = h('div', { class: 'grid g2', style: { marginTop: '8px' } });
     const inp = (k, label, value, extra = {}) => { const i = h('input', { value: value ?? '', ...extra }); i.dataset.k = k; return field(label, i); };

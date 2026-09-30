@@ -11,7 +11,7 @@ It has three connected systems plus an automation engine that links them:
 | 👥 **CRM** + ✅ **Task Manager** | Handles leads, the deal pipeline, follow-ups and the team's daily tasks. Automations do the routine admin, and team wins and kudos help keep morale up. |
 | ⚡ **Automation engine** | Uses WHEN → IF → THEN rules to connect all of the above. It also logs the time it saves each business. |
 
-The design uses sky blue on a white background with black text. Headers and key figures are in blue text or have a blue highlight.
+The design uses a deep nautical sky blue on a white background with black text. Headers and key figures are in blue text.
 
 ---
 
@@ -193,7 +193,7 @@ server/
     crm/                   contacts, deals, activities
     tasks/                 task service (recurrence) + routes
 public/                    front end: plain ES modules, no build step
-  css/app.css              design system (sky blue / white / black)
+  css/app.css              design system (nautical sky blue / white / black)
   js/app.js                router + layout
   js/pages/*.js            one file per module
 tests/api.test.js          end-to-end API + automation tests

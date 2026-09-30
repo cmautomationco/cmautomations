@@ -41,7 +41,7 @@ export async function render(el, route) {
             h('li', 'Morning digest of what’s due'),
             h('li', 'Lead, proposal & onboarding tasks'),
             h('li', 'Funnel steps → tasks with checklists'))),
-        h('div', { class: 'card card-pad' }, h('div', { class: 'small muted' }, 'Open tasks'), h('div', { style: { fontSize: '26px', fontWeight: 800, color: 'var(--sky-600)' } }, open.length), h('div', { class: 'small muted' }, `${open.filter((t) => isOverdue(t.due_at)).length} overdue`)))));
+        h('div', { class: 'card card-pad' }, h('div', { class: 'small muted' }, 'Open tasks'), h('div', { style: { fontSize: '26px', fontWeight: 800, color: 'var(--blue-600)' } }, open.length), h('div', { class: 'small muted' }, `${open.filter((t) => isOverdue(t.due_at)).length} overdue`)))));
 }
 
 function taskCard(t, team, reload) {
@@ -90,7 +90,7 @@ function myDay(tasks, team, reload) {
   return h('div', { class: 'stack' }, groups.filter(([, items]) => items.length).map(([label, items]) => h('div', { class: 'card' },
     h('div', { class: 'card-head' }, h('h3', label === 'Overdue' ? h('span', { style: { color: 'var(--red)' } }, label) : label === 'Today' ? h('span', { class: 'blue' }, label) : label), h('span', { class: 'badge' }, items.length)),
     h('div', { class: 'card-body' }, items.map((t) => h('div', { class: 'list-item' },
-      h('input', { type: 'checkbox', style: { width: '18px', height: '18px', accentColor: 'var(--sky-500)' }, onchange: async () => { await patch(`/tasks/${t.id}`, { status: 'done' }); toast('Done ✅'); reload(); } }),
+      h('input', { type: 'checkbox', style: { width: '18px', height: '18px', accentColor: 'var(--blue-500)' }, onchange: async () => { await patch(`/tasks/${t.id}`, { status: 'done' }); toast('Done ✅'); reload(); } }),
       h('div', { class: 'grow', style: { cursor: 'pointer' }, onclick: () => taskModal(t, team, reload) }, h('div', { style: { fontWeight: 600 } }, t.title), t.description ? h('div', { class: 'small muted truncate' }, t.description.split('\n')[0]) : null),
       SOURCE_LABEL[t.source] ? h('span', { class: 'badge blue' }, SOURCE_LABEL[t.source]) : null,
       h('span', { class: `prio ${t.priority}` }),
@@ -102,7 +102,7 @@ function taskModal(t, team, reload) {
   const checklist = h('div', { class: 'stack', style: { gap: '6px' } });
   const addItem = (item = { text: '', done: false }) => {
     const row = h('div', { class: 'row', style: { gap: '8px', flexWrap: 'nowrap' } },
-      h('input', { type: 'checkbox', checked: item.done, style: { width: '16px', accentColor: 'var(--sky-500)' } }),
+      h('input', { type: 'checkbox', checked: item.done, style: { width: '16px', accentColor: 'var(--blue-500)' } }),
       h('input', { value: item.text, placeholder: 'Checklist item' }),
       h('button', { class: 'btn sm ghost', type: 'button', onclick: () => row.remove() }, icon('x')));
     checklist.append(row);

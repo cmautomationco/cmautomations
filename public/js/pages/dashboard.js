@@ -13,7 +13,7 @@ export async function render(el) {
     h('div', { class: 'label' }, icon(ic), label), h('div', { class: `value ${cls ? '' : 'blue'}` }, value), h('div', { class: 'sub' }, sub));
 
   const taskList = h('div', d.my_tasks.length ? d.my_tasks.map((t) => {
-    const box = h('input', { type: 'checkbox', style: { width: '18px', height: '18px', accentColor: 'var(--sky-500)' }, onchange: async () => {
+    const box = h('input', { type: 'checkbox', style: { width: '18px', height: '18px', accentColor: 'var(--blue-500)' }, onchange: async () => {
       try { await patch(`/tasks/${t.id}`, { status: 'done' }); row.style.opacity = 0.4; toast('Nice work – task completed ✅'); } catch (err) { showError(err); }
     } });
     const row = h('div', { class: 'list-item' }, box,
@@ -52,7 +52,7 @@ export async function render(el) {
           : h('div', { class: 'empty' }, h('a', { href: '#/funnel' }, 'Start your first build →')))),
 
       h('div', { class: 'card' },
-        h('div', { class: 'card-head' }, h('h3', 'Content going ', h('span', { class: 'hl' }, 'out')), h('a', { href: '#/content/calendar', class: 'small' }, 'Calendar →')),
+        h('div', { class: 'card-head' }, h('h3', 'Content going ', h('span', { class: 'blue' }, 'out')), h('a', { href: '#/content/calendar', class: 'small' }, 'Calendar →')),
         h('div', { class: 'card-body' }, d.upcoming_posts.length ? d.upcoming_posts.map((p) => h('div', { class: 'list-item' },
           h('div', { class: 'run-item', style: { border: 'none', padding: 0 } }, h('div', { class: 'ico' }, icon('calendar'))),
           h('div', { class: 'grow' }, h('div', { class: 'truncate', style: { fontWeight: 600 } }, p.title || p.caption.slice(0, 50)), h('div', { class: 'small muted' }, `${PLATFORM_LABELS[p.platform]} · ${dateTime(p.publish_at)}`))))
