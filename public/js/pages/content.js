@@ -78,7 +78,11 @@ function ideaCard(i, reload) {
     h('p', { class: 'small muted' }, i.angle),
     h('div', { class: 'row small muted', style: { gap: '6px' } }, i.pillar_name ? h('span', '📌 ', i.pillar_name) : null, i.source === 'ai' ? h('span', { class: 'badge blue' }, 'AI') : null, h('span', { class: 'badge' }, titleCase(i.status))),
     h('div', { class: 'row', style: { marginTop: 'auto', paddingTop: '6px' } },
-      h('a', { class: 'btn sm primary', href: `#/content/create/${i.id}`, onclick: () => { if (['idea', 'shortlisted'].includes(i.status)) post(`/content/ideas/${i.id}/brief`).catch(() => {}); } }, icon('edit'), 'Create'),
+      h('a', { class: 'btn sm primary', href: `#/content/create/${i.id}`, onclick: async (e) => {
+        if (!['idea', 'shortlisted'].includes(i.status)) return;
+        e.preventDefault();
+        try { await post(`/content/ideas/${i.id}/brief`); location.hash = `#/content/create/${i.id}`; } catch (err) { showError(err); }
+      } }, icon('edit'), 'Create'),
       i.status === 'idea' ? h('button', { class: 'btn sm soft', onclick: () => act(() => patch(`/content/ideas/${i.id}`, { status: 'shortlisted' })) }, '⭐ Shortlist') : null,
       i.status !== 'archived' ? h('button', { class: 'btn sm ghost', onclick: () => act(() => patch(`/content/ideas/${i.id}`, { status: 'archived' })) }, 'Archive') : h('button', { class: 'btn sm ghost', onclick: () => act(() => patch(`/content/ideas/${i.id}`, { status: 'idea' })) }, 'Restore')));
 }

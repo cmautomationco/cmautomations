@@ -1,6 +1,6 @@
 import { del, get, patch, post } from '../api.js';
 import { state } from '../app.js';
-import { ago, announce, date, field, h, icon, modal, mount, select, showError, toast } from '../ui.js';
+import { ago, announce, confirmDialog, date, field, h, icon, modal, mount, select, showError, toast } from '../ui.js';
 
 export async function render(el) {
   const [rules, runs, impact, meta, team] = await Promise.all([get('/automations'), get('/automations/runs'), get('/automations/impact'), get('/automations/meta'), get('/team')]);
@@ -130,7 +130,7 @@ function builder(rule, meta, team, reload) {
 
   const actions = [{ label: 'Cancel' }];
   if (rule?.id) {
-    actions.push({ label: 'Delete', onClick: async () => { if (!confirm('Delete this automation?')) return false; await del(`/automations/${rule.id}`); reload(); } });
+    actions.push({ label: 'Delete', onClick: async () => { if (!(await confirmDialog('Delete this automation?'))) return false; await del(`/automations/${rule.id}`); reload(); } });
     actions.push({ label: 'Test run', onClick: async () => { const res = await post(`/automations/${rule.id}/test`, { payload: {} }); announce(res); if (!res.length) toast('Conditions did not match the empty test data'); reload(); } });
   }
   actions.push({ label: 'Save automation', primary: true, onClick: async () => {

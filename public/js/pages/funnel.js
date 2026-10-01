@@ -1,6 +1,6 @@
 import { del, get, patch, post } from '../api.js';
 import { navigate } from '../app.js';
-import { announce, date, field, formData, h, icon, modal, money, mount, select, showError, titleCase, toast } from '../ui.js';
+import { announce, confirmDialog, date, field, formData, h, icon, modal, money, mount, select, showError, titleCase, toast } from '../ui.js';
 
 export async function render(el, route) {
   if (route.parts[1]) return renderProject(el, route.parts[1], route.query);
@@ -68,7 +68,7 @@ async function renderProject(el, projectId, query) {
         h('div', { class: 'row' },
           h('div', { class: 'ring', style: { '--p': project.progress } }, h('span', `${project.progress}%`)),
           h('div', h('div', { style: { fontWeight: 800 } }, `${project.steps_done} / ${project.steps_total} steps`), h('div', { class: 'small muted' }, project.status === 'launched' ? '🚀 Launched!' : 'Keep going – one step at a time')),
-          h('button', { class: 'btn ghost danger sm', onclick: async () => { if (confirm('Delete this build?')) { await del(`/funnel/projects/${project.id}`); navigate('#/funnel'); } } }, 'Delete'))),
+          h('button', { class: 'btn ghost danger sm', onclick: async () => { if (await confirmDialog('Delete this build?')) { await del(`/funnel/projects/${project.id}`); navigate('#/funnel'); } } }, 'Delete'))),
 
       h('div', { class: 'stepper' }, project.stages.map((s, i) => h('div', {
         class: `stage-pill ${s.status} ${s.key === stageKey ? 'selected' : ''}`,
@@ -138,7 +138,7 @@ function stepPanel(project, stage, step, onChange) {
   if (step.prefill === 'sales_page') {
     extras.push(h('div', { class: 'brief-section' }, h('h4', 'Sales page draft – built from your earlier answers'),
       h('div', { class: 'pre' }, project.sales_page_draft),
-      h('button', { class: 'btn sm soft', style: { marginTop: '8px' }, onclick: () => navigator.clipboard?.writeText(project.sales_page_draft).then(() => toast('Copied')) }, 'Copy draft')));
+      h('button', { class: 'btn sm soft', style: { marginTop: '8px' }, onclick: () => (navigator.clipboard?.writeText(project.sales_page_draft) || Promise.reject()).then(() => toast('Copied'), () => toast('Select the draft text and copy it manually')) }, 'Copy draft')));
   }
 
   return h('div', { class: 'card' },

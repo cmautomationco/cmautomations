@@ -1,6 +1,6 @@
 import { del, get, patch, post } from '../api.js';
 import { refresh, state } from '../app.js';
-import { avatar, field, formData, h, icon, modal, mount, select, showError, titleCase, toast, PLATFORM_LABELS } from '../ui.js';
+import { avatar, confirmDialog, field, formData, h, icon, modal, mount, select, showError, titleCase, toast, PLATFORM_LABELS } from '../ui.js';
 
 export async function render(el) {
   const [team, channels] = await Promise.all([get('/team'), get('/content/channels')]);
@@ -40,7 +40,7 @@ export async function render(el) {
               h('td', h('b', PLATFORM_LABELS[c.platform])), h('td', c.handle),
               h('td', h('span', { class: 'badge blue' }, titleCase(c.adapter)), c.config?.webhook_url ? h('div', { class: 'small muted truncate', style: { maxWidth: '240px' } }, c.config.webhook_url) : null),
               h('td', h('button', { class: `switch ${c.active ? 'on' : ''}`, disabled: !canEdit, onclick: async () => { await patch(`/content/channels/${c.id}`, { active: !c.active }); reload(); } })),
-              h('td', canEdit ? h('button', { class: 'btn sm ghost danger', onclick: async () => { if (confirm('Remove this channel?')) { await del(`/content/channels/${c.id}`); reload(); } } }, 'Remove') : null)))))))));
+              h('td', canEdit ? h('button', { class: 'btn sm ghost danger', onclick: async () => { if (await confirmDialog('Remove this channel?', 'Remove')) { await del(`/content/channels/${c.id}`); reload(); } } }, 'Remove') : null)))))))));
 }
 
 function invite(reload) {

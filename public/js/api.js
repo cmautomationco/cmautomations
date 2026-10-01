@@ -1,9 +1,14 @@
-// Thin fetch wrapper. The session token lives in localStorage.
+// Thin fetch wrapper. The session token lives in localStorage, with an
+// in-memory copy so signing in still works where storage is blocked.
 const KEY = 'cm_token';
+let memoryToken = null;
 
 export const auth = {
-  get token() { try { return localStorage.getItem(KEY); } catch { return null; } },
-  set token(v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch { /* storage blocked */ } },
+  get token() { try { return localStorage.getItem(KEY) || memoryToken; } catch { return memoryToken; } },
+  set token(v) {
+    memoryToken = v || null;
+    try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch { /* storage blocked */ }
+  },
 };
 
 export class ApiError extends Error {

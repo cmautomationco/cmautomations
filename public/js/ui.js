@@ -99,6 +99,16 @@ export function modal(title, body, { wide = false, actions = [] } = {}) {
   return { close, el: back };
 }
 
+/** In-page yes/no confirmation. Resolves true only when the action button is pressed. */
+export function confirmDialog(message, actionLabel = 'Delete') {
+  return new Promise((resolve) => {
+    modal('Are you sure?', h('p', message), { actions: [
+      { label: 'Cancel', onClick: () => resolve(false) },
+      { label: actionLabel, primary: true, onClick: () => resolve(true) },
+    ] });
+  });
+}
+
 /** Reads a form's named inputs into an object. */
 export function formData(root) {
   const out = {};

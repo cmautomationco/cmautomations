@@ -119,7 +119,7 @@ function seedCrm(db, engine, org, [owner, priya, jordan, sam]) {
     ['Aisha', 'Khan', 'Barclays', 'LinkedIn', 'prospect', owner, [['Confidence Accelerator – Aisha', 2400, 'negotiation', 0]]],
     ['Tom', 'Bennett', 'Freelance', 'Lead magnet', 'lead', jordan, [['Momentum group – Tom', 450, 'qualified', 0]]],
     ['Sophie', 'Turner', 'Unilever', 'Webinar', 'lead', priya, [['Confidence Accelerator – Sophie', 2400, 'new', 0]]],
-    ['Daniel', 'Price', 'BT', 'Instagram', 'customer', owner, [['Career Clarity Intensive – Daniel', 650, 'won', -2]]],
+    ['Daniel', 'Price', 'BT', 'Instagram', 'customer', owner, [['Career Clarity Intensive – Daniel', 650, 'won', 0]]],
     ['Grace', 'Okafor', 'Accenture', 'Podcast', 'lead', jordan, [['Momentum group – Grace', 450, 'new', 0]]],
     ['Ryan', 'Murphy', 'Local council', 'Google', 'prospect', sam, [['Confidence Accelerator – Ryan', 2400, 'proposal', 0]]],
     ['Chloe', 'Evans', 'Self-employed', 'Referral', 'lead', sam, [['Career Clarity Intensive – Chloe', 650, 'qualified', 0]]],

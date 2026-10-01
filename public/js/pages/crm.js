@@ -1,5 +1,5 @@
 import { del, get, patch, post } from '../api.js';
-import { announce, ago, avatar, date, field, formData, h, icon, modal, money, mount, relative, select, showError, titleCase, toast } from '../ui.js';
+import { ago, announce, avatar, confirmDialog, date, field, formData, h, icon, modal, money, mount, relative, select, showError, titleCase, toast } from '../ui.js';
 
 const STAGES = [['new', 'New'], ['qualified', 'Qualified'], ['proposal', 'Proposal'], ['negotiation', 'Negotiation'], ['won', 'Won'], ['lost', 'Lost']];
 const LIFE = { lead: 'blue', prospect: 'amber', customer: 'green', churned: '' };
@@ -132,7 +132,7 @@ async function contactDrawer(id, team, reload) {
       h('div', h('h3', { style: { marginBottom: '8px' } }, 'Timeline'), c.activities.map((a) => h('div', { class: 'run-item' },
         h('div', { class: 'ico' }, icon(a.type === 'system' ? 'zap' : a.type === 'call' ? 'users' : a.type === 'email' ? 'send' : 'edit')),
         h('div', { class: 'grow' }, h('div', { class: 'small' }, h('b', a.type === 'system' ? 'Automation' : titleCase(a.type)), ` · ${a.author || 'System'} · ${ago(a.created_at)}`), h('div', a.body))))),
-      h('button', { class: 'btn ghost danger sm', onclick: async () => { if (confirm('Delete this contact?')) { await del(`/crm/contacts/${c.id}`); close(); reload(); } } }, 'Delete contact')));
+      h('button', { class: 'btn ghost danger sm', onclick: async () => { if (await confirmDialog('Delete this contact?')) { await del(`/crm/contacts/${c.id}`); close(); reload(); } } }, 'Delete contact')));
   document.body.append(drawer);
 }
 

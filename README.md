@@ -90,6 +90,17 @@ Configuration is in `.env` (see `.env.example`):
 
 ---
 
+## Browser test build
+
+`npm run build:test` packs the whole system into one self-contained page at `dist/test-build/cm-automations.html`: the front end, the real server modules and SQLite (via sql.js). The page needs no server and no network connection, and it can be hosted anywhere or opened locally (`dist/test-build/index.html`).
+
+- `demo/` holds the browser stand-ins for the few Node modules the server uses (`node:sqlite`, `node:crypto`, `node:fs`, Express's router), plus the boot script.
+- Data is saved in the viewer's browser, and **Reset data** restores the demo business.
+- A **Walkthrough** panel guides testers through every section. The same steps are written to [`docs/WALKTHROUGH.md`](docs/WALKTHROUGH.md).
+- In this build, publishing is simulated and timed automations run every 30 seconds while the page is open.
+
+---
+
 ## Rolling it out to a new business
 
 1. The business signs up (or you use **Settings → Add another business** to run several businesses from one login).

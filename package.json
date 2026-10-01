@@ -1,7 +1,7 @@
 {
   "name": "cm-automations",
   "version": "1.0.0",
-  "description": "CM Automations – a multi-business operating system: Build Funnel, Content Studio, CRM & Task Manager, all driven by an automation engine.",
+  "description": "CM Automations \u2013 a multi-business operating system: Build Funnel, Content Studio, CRM & Task Manager, all driven by an automation engine.",
   "type": "module",
   "private": true,
   "engines": {
@@ -12,12 +12,17 @@
     "dev": "node --disable-warning=ExperimentalWarning --watch server/index.js",
     "seed": "node --disable-warning=ExperimentalWarning server/db/seed.js",
     "test": "node --disable-warning=ExperimentalWarning --test tests/*.test.js",
-    "screenshots": "node --disable-warning=ExperimentalWarning scripts/screenshots.mjs"
+    "screenshots": "node --disable-warning=ExperimentalWarning scripts/screenshots.mjs",
+    "build:test": "node scripts/build-demo.mjs"
   },
   "dependencies": {
     "express": "^5.2.1"
   },
   "optionalDependencies": {
     "@anthropic-ai/sdk": "^0.130.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "sql.js": "^1.14.2"
   }
 }
