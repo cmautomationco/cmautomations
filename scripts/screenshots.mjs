@@ -66,6 +66,17 @@ await shot('12-tasks-board', '#/tasks', { full: true });
 await shot('13-tasks-my-day', '#/tasks/today', { full: true });
 await shot('14-automations', '#/automations', { full: true });
 await shot('15-content-academy', '#/content/academy', { full: true });
+await shot('16-help-desk', '#/helpdesk', { full: true });
+await shot('17-assistant', '#/', { before: async () => {
+  await page.click('.as-fab');
+  for (const q of ['What do I need to do today?', 'Report a problem: the booking page won’t take payments']) {
+    const count = await page.locator('.as-msg.bot').count();
+    await page.fill('#assistant-input', q);
+    await page.press('#assistant-input', 'Enter');
+    await page.waitForFunction((n) => document.querySelectorAll('.as-msg.bot:not(:has(.as-typing))').length > n, count);
+  }
+  await page.waitForTimeout(400);
+} });
 
 await browser.close();
 server.close();

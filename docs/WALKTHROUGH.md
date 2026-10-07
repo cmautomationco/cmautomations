@@ -68,7 +68,29 @@ WHEN something happens, IF it matches, THEN the system does the work.
 - [ ] Press New automation and build your own. Use {{contact.first_name}} style placeholders in text.
 - [ ] Check the activity log and the time-saved chart to see everything it has done.
 
-## 8. Settings & notifications
+## 8. Assistant (chat)
+
+The round chat button in the bottom-right corner, on every page. It finds the answer and takes you there.
+
+- [ ] Open the assistant and ask “What do I need to do today?” – it answers from your real tasks and opens My day.
+- [ ] Ask “How do I add a new lead?” – it opens the new lead form for you.
+- [ ] Say “I don’t know what to post” – it opens the Idea Lab and points at the Generate ideas button.
+- [ ] Type “Remind me to call Emma tomorrow” – it creates the task with tomorrow’s date.
+- [ ] Type “find Emma” or “take me to the pipeline” to jump straight there.
+- [ ] Type “Report a problem: customers can’t pay on the booking page” – it logs an urgent Help Desk issue and alerts the right person.
+- [ ] Ask something it can’t answer – it offers to log it for the team so a person picks it up.
+
+## 9. Help Desk
+
+Every problem tracked until it’s sorted, with response targets and automatic escalation.
+
+- [ ] Open the Help Desk and look at the open issues, including ones raised by the assistant.
+- [ ] Press “New issue”, describe a problem, pick a priority and raise it. It’s assigned automatically.
+- [ ] Click an issue to add an update, change its priority or reassign it.
+- [ ] Write how it was fixed and press “Mark resolved” – whoever raised it gets a notification.
+- [ ] Check “What people ask the assistant” to see where your team or clients get stuck.
+
+## 10. Settings & notifications
 
 Business details, team, channels and extra businesses.
 
@@ -77,11 +99,12 @@ Business details, team, channels and extra businesses.
 - [ ] Press “Add another business” to set up a new business in any niche. It comes ready with pillars, channels and automations.
 - [ ] Press the bell at the top to read notifications from automations and kudos.
 
-## 9. What this test build simulates
+## 11. What this test build simulates
 
 Everything works end to end, with these limits for now:
 
 - [ ] Posts are “published” in demo mode. Connecting real Instagram, TikTok and other accounts comes in the full build.
+- [ ] The assistant here uses the built-in engine. On the full server, adding an Anthropic API key upgrades it to Claude for open-ended questions.
 - [ ] Emails and texts are not sent; notifications appear in the bell instead.
 - [ ] Your data is saved in this browser only, so other people opening the link start with the demo data.
 - [ ] Timed automations (publishing, overdue reminders, follow-ups) run every 30 seconds while the page is open.

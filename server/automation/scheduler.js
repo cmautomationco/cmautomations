@@ -7,7 +7,8 @@ import { publishPost } from './publishers.js';
  *   1. publishes content that is due
  *   2. flags overdue tasks (fires task.overdue once per task)
  *   3. turns due CRM follow-ups into tasks (contact.follow_up_due)
- *   4. sends each person a morning digest and fires schedule.daily
+ *   4. escalates Help Desk issues past their response target (issue.overdue)
+ *   5. sends each person a morning digest and fires schedule.daily
  */
 export function createScheduler(ctx, { intervalSeconds = 30, digestHourUtc = 7 } = {}) {
   let timer = null;
@@ -18,7 +19,7 @@ export function createScheduler(ctx, { intervalSeconds = 30, digestHourUtc = 7 }
     running = true;
     const { db, engine } = ctx;
     const iso = at.toISOString();
-    const summary = { published: 0, overdue: 0, followUps: 0, digests: 0 };
+    const summary = { published: 0, overdue: 0, followUps: 0, issues: 0, digests: 0 };
     try {
       for (const post of db.all(`SELECT * FROM scheduled_posts WHERE status = 'queued' AND publish_at <= ? ORDER BY publish_at LIMIT 50`, iso)) {
         const result = await publishPost(ctx, post);
@@ -35,6 +36,12 @@ export function createScheduler(ctx, { intervalSeconds = 30, digestHourUtc = 7 }
         db.run('UPDATE contacts SET next_follow_up_at = NULL WHERE id = ?', contact.id);
         engine.emit(contact.org_id, 'contact.follow_up_due', { contact });
         summary.followUps++;
+      }
+
+      for (const issue of db.all(`SELECT * FROM issues WHERE status != 'resolved' AND due_at IS NOT NULL AND due_at < ? AND overdue_notified = 0`, iso)) {
+        db.run('UPDATE issues SET overdue_notified = 1 WHERE id = ?', issue.id);
+        engine.emit(issue.org_id, 'issue.overdue', { issue });
+        summary.issues++;
       }
 
       if (at.getUTCHours() >= digestHourUtc) {

@@ -1,3 +1,5 @@
+import { id, now } from '../lib/util.js';
+
 /**
  * Ready-made automations installed for every new business. They cover the
  * mundane admin that normally eats into the day: follow-ups, onboarding,
@@ -102,4 +104,70 @@ export const RECIPES = [
       { type: 'create_task', title: 'Fix failed post on {{channel.platform}}', description: 'Error: {{post.last_error}}', priority: 'urgent', due_in_days: 0, assign_to: 'admins' },
     ],
   },
+  {
+    recipe: 'urgent_issue_alert',
+    name: 'Urgent issue → alert the team',
+    description: 'When a high or urgent Help Desk issue is raised, alert owners and admins straight away.',
+    trigger: 'issue.created',
+    conditions: [{ field: 'issue.priority', op: 'in', value: 'high,urgent' }],
+    actions: [
+      { type: 'notify', to: 'admins', title: '🚨 {{issue.priority}} issue: {{issue.title}}', body: 'Raised by {{actor.name}}. Respond by the target time.', link: '#/helpdesk/{{issue.id}}' },
+    ],
+  },
+  {
+    recipe: 'issue_assigned',
+    name: 'Issue raised → tell the assignee',
+    description: 'Let the person an issue is assigned to know it is theirs.',
+    trigger: 'issue.created',
+    conditions: [{ field: 'issue.assignee_id', op: 'exists' }],
+    actions: [
+      { type: 'notify', to: 'assignee', title: 'New issue for you: {{issue.title}}', body: 'Priority: {{issue.priority}}.', link: '#/helpdesk/{{issue.id}}' },
+    ],
+  },
+  {
+    recipe: 'issue_overdue_escalate',
+    name: 'Issue overdue → escalate',
+    description: 'When an issue passes its response target, remind the assignee and alert admins.',
+    trigger: 'issue.overdue',
+    conditions: [],
+    actions: [
+      { type: 'notify', to: 'assignee', title: 'Overdue issue: {{issue.title}}', body: 'This issue has passed its response target.', link: '#/helpdesk/{{issue.id}}' },
+      { type: 'notify', to: 'admins', title: 'Escalated: {{issue.title}}', body: 'Past its response target and still not resolved.', link: '#/helpdesk/{{issue.id}}' },
+    ],
+  },
+  {
+    recipe: 'issue_resolved_update',
+    name: 'Issue resolved → update the reporter',
+    description: 'Tell whoever raised an issue that it has been sorted, with the resolution.',
+    trigger: 'issue.resolved',
+    conditions: [],
+    actions: [
+      { type: 'notify', to: 'reporter', title: '✅ Sorted: {{issue.title}}', body: '{{issue.resolution}}', link: '#/helpdesk/{{issue.id}}' },
+    ],
+  },
 ];
+
+/**
+ * Installs any recipes a business doesn't have yet (e.g. recipes added in a
+ * later release). Remembers what it installed, so a recipe the business
+ * deleted on purpose is not brought back.
+ */
+export function installMissingRecipes(db, orgId) {
+  const orgs = orgId ? [{ id: orgId }] : db.all('SELECT id FROM organizations');
+  let added = 0;
+  for (const org of orgs) {
+    const meta = db.get(`SELECT value FROM org_meta WHERE org_id = ? AND key = 'recipes_installed'`, org.id);
+    const installed = new Set(meta ? JSON.parse(meta.value) : db.all('SELECT recipe FROM automations WHERE org_id = ? AND recipe IS NOT NULL', org.id).map((r) => r.recipe));
+    for (const r of RECIPES) {
+      if (installed.has(r.recipe)) continue;
+      db.insert('automations', {
+        id: id('aut'), org_id: org.id, name: r.name, description: r.description, trigger: r.trigger,
+        conditions: r.conditions, actions: r.actions, enabled: 1, recipe: r.recipe, run_count: 0, created_at: now(),
+      });
+      installed.add(r.recipe);
+      added++;
+    }
+    db.run(`INSERT INTO org_meta (org_id, key, value) VALUES (?, 'recipes_installed', ?) ON CONFLICT(org_id, key) DO UPDATE SET value = excluded.value`, org.id, JSON.stringify([...installed]));
+  }
+  return added;
+}

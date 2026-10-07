@@ -23,4 +23,7 @@
 .tb-steps li { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; align-items: start; font-size: 13px; }
 .tb-steps input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--blue-500); }
 .tb-steps label { cursor: pointer; }
-@media (max-width: 760px) { .tb-bar { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); } }
+@media (max-width: 760px) {
+  .tb-bar { left: 16px; transform: none; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
+  .tb-bar > b { display: none; }
+}

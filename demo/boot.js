@@ -4,6 +4,7 @@ import './shims/globals.js';
 import { setSqlDatabase, getSqlDatabase } from './shims/sqlite.js';
 import { openDatabase } from '../server/db/index.js';
 import { seedDemo } from '../server/db/seed.js';
+import { installMissingRecipes } from '../server/automation/recipes.js';
 import { createScheduler } from '../server/automation/scheduler.js';
 import { createBackend } from './backend.js';
 import { clearSnapshot, loadSnapshot, saveSnapshot } from './persist.js';
@@ -23,6 +24,7 @@ async function start() {
 
   const db = openDatabase(':memory:');
   if (!db.get('SELECT 1 FROM organizations LIMIT 1')) seedDemo(db);
+  installMissingRecipes(db); // data saved by an earlier test build gets the new automations
 
   // Save to this browser shortly after every change.
   let timer = null;

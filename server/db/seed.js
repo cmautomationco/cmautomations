@@ -45,6 +45,7 @@ export function seedDemo(db) {
   seedCrm(db, engine, org, [owner, priya, jordan, sam]);
   seedTasks(db, org, [owner, priya, jordan, sam]);
   seedHistory(db, org, [owner, priya, jordan, sam]);
+  seedHelpdesk(db, org, [owner, priya, jordan, sam]);
   return { org, owner };
 }
 
@@ -201,6 +202,38 @@ function seedHistory(db, org, [owner, priya, jordan, sam]) {
   ]) {
     db.insert('notifications', { id: id('ntf'), org_id: org.id, user_id: owner.id, title, body, link, read: 0, created_at: now() });
   }
+}
+
+function seedHelpdesk(db, org, [owner, priya, jordan, sam]) {
+  const contact = (first) => db.get('SELECT id FROM contacts WHERE org_id = ? AND first_name = ?', org.id, first)?.id || null;
+  const issues = [
+    { title: 'Liam can’t open the proposal link', description: 'Liam Walsh says the proposal link in his email shows an error page. He wants to sign this week.', category: 'customer', priority: 'urgent', status: 'open', source: 'customer', contact_id: contact('Liam'), assignee_id: priya.id, created_by: priya.id, hoursAgo: 2, slaHours: 4 },
+    { title: 'Instagram post failed to publish on Monday', description: 'The Monday carousel did not go out. Channel may need reconnecting.', category: 'content', priority: 'high', status: 'in_progress', source: 'assistant', assignee_id: owner.id, created_by: jordan.id, hoursAgo: 30, slaHours: 24, comment: [owner.id, 'Reconnecting the channel now – will re-publish this afternoon.'] },
+    { title: 'Invoice for Emma Clarke shows the wrong amount', description: 'Month 2 invoice says £2,600 instead of £2,400.', category: 'billing', priority: 'medium', status: 'waiting', source: 'manual', contact_id: contact('Emma'), assignee_id: sam.id, created_by: sam.id, hoursAgo: 20, slaHours: 72, comment: [sam.id, 'Waiting on the accountant to re-issue it.'] },
+    { title: 'Onboarding form link is out of date', description: 'New clients are getting the old form. Update the welcome email.', category: 'operations', priority: 'low', status: 'open', source: 'manual', assignee_id: jordan.id, created_by: owner.id, hoursAgo: 5, slaHours: 168 },
+    { title: 'Workshop slides missing from shared folder', description: 'Couldn’t find the slides for Thursday’s workshop.', category: 'operations', priority: 'medium', status: 'resolved', source: 'assistant', assignee_id: priya.id, created_by: sam.id, hoursAgo: 96, slaHours: 72, resolution: 'Moved the slides into the shared Workshops folder and sent Sam the link.', resolvedAfterHours: 6 },
+  ];
+  for (const i of issues) {
+    const created = addHours(now(), -i.hoursAgo);
+    const issueId = id('iss');
+    db.insert('issues', {
+      id: issueId, org_id: org.id, title: i.title, description: i.description, category: i.category, priority: i.priority, status: i.status,
+      source: i.source, contact_id: i.contact_id || null, assignee_id: i.assignee_id, due_at: addHours(created, i.slaHours), overdue_notified: 0,
+      resolution: i.resolution || null, resolved_at: i.resolvedAfterHours ? addHours(created, i.resolvedAfterHours) : null,
+      created_by: i.created_by, created_at: created, updated_at: created,
+    });
+    if (i.comment) db.insert('issue_comments', { id: id('icm'), issue_id: issueId, user_id: i.comment[0], body: i.comment[1], created_at: addHours(created, 1) });
+  }
+  // Recent assistant questions, so the Help Desk shows what people ask most.
+  const asked = [
+    [jordan, 'how do I add a new lead', 'crm_add_lead', 1], [sam, 'what do I need to do today', 'today', 1], [priya, 'I dont know what to post', 'content_ideas', 1],
+    [jordan, 'add a lead', 'crm_add_lead', 1], [sam, 'whats overdue', 'task_overdue', 1], [owner, 'how is the business doing', 'summary', 1],
+    [jordan, 'how do I log a call', 'crm_log', 1], [sam, 'can clients book appointments online', 'bookings', 1], [priya, 'can we send invoices from here', 'invoices', 1],
+    [sam, 'how do I add a new client', 'crm_add_lead', 1], [jordan, 'where do I upload our price list for clients', 'unknown', 0],
+  ];
+  asked.forEach(([who, message, intent, resolved], k) => db.insert('assistant_logs', {
+    id: id('asl'), org_id: org.id, user_id: who.id, message, intent, engine: 'built-in', resolved, created_at: addHours(now(), -(k + 1) * 9),
+  }));
 }
 
 // `npm run seed` resets the database file with fresh demo data.

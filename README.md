@@ -9,6 +9,8 @@ It has three connected systems plus an automation engine that links them:
 | 🚀 **Build Funnel** | Takes a product or service from a rough idea to fully built and launched, in **9 stages and 36 guided steps**. Each step says why it matters, what to do and when it's done. |
 | ✨ **Content Studio** | Builds the content strategy and generates the ideas and creation briefs. It teaches the client how to make each piece. The client finalises it, and the system publishes it at the scheduled time. |
 | 👥 **CRM** + ✅ **Task Manager** | Handles leads, the deal pipeline, follow-ups and the team's daily tasks. Automations do the routine admin, and team wins and kudos help keep morale up. |
+| 💬 **Assistant** | A chat helper on every page. It works out the problem, takes you to the screen that solves it and points at the right button. It also answers questions from your own data, creates tasks and logs issues. |
+| 🛟 **Help Desk** | Tracks every problem until it's sorted. Issues are auto-assigned, each priority has a response target, missed targets are escalated, and the person who raised it is told when it's fixed. |
 | ⚡ **Automation engine** | Uses WHEN → IF → THEN rules to connect all of the above. It also logs the time it saves each business. |
 
 The design uses a deep nautical sky blue on a white background with black text. Headers and key figures are in blue text.
@@ -54,6 +56,11 @@ All screenshots come from the running app with the built-in demo business (`npm 
 
 ![Automations](docs/screenshots/14-automations.png)
 
+### Help Desk & Assistant
+| Help Desk | Assistant |
+|---|---|
+| ![Help Desk](docs/screenshots/16-help-desk.png) | ![Assistant](docs/screenshots/17-assistant.png) |
+
 ---
 
 ## Quick start
@@ -86,7 +93,7 @@ Configuration is in `.env` (see `.env.example`):
 | `PORT` | `3000` | Web + API port |
 | `DATABASE_PATH` | `./data/cm-automations.db` | SQLite file |
 | `SCHEDULER_INTERVAL_SECONDS` | `30` | How often publishing, reminders and follow-ups run |
-| `ANTHROPIC_API_KEY` | – | Optional. Turns on AI idea generation (Claude) in the Idea Lab. Without it, the built-in idea engine is used. |
+| `ANTHROPIC_API_KEY` | – | Optional. Turns on AI idea generation in the Idea Lab and upgrades the assistant to Claude. Without it, the built-in idea engine and built-in assistant are used. |
 
 ---
 
@@ -157,6 +164,32 @@ Native platform APIs can be added as new adapters with the same signature.
 - **Tasks:** a Kanban board and a **My day** view, with priorities, checklists, recurring tasks and team workload.
 - **Morale:** a team wins feed (completed tasks and won deals), kudos with notifications, and workload balancing.
 
+### 4. Assistant: help on every page
+
+Open it with the round chat button in the bottom-right corner. It can:
+
+- **Take you to the fix.** It recognises about 45 everyday problems and questions across every section ("how do I add a lead", "I don't know what to post", "a stage is locked", "connect Instagram"). It opens the right screen and points at the button to press. If the button sits under the chat panel, the panel tucks itself away.
+- **Answer from your data,** for example "What do I need to do today?", "What's overdue?", "How is the business doing?", "Who do I need to follow up with?" or "Where am I with my build?".
+- **Do things:**
+  - "Remind me to call Emma tomorrow" creates a dated task.
+  - "Add a lead called Sam Jones" opens the lead form with the name filled in.
+  - "Find Emma" looks up a contact.
+  - "Report a problem: …" logs a Help Desk issue with a sensible category and priority, and alerts the right person.
+- **Respect permissions.** Team members asking about owner/admin-only changes are offered "Ask an admin", and the assistant raises it for them.
+- **Admit when it doesn't know.** It offers the closest matches or logs the question for a person to pick up. Every question is recorded, and the Help Desk shows owners **what people ask most** and **what the assistant couldn't answer**, so you can see where clients and staff get stuck.
+
+There are two engines with the same abilities and the same reply format:
+
+- **Built-in** (`server/modules/assistant/engine.js` + `knowledge.js`) works with no setup. Add a topic to `knowledge.js` to teach it something new.
+- **Claude** (`ai.js`) is used automatically when `ANTHROPIC_API_KEY` is set. Claude calls the same abilities as tools: navigate, read business data, search contacts, create tasks and raise issues. If the AI is ever unavailable, the built-in engine answers instead.
+
+### 5. Help Desk: problems tracked until they're sorted
+
+- Issues come from the team, from clients or from the assistant. Each one has a category, priority, status, assignee and updates thread.
+- New issues go to the owner/admin with the fewest open issues, unless you pick someone.
+- **Response targets:** urgent 4 hours, high 1 day, medium 3 days, low 7 days. Missed targets are escalated to the assignee and admins (once).
+- Resolving an issue needs a short note, and the person who raised it is notified with that note.
+
 ### ⚡ Built-in automations (installed for every business)
 
 | When… | …the system |
@@ -172,6 +205,12 @@ Native platform APIs can be added as new adapters with the same signature.
 | A post fails to publish | Creates an urgent fix task with the error |
 | Every morning | Sends each person their plan for the day |
 | A recurring task is completed | Creates the next occurrence |
+| A high or urgent issue is raised | Alerts owners and admins straight away |
+| An issue is raised with an assignee | Tells the assignee it's theirs |
+| An issue passes its response target | Reminds the assignee and escalates to admins |
+| An issue is resolved | Tells whoever raised it, with the resolution |
+
+New automations added in a release are installed for existing businesses automatically, and one a business deleted on purpose is never brought back.
 
 Businesses can switch any of these off, duplicate and edit them, or build their own in the visual **WHEN → IF → THEN** builder.
 
@@ -203,10 +242,13 @@ server/
     content/               idea engine, briefs, academy, optional Claude AI, routes
     crm/                   contacts, deals, activities
     tasks/                 task service (recurrence) + routes
+    helpdesk/              issues, response targets, comments
+    assistant/             knowledge base, built-in engine, Claude engine, routes
 public/                    front end: plain ES modules, no build step
   css/app.css              design system (nautical sky blue / white / black)
   js/app.js                router + layout
   js/pages/*.js            one file per module
+  js/assistant.js          the chat panel on every page
 tests/api.test.js          end-to-end API + automation tests
 scripts/screenshots.mjs    renders every module to docs/screenshots
 ```
@@ -229,6 +271,14 @@ All endpoints are under `/api` and use `Authorization: Bearer <token>`, except t
 | CRM | `GET/POST /crm/contacts`, `POST /crm/contacts/import`, `GET/PATCH/DELETE /crm/contacts/:id`, `POST /crm/contacts/:id/activities`, `GET /crm/pipeline`, `POST /crm/deals`, `PATCH/DELETE /crm/deals/:id` |
 | Tasks | `GET/POST /tasks`, `GET /tasks/workload`, `GET/PATCH/DELETE /tasks/:id` |
 | Automations | `GET/POST /automations`, `PATCH/DELETE /automations/:id`, `POST /automations/:id/test`, `GET /automations/runs`, `GET /automations/impact`, `GET /automations/meta` |
+| Help Desk | `GET /helpdesk/meta`, `GET/POST /helpdesk/issues`, `GET/PATCH/DELETE /helpdesk/issues/:id`, `POST /helpdesk/issues/:id/comments`, `GET /helpdesk/stats` |
+| Assistant | `GET /assistant/meta`, `POST /assistant/chat`, `GET /assistant/insights` (owners/admins) |
+
+---
+
+## What's next
+
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) for suggested services to add next, in priority order.
 
 ---
 

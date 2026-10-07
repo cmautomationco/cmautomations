@@ -256,3 +256,48 @@ CREATE TABLE IF NOT EXISTS kudos (
   message    TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+
+-- ───────────────────────── Help Desk ─────────────────────────
+-- Problems raised by the team, by clients, or by the assistant when it
+-- can't solve something itself. Each priority has a response-time target (SLA).
+CREATE TABLE IF NOT EXISTS issues (
+  id               TEXT PRIMARY KEY,
+  org_id           TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  title            TEXT NOT NULL,
+  description      TEXT,
+  category         TEXT NOT NULL DEFAULT 'other' CHECK (category IN ('technical','customer','billing','operations','content','other')),
+  priority         TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low','medium','high','urgent')),
+  status           TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','in_progress','waiting','resolved')),
+  source           TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual','assistant','customer')),
+  contact_id       TEXT REFERENCES contacts(id) ON DELETE SET NULL,
+  assignee_id      TEXT REFERENCES users(id),
+  due_at           TEXT,
+  overdue_notified INTEGER NOT NULL DEFAULT 0,
+  resolution       TEXT,
+  resolved_at      TEXT,
+  created_by       TEXT REFERENCES users(id),
+  created_at       TEXT NOT NULL,
+  updated_at       TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_issues_org_status ON issues(org_id, status);
+
+CREATE TABLE IF NOT EXISTS issue_comments (
+  id         TEXT PRIMARY KEY,
+  issue_id   TEXT NOT NULL REFERENCES issues(id) ON DELETE CASCADE,
+  user_id    TEXT REFERENCES users(id),
+  body       TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+-- ───────────────────────── Assistant ─────────────────────────
+-- Every question asked, so the business can see what people get stuck on.
+CREATE TABLE IF NOT EXISTS assistant_logs (
+  id         TEXT PRIMARY KEY,
+  org_id     TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id    TEXT REFERENCES users(id) ON DELETE SET NULL,
+  message    TEXT NOT NULL,
+  intent     TEXT,
+  engine     TEXT NOT NULL,
+  resolved   INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL
+);

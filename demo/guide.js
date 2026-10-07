@@ -74,6 +74,30 @@ export const GUIDE = [
     ],
   },
   {
+    title: 'Assistant (chat)',
+    intro: 'The round chat button in the bottom-right corner, on every page. It finds the answer and takes you there.',
+    steps: [
+      ['Open the assistant and ask “What do I need to do today?” – it answers from your real tasks and opens My day.', null],
+      ['Ask “How do I add a new lead?” – it opens the new lead form for you.', null],
+      ['Say “I don’t know what to post” – it opens the Idea Lab and points at the Generate ideas button.', null],
+      ['Type “Remind me to call Emma tomorrow” – it creates the task with tomorrow’s date.', null],
+      ['Type “find Emma” or “take me to the pipeline” to jump straight there.', null],
+      ['Type “Report a problem: customers can’t pay on the booking page” – it logs an urgent Help Desk issue and alerts the right person.', null],
+      ['Ask something it can’t answer – it offers to log it for the team so a person picks it up.', null],
+    ],
+  },
+  {
+    title: 'Help Desk',
+    intro: 'Every problem tracked until it’s sorted, with response targets and automatic escalation.',
+    steps: [
+      ['Open the Help Desk and look at the open issues, including ones raised by the assistant.', '#/helpdesk'],
+      ['Press “New issue”, describe a problem, pick a priority and raise it. It’s assigned automatically.', '#/helpdesk'],
+      ['Click an issue to add an update, change its priority or reassign it.', '#/helpdesk'],
+      ['Write how it was fixed and press “Mark resolved” – whoever raised it gets a notification.', '#/helpdesk'],
+      ['Check “What people ask the assistant” to see where your team or clients get stuck.', '#/helpdesk'],
+    ],
+  },
+  {
     title: 'Settings & notifications',
     intro: 'Business details, team, channels and extra businesses.',
     steps: [
@@ -88,6 +112,7 @@ export const GUIDE = [
     intro: 'Everything works end to end, with these limits for now:',
     steps: [
       ['Posts are “published” in demo mode. Connecting real Instagram, TikTok and other accounts comes in the full build.', null],
+      ['The assistant here uses the built-in engine. On the full server, adding an Anthropic API key upgrades it to Claude for open-ended questions.', null],
       ['Emails and texts are not sent; notifications appear in the bell instead.', null],
       ['Your data is saved in this browser only, so other people opening the link start with the demo data.', null],
       ['Timed automations (publishing, overdue reminders, follow-ups) run every 30 seconds while the page is open.', null],

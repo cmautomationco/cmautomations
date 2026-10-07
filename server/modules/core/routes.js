@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { parseJson } from '../../db/index.js';
 import { createSession, hashPassword, requireAuth, requireRole, verifyPassword } from '../../lib/auth.js';
 import { HttpError, badRequest, id, now, pick } from '../../lib/util.js';
-import { RECIPES } from '../../automation/recipes.js';
+import { installMissingRecipes } from '../../automation/recipes.js';
 import { NICHES, PLATFORMS, getNiche } from './niches.js';
 
 /**
@@ -29,12 +29,7 @@ export function provisionOrganization(db, { name, niche, business_type, ownerId 
   for (const platform of preset.platforms) {
     db.insert('channels', { id: id('chn'), org_id: org.id, platform, handle: `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`, adapter: 'simulated', config: {}, active: 1, created_at: ts });
   }
-  for (const r of RECIPES) {
-    db.insert('automations', {
-      id: id('aut'), org_id: org.id, name: r.name, description: r.description, trigger: r.trigger,
-      conditions: r.conditions, actions: r.actions, enabled: 1, recipe: r.recipe, run_count: 0, created_at: ts,
-    });
-  }
+  installMissingRecipes(db, org.id);
   return org;
 }
 

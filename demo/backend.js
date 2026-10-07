@@ -9,6 +9,8 @@ import { contentRoutes } from '../server/modules/content/routes.js';
 import { crmRoutes } from '../server/modules/crm/routes.js';
 import { funnelRoutes } from '../server/modules/funnel/routes.js';
 import { taskRoutes } from '../server/modules/tasks/routes.js';
+import { helpdeskRoutes } from '../server/modules/helpdesk/routes.js';
+import { assistantRoutes } from '../server/modules/assistant/routes.js';
 
 export function createBackend(db, { onWrite = () => {} } = {}) {
   const engine = createEngine(db);
@@ -21,6 +23,8 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
     ['/api/crm', crmRoutes(ctx)],
     ['/api/tasks', taskRoutes(ctx)],
     ['/api/automations', automationRoutes(ctx)],
+    ['/api/helpdesk', helpdeskRoutes(ctx)],
+    ['/api/assistant', assistantRoutes(ctx)],
   ];
 
   async function request(method, url, headers = {}, rawBody) {

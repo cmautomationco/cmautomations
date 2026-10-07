@@ -7,6 +7,8 @@ import * as crm from './pages/crm.js';
 import * as tasks from './pages/tasks.js';
 import * as automations from './pages/automations.js';
 import * as settings from './pages/settings.js';
+import * as helpdesk from './pages/helpdesk.js';
+import { setAssistantVisible } from './assistant.js';
 
 const root = document.getElementById('app');
 export const state = { me: null, meta: null };
@@ -21,6 +23,7 @@ const NAV = [
   { path: '/crm', label: 'CRM', icon: 'users', page: crm },
   { path: '/tasks', label: 'Tasks', icon: 'check', page: tasks },
   { path: '/automations', label: 'Automations', icon: 'zap', page: automations },
+  { path: '/helpdesk', label: 'Help Desk', icon: 'lifebuoy', page: helpdesk },
   { section: 'Account' },
   { path: '/settings', label: 'Settings', icon: 'cog', page: settings },
 ];
@@ -41,14 +44,17 @@ async function router() {
   const route = parseRoute();
   document.querySelectorAll('.drawer, .modal-back').forEach((el) => el.remove());
   if (!auth.token) {
+    setAssistantVisible(false);
     if (route.parts[0] === 'register') return renderRegister();
     return renderLogin();
   }
   try {
     await loadMe();
   } catch {
+    setAssistantVisible(false);
     return renderLogin();
   }
+  setAssistantVisible(true);
   const top = `/${route.parts[0] || ''}`;
   const item = NAV.find((n) => n.path === top) || NAV[1];
   const view = h('div', { class: 'content' });

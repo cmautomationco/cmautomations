@@ -26,6 +26,9 @@ export const TRIGGERS = {
   'post.published': 'A scheduled post is published',
   'post.failed': 'A scheduled post fails to publish',
   'schedule.daily': 'Every morning (daily digest time)',
+  'issue.created': 'A Help Desk issue is raised',
+  'issue.overdue': 'A Help Desk issue passes its response target',
+  'issue.resolved': 'A Help Desk issue is resolved',
 };
 
 export const ACTIONS = {
@@ -125,7 +128,7 @@ function runAction(db, engine, orgId, action, ctx, { actorId }) {
         assignee_id: assignee || null,
         checklist: (action.checklist || []).map((text) => ({ text: r(text), done: false })),
         source: 'automation',
-        source_ref: ctx.contact?.id || ctx.deal?.id || ctx.project?.id || ctx.idea?.id || ctx.post?.id || ctx.task?.id || null,
+        source_ref: ctx.contact?.id || ctx.deal?.id || ctx.project?.id || ctx.idea?.id || ctx.post?.id || ctx.issue?.id || ctx.task?.id || null,
       }, { actorId, emit: false });
       return `Created task “${task.title}”`;
     }

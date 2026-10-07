@@ -8,6 +8,8 @@ import { contentRoutes } from './modules/content/routes.js';
 import { crmRoutes } from './modules/crm/routes.js';
 import { funnelRoutes } from './modules/funnel/routes.js';
 import { taskRoutes } from './modules/tasks/routes.js';
+import { helpdeskRoutes } from './modules/helpdesk/routes.js';
+import { assistantRoutes } from './modules/assistant/routes.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -27,6 +29,8 @@ export function createApp(db) {
   app.use('/api/crm', crmRoutes(ctx));
   app.use('/api/tasks', taskRoutes(ctx));
   app.use('/api/automations', automationRoutes(ctx));
+  app.use('/api/helpdesk', helpdeskRoutes(ctx));
+  app.use('/api/assistant', assistantRoutes(ctx));
 
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 

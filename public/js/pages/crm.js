@@ -18,7 +18,7 @@ export async function render(el, route) {
         h('button', { class: 'btn primary', onclick: () => contactModal(team, () => render(el, route)) }, icon('plus'), 'Add lead'))),
     h('div', { class: 'tabs' }, [['pipeline', 'Pipeline'], ['contacts', 'Contacts']].map(([k, l]) => h('a', { href: `#/crm/${k}`, class: tab === k ? 'active' : '' }, l))),
     body);
-  if (route.query.new) contactModal(team, () => { location.hash = '#/crm/contacts'; });
+  if (route.query.new) contactModal(team, () => { location.hash = '#/crm/contacts'; }, route.query);
   if (tab === 'contacts') return renderContacts(body, route.query, team);
   return renderPipeline(body, team);
 }
@@ -91,9 +91,9 @@ async function renderContacts(el, query, team) {
     contacts.length ? null : h('div', { class: 'empty' }, 'No contacts match.'));
 }
 
-function contactModal(team, reload) {
+function contactModal(team, reload, prefill = {}) {
   const body = h('div', { class: 'stack' },
-    h('div', { class: 'grid g2' }, field('First name', h('input', { name: 'first_name' }), { required: true }), field('Last name', h('input', { name: 'last_name' }))),
+    h('div', { class: 'grid g2' }, field('First name', h('input', { name: 'first_name', value: prefill.first_name || '' }), { required: true }), field('Last name', h('input', { name: 'last_name', value: prefill.last_name || '' }))),
     h('div', { class: 'grid g2' }, field('Email', h('input', { name: 'email', type: 'email' })), field('Phone', h('input', { name: 'phone' }))),
     h('div', { class: 'grid g2' }, field('Company', h('input', { name: 'company' })), field('Source', select('source', ['Instagram', 'LinkedIn', 'Referral', 'Website', 'Lead magnet', 'Google', 'Event', 'Other']))),
     h('div', { class: 'grid g2' }, field('Stage', select('lifecycle', [['lead', 'Lead'], ['prospect', 'Prospect'], ['customer', 'Customer']])), field('Owner', select('owner_id', team.map((t) => [t.id, t.name])))),
