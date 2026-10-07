@@ -72,5 +72,6 @@ async function start() {
 
 start().catch((err) => {
   console.error(err);
-  if (status) status.textContent = `The system could not start: ${err.message}`;
+  if (globalThis.__cmBootFailed) globalThis.__cmBootFailed(err.message);
+  else if (status) status.textContent = `The system could not start: ${err.message}`;
 });

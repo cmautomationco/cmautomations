@@ -29,7 +29,8 @@ const result = await esbuild.build({
   entryPoints: [path.join(root, 'demo', 'boot.js')],
   bundle: true,
   format: 'esm',
-  target: 'es2022',
+  // Older phones (e.g. iOS 15 Safari) must be able to run it, so newer syntax is converted.
+  target: ['es2020', 'safari15', 'chrome90', 'firefox90'],
   platform: 'browser',
   minify: true,
   legalComments: 'none',
@@ -52,6 +53,32 @@ const page = `<title>CM Automations</title>
 <style>${css}</style>
 <div id="app"><div id="boot-status" class="boot">Loading CM Automations…</div></div>
 <div class="toast-wrap" id="toasts"></div>
+<script>
+// Start-up safety net (plain script, so it runs even if the main code can't):
+// if the system fails or never starts, explain why and offer a clean start.
+(function () {
+  function show(reason) {
+    var box = document.getElementById('boot-status');
+    if (!box || box.dataset.failed) return;
+    box.dataset.failed = '1';
+    box.innerHTML = '<div class="boot-card"><b>CM Automations couldn’t start</b>'
+      + '<p>This can happen if data saved by an earlier test version is getting in the way, or the browser is out of date.</p>'
+      + '<p>Press Start fresh to clear the saved test data and reload. If it still won’t open, update your phone or try the link on a computer.</p>'
+      + '<button class="btn primary" type="button" id="boot-reset">Start fresh</button>'
+      + '<p class="small muted" id="boot-reason"></p></div>';
+    document.getElementById('boot-reason').textContent = reason ? 'Details: ' + reason : '';
+    document.getElementById('boot-reset').onclick = function () {
+      try { localStorage.clear(); } catch (e) {}
+      try { sessionStorage.clear(); } catch (e) {}
+      var done = function () { location.reload(); };
+      try { var r = indexedDB.deleteDatabase('cm-automations-test'); r.onsuccess = r.onerror = r.onblocked = done; setTimeout(done, 1500); } catch (e) { done(); }
+    };
+  }
+  window.__cmBootFailed = show;
+  window.addEventListener('error', function (e) { if (document.getElementById('boot-status')) show(e.message); });
+  setTimeout(function () { if (document.getElementById('boot-status')) show('Start-up took too long.'); }, 20000);
+})();
+</script>
 <script>${safe(sqljs)}</script>
 <script type="module">${safe(appJs)}</script>
 `;

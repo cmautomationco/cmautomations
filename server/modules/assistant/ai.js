@@ -141,10 +141,10 @@ export async function answerWithAI(ctx, { message, page = '#/', history = [] }, 
   const messages = [];
   for (const turn of history.slice(-8)) {
     const role = turn.role === 'assistant' ? 'assistant' : 'user';
-    if (!turn.text || (messages.length === 0 && role !== 'user') || messages.at(-1)?.role === role) continue;
+    if (!turn.text || (messages.length === 0 && role !== 'user') || messages[messages.length - 1]?.role === role) continue;
     messages.push({ role, content: String(turn.text).slice(0, 2000) });
   }
-  if (messages.at(-1)?.role === 'user') messages.pop();
+  if (messages[messages.length - 1]?.role === 'user') messages.pop();
   messages.push({ role: 'user', content: String(message).slice(0, 4000) });
 
   const out = { actions: [], navigate: null, created: null };

@@ -271,7 +271,7 @@ export function answer(ctx, { message, page = '#/' }) {
         actions: [{ label: 'Open the Help Desk form', hash: '#/helpdesk?new=1' }],
       });
     }
-    const issue = raiseIssue(ctx, { title: detail.split(/(?<=[.!?])\s/)[0], description: detail, page });
+    const issue = raiseIssue(ctx, { title: detail.split(/[.!?]\s/)[0], description: detail, page });
     return reply({
       intent: 'issue_raise',
       reply: `I’ve logged that in the Help Desk as a ${issue.priority} ${issue.category} issue${issue.assignee_name ? ` and assigned it to ${issue.assignee_name}` : ''}. They’ve been alerted and should respond within ${slaLabel(issue.priority)}. You’ll get a notification when it’s sorted.`,

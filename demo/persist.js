@@ -22,8 +22,10 @@ async function run(mode, fn) {
   });
 }
 
+/** Saved data, or null. Gives up after a few seconds if the browser's storage doesn't answer. */
 export async function loadSnapshot() {
-  try { return (await run('readonly', (s) => s.get(KEY))) || null; } catch { return null; }
+  const timeout = new Promise((resolve) => setTimeout(() => resolve(null), 4000));
+  try { return (await Promise.race([run('readonly', (s) => s.get(KEY)), timeout])) || null; } catch { return null; }
 }
 
 export async function saveSnapshot(bytes) {

@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { config } from '../config.js';
 import { createEngine } from '../automation/engine.js';
@@ -238,7 +239,6 @@ function seedHelpdesk(db, org, [owner, priya, jordan, sam]) {
 
 // `npm run seed` resets the database file with fresh demo data.
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const fs = await import('node:fs');
   for (const suffix of ['', '-wal', '-shm']) fs.rmSync(config.databasePath + suffix, { force: true });
   const db = openDatabase(config.databasePath);
   seedDemo(db);

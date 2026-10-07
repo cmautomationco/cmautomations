@@ -1,5 +1,8 @@
 /* Test-build helpers (walkthrough + reset). Uses the app's design tokens. */
-.boot { min-height: 100vh; display: grid; place-items: center; color: var(--blue-700); font-weight: 700; }
+.boot { min-height: 100vh; display: grid; place-items: center; padding: 16px; color: var(--blue-700); font-weight: 700; }
+.boot-card { max-width: 440px; display: grid; gap: 10px; padding: 24px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; color: var(--ink); font-weight: 500; box-shadow: var(--shadow); }
+.boot-card b { font-size: 18px; color: var(--blue-700); }
+.boot-card .btn { justify-self: start; }
 .tb-bar {
   position: fixed; left: 50%; transform: translateX(-50%);
   bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 70;
