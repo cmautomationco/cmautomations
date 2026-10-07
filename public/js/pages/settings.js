@@ -47,7 +47,9 @@ function invite(reload) {
   const body = h('div', { class: 'stack' },
     field('Name', h('input', { name: 'name' }), { required: true }),
     field('Email', h('input', { name: 'email', type: 'email' }), { required: true }),
-    field('Temporary password', h('input', { name: 'password', type: 'text', value: Math.random().toString(36).slice(2, 12) }), { help: 'Share this with them – they can sign in straight away.' }),
+    state.meta?.require_passwords !== false
+      ? field('Temporary password', h('input', { name: 'password', type: 'text', value: Math.random().toString(36).slice(2, 12) }), { help: 'Share this with them – they can sign in straight away.' })
+      : h('p', { class: 'small muted' }, 'They can sign in straight away with just their email (passwords are switched off while you test).'),
     field('Role', select('role', [['member', 'Member'], ['admin', 'Admin']])));
   modal('Add a team member', body, { actions: [{ label: 'Cancel' }, { label: 'Add', primary: true, onClick: async () => { await post('/team', formData(body)); toast('Team member added'); reload(); } }] });
 }

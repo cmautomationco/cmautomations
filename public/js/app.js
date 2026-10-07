@@ -133,7 +133,9 @@ function authShell(form) {
     h('div', { class: 'auth-form' }, form));
 }
 
-function renderLogin() {
+async function renderLogin() {
+  if (!state.meta) state.meta = await get('/meta').catch(() => null);
+  const passwords = state.meta?.require_passwords !== false;
   const form = h('form', { class: 'card card-pad stack', onsubmit: async (e) => {
     e.preventDefault();
     try {
@@ -145,10 +147,10 @@ function renderLogin() {
   } },
   h('div', h('div', { class: 'eyebrow' }, 'Welcome back'), h('h1', { style: { marginTop: '6px' } }, 'Sign in to ', h('span', { class: 'blue' }, 'CM Automations'))),
   field('Email', h('input', { name: 'email', type: 'email', value: 'demo@cmautomations.com', required: true })),
-  field('Password', h('input', { name: 'password', type: 'password', value: 'demo1234', required: true })),
+  passwords ? field('Password', h('input', { name: 'password', type: 'password', value: 'demo1234', required: true })) : null,
   h('button', { class: 'btn primary', type: 'submit' }, 'Sign in'),
   h('p', { class: 'small muted' }, 'New business? ', h('a', { href: '#/register' }, 'Create an account')),
-  h('p', { class: 'small muted' }, 'Demo login is pre-filled.'));
+  h('p', { class: 'small muted' }, passwords ? 'Demo login is pre-filled.' : 'Demo login is pre-filled. Passwords are switched off while you test.'));
   mount(root, authShell(form));
 }
 
@@ -167,7 +169,7 @@ async function renderRegister() {
   h('div', h('div', { class: 'eyebrow' }, 'Get started'), h('h1', { style: { marginTop: '6px' } }, 'Set up your ', h('span', { class: 'blue' }, 'business'))),
   field('Your name', h('input', { name: 'name', required: true })),
   field('Email', h('input', { name: 'email', type: 'email', required: true })),
-  field('Password', h('input', { name: 'password', type: 'password', minLength: 8, required: true }), { help: 'At least 8 characters' }),
+  meta.require_passwords !== false ? field('Password', h('input', { name: 'password', type: 'password', minLength: 8, required: true }), { help: 'At least 8 characters' }) : null,
   field('Business name', h('input', { name: 'business_name', required: true })),
   field('Niche', select('niche', meta.niches.map((n) => [n.key, n.label])), { help: 'We pre-load content pillars, audience insights and automations for your niche.' }),
   field('Business type', select('business_type', [['service', 'Service'], ['product', 'Product'], ['hybrid', 'Both']])),

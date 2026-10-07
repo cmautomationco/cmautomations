@@ -1,6 +1,8 @@
+import { randomBytes } from 'node:crypto';
 import { Router } from 'express';
 import { parseJson } from '../../db/index.js';
 import { createSession, hashPassword, requireAuth, requireRole, verifyPassword } from '../../lib/auth.js';
+import { config } from '../../config.js';
 import { HttpError, badRequest, id, now, pick } from '../../lib/util.js';
 import { installMissingRecipes } from '../../automation/recipes.js';
 import { NICHES, PLATFORMS, getNiche } from './niches.js';
@@ -33,12 +35,16 @@ export function provisionOrganization(db, { name, niche, business_type, ownerId 
   return org;
 }
 
+/** While passwords are off, accounts get an unguessable password nobody knows (it can be reset later). */
+const placeholderPassword = () => randomBytes(24).toString('hex');
+
 export function coreRoutes({ db }) {
   const r = Router();
   const auth = requireAuth(db);
 
   r.get('/meta', (_req, res) => {
     res.json({
+      require_passwords: config.requirePasswords,
       niches: Object.entries(NICHES).map(([key, n]) => ({ key, label: n.label, businessType: n.businessType })),
       platforms: Object.entries(PLATFORMS).map(([key, p]) => ({ key, ...p })),
     });
@@ -46,15 +52,15 @@ export function coreRoutes({ db }) {
 
   r.post('/auth/register', (req, res) => {
     const body = pick(req.body, {
-      name: { required: true, max: 120 }, email: { required: true, max: 200 }, password: { required: true },
+      name: { required: true, max: 120 }, email: { required: true, max: 200 }, password: { required: config.requirePasswords },
       business_name: { required: true, max: 120 }, niche: { enum: Object.keys(NICHES) },
       business_type: { enum: ['product', 'service', 'hybrid'] },
     });
-    if (body.password.length < 8) throw badRequest('Password must be at least 8 characters');
+    if (config.requirePasswords && body.password.length < 8) throw badRequest('Password must be at least 8 characters');
     const email = body.email.toLowerCase();
     if (db.get('SELECT id FROM users WHERE email = ?', email)) throw badRequest('An account with that email already exists');
     const result = db.tx(() => {
-      const user = { id: id('usr'), email, name: body.name, password_hash: hashPassword(body.password), created_at: now() };
+      const user = { id: id('usr'), email, name: body.name, password_hash: hashPassword(body.password || placeholderPassword()), created_at: now() };
       db.insert('users', user);
       const org = provisionOrganization(db, { name: body.business_name, niche: body.niche || 'coaching', business_type: body.business_type, ownerId: user.id });
       return { user, org };
@@ -64,9 +70,13 @@ export function coreRoutes({ db }) {
   });
 
   r.post('/auth/login', (req, res) => {
-    const { email, password } = pick(req.body, { email: { required: true }, password: { required: true } });
+    const { email, password } = pick(req.body, { email: { required: true }, password: { required: config.requirePasswords } });
     const user = db.get('SELECT * FROM users WHERE email = ?', email.toLowerCase());
-    if (!user || !verifyPassword(password, user.password_hash)) throw new HttpError(401, 'Email or password is incorrect');
+    if (!config.requirePasswords) {
+      if (!user) throw new HttpError(401, 'No account uses that email');
+    } else if (!user || !verifyPassword(password, user.password_hash)) {
+      throw new HttpError(401, 'Email or password is incorrect');
+    }
     const membership = db.get('SELECT org_id FROM memberships WHERE user_id = ? ORDER BY rowid LIMIT 1', user.id);
     if (!membership) throw new HttpError(403, 'This account is not part of a business yet');
     const token = createSession(db, user.id, membership.org_id);
@@ -115,11 +125,11 @@ export function coreRoutes({ db }) {
   });
 
   r.post('/team', auth, requireRole('owner', 'admin'), (req, res) => {
-    const body = pick(req.body, { name: { required: true }, email: { required: true }, password: { required: true }, role: { enum: ['admin', 'member'] } });
+    const body = pick(req.body, { name: { required: true }, email: { required: true }, password: { required: config.requirePasswords }, role: { enum: ['admin', 'member'] } });
     const email = body.email.toLowerCase();
     let user = db.get('SELECT * FROM users WHERE email = ?', email);
     if (!user) {
-      user = { id: id('usr'), email, name: body.name, password_hash: hashPassword(body.password), created_at: now() };
+      user = { id: id('usr'), email, name: body.name, password_hash: hashPassword(body.password || placeholderPassword()), created_at: now() };
       db.insert('users', user);
     }
     if (db.get('SELECT 1 FROM memberships WHERE org_id = ? AND user_id = ?', req.org.id, user.id)) throw badRequest('Already in the team');
