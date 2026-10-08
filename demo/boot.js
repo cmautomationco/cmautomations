@@ -3,7 +3,7 @@
 import './shims/globals.js';
 import { setSqlDatabase, getSqlDatabase } from './shims/sqlite.js';
 import { openDatabase } from '../server/db/index.js';
-import { seedDemo } from '../server/db/seed.js';
+import { seedDemo, upgradeDemo } from '../server/db/seed.js';
 import { installMissingRecipes } from '../server/automation/recipes.js';
 import { createScheduler } from '../server/automation/scheduler.js';
 import { createBackend } from './backend.js';
@@ -23,7 +23,9 @@ async function start() {
   setSqlDatabase(sqlDb);
 
   const db = openDatabase(':memory:');
-  if (!db.get('SELECT 1 FROM organizations LIMIT 1')) seedDemo(db);
+  if (!db.get('SELECT 1 FROM organizations LIMIT 1')) await seedDemo(db);
+  // Data saved by an earlier test build gets the new demo businesses added (nothing is lost).
+  const upgraded = await upgradeDemo(db).catch((err) => { console.error(err); return false; });
   installMissingRecipes(db); // data saved by an earlier test build gets the new automations
 
   // Save to this browser shortly after every change.
@@ -39,6 +41,7 @@ async function start() {
     await saveSnapshot(bytes);
   };
   const markDirty = () => { dirty = true; if (!timer) timer = setTimeout(save, 400); };
+  if (upgraded) markDirty();
 
   const backend = createBackend(db, { onWrite: markDirty });
   backend.installFetch();
@@ -58,7 +61,7 @@ async function start() {
   mountTestBuildBar({
     onReset: async () => {
       db.exec('DELETE FROM organizations; DELETE FROM users;');
-      seedDemo(db);
+      await seedDemo(db);
       await clearSnapshot();
       markDirty();
       const { auth } = await import('../public/js/api.js');

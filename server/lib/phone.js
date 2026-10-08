@@ -22,6 +22,7 @@ export function displayPhone(e164) {
   if (e164.startsWith('+44') && e164.length === 13) {
     const local = `0${e164.slice(3)}`;
     if (local.startsWith('02')) return `${local.slice(0, 3)} ${local.slice(3, 7)} ${local.slice(7)}`;
+    if (/^0[138]/.test(local)) return `${local.slice(0, 4)} ${local.slice(4, 7)} ${local.slice(7)}`;
     return `${local.slice(0, 5)} ${local.slice(5)}`;
   }
   return e164;

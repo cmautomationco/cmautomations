@@ -95,7 +95,7 @@ export function clientHealth(db, org) {
   score -= Math.min(10, m.automation_errors_7d * 3 + m.failed_messages_7d * 2);
   if (quiet) score -= 20;
   score = Math.max(0, Math.round(score));
-  return { ...m, hours_saved_30d: Math.round((m.minutes_saved_30d / 60) * 10) / 10, attention, score, health: score >= 80 ? 'green' : score >= 55 ? 'amber' : 'red' };
+  return { ...m, hours_saved_30d: Math.round((m.minutes_saved_30d / 60) * 10) / 10, attention, score, health: score >= 85 ? 'green' : score >= 55 ? 'amber' : 'red' };
 }
 
 /** Everything on the agency control centre. */

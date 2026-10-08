@@ -316,7 +316,7 @@ describe('dashboard', () => {
 test('demo seed produces a complete, consistent business', async () => {
   const { seedDemo } = await import('../server/db/seed.js');
   const db = openDatabase(':memory:');
-  const { org } = seedDemo(db);
+  const { org } = await seedDemo(db);
   assert.equal(db.get('SELECT COUNT(*) AS n FROM funnel_projects WHERE org_id = ?', org.id).n, 2);
   assert.ok(db.get('SELECT COUNT(*) AS n FROM content_ideas WHERE org_id = ?', org.id).n >= 15);
   assert.ok(db.get(`SELECT COUNT(*) AS n FROM scheduled_posts WHERE org_id = ? AND status = 'queued'`, org.id).n >= 3);

@@ -1,5 +1,5 @@
 import { auth, get, post } from './api.js';
-import { ago, avatar, field, formData, h, icon, mount, select, showError, toast } from './ui.js';
+import { ago, applyBrandColor, avatar, field, formData, h, icon, mount, select, showError, toast } from './ui.js';
 import * as dashboard from './pages/dashboard.js';
 import * as funnel from './pages/funnel.js';
 import * as content from './pages/content.js';
@@ -8,6 +8,11 @@ import * as tasks from './pages/tasks.js';
 import * as automations from './pages/automations.js';
 import * as settings from './pages/settings.js';
 import * as helpdesk from './pages/helpdesk.js';
+import * as messages from './pages/messages.js';
+import * as bookings from './pages/bookings.js';
+import * as invoices from './pages/invoices.js';
+import * as agency from './pages/agency.js';
+import { PUBLIC_PAGES, renderPublic } from './public.js';
 import { setAssistantVisible } from './assistant.js';
 
 const root = document.getElementById('app');
@@ -16,17 +21,22 @@ export const state = { me: null, meta: null };
 const NAV = [
   { section: 'Overview' },
   { path: '/', label: 'Dashboard', icon: 'home', page: dashboard },
+  { path: '/agency', label: 'Agency', icon: 'briefcase', page: agency, when: (me) => me.agency_access },
   { section: 'Build' },
   { path: '/funnel', label: 'Build Funnel', icon: 'rocket', page: funnel },
   { path: '/content', label: 'Content Studio', icon: 'sparkles', page: content },
   { section: 'Run' },
+  { path: '/messages', label: 'Messages', icon: 'inbox', page: messages, badge: 'messages' },
+  { path: '/bookings', label: 'Bookings', icon: 'calendar', page: bookings },
   { path: '/crm', label: 'CRM', icon: 'users', page: crm },
+  { path: '/invoices', label: 'Quotes & invoices', icon: 'receipt', page: invoices },
   { path: '/tasks', label: 'Tasks', icon: 'check', page: tasks },
   { path: '/automations', label: 'Automations', icon: 'zap', page: automations },
   { path: '/helpdesk', label: 'Help Desk', icon: 'lifebuoy', page: helpdesk },
   { section: 'Account' },
   { path: '/settings', label: 'Settings', icon: 'cog', page: settings },
 ];
+const visibleNav = (me) => NAV.filter((n) => !n.when || n.when(me));
 
 function parseRoute() {
   const hash = location.hash.replace(/^#/, '') || '/';
@@ -43,7 +53,14 @@ async function loadMe() {
 async function router() {
   const route = parseRoute();
   document.querySelectorAll('.drawer, .modal-back').forEach((el) => el.remove());
+  // Customer-facing pages (booking, quotes, invoices, forms…) never need a sign-in.
+  if (PUBLIC_PAGES.includes(route.parts[0])) {
+    setAssistantVisible(false);
+    return renderPublic(root, route);
+  }
+  document.body.classList.remove('public');
   if (!auth.token) {
+    applyBrandColor(null);
     setAssistantVisible(false);
     if (route.parts[0] === 'register') return renderRegister();
     return renderLogin();
@@ -55,8 +72,9 @@ async function router() {
     return renderLogin();
   }
   setAssistantVisible(true);
+  applyBrandColor(state.me.org.brand?.color);
   const top = `/${route.parts[0] || ''}`;
-  const item = NAV.find((n) => n.path === top) || NAV[1];
+  const item = visibleNav(state.me).find((n) => n.path === top) || NAV[1];
   const view = h('div', { class: 'content' });
   mount(root, layout(item, view));
   try {
@@ -72,22 +90,36 @@ function layout(active, view) {
   const minutes = h('div', { class: 'big' }, '–');
   get('/automations/impact').then((r) => { minutes.textContent = `${(r.total_minutes / 60).toFixed(1)} hrs`; }).catch(() => {});
 
+  // White-label: a client's own logo and name; otherwise the CM Automations mark.
+  const brand = me.org.brand || {};
+  const brandBlock = brand.logo || brand.display_name
+    ? h('div', { class: 'brand' }, brand.logo ? h('img', { src: brand.logo, alt: '', class: 'brand-logo' }) : h('div', { class: 'brand-mark' }, (brand.display_name || me.org.name).slice(0, 2).toUpperCase()), h('div', { class: 'brand-name' }, brand.display_name || me.org.name))
+    : h('div', { class: 'brand' }, h('div', { class: 'brand-mark' }, 'CM'), h('div', { class: 'brand-name' }, 'CM ', h('span', 'Automations')));
+  const badges = {};
   const sidebar = h('aside', { class: 'sidebar' },
-    h('div', { class: 'brand' }, h('div', { class: 'brand-mark' }, 'CM'), h('div', { class: 'brand-name' }, 'CM ', h('span', 'Automations'))),
-    h('nav', { class: 'nav' }, NAV.map((n) => n.section
-      ? h('div', { class: 'nav-label' }, n.section)
-      : h('a', { href: `#${n.path}`, class: n === active ? 'active' : '' }, icon(n.icon), n.label))),
+    brandBlock,
+    h('nav', { class: 'nav' }, visibleNav(me).map((n) => {
+      if (n.section) return h('div', { class: 'nav-label' }, n.section);
+      const count = n.badge ? (badges[n.badge] = h('span', { class: 'count', hidden: true })) : null;
+      return h('a', { href: `#${n.path}`, class: n === active ? 'active' : '' }, icon(n.icon), n.label, count);
+    })),
     h('div', { class: 'sidebar-foot' },
       h('div', { class: 'eyebrow' }, 'Time saved · 30 days'),
       minutes,
-      h('div', { class: 'small muted' }, 'by automations doing the admin for you')),
+      h('div', { class: 'small muted' }, 'by automations doing the admin for you'),
+      me.agency && !brand.hide_powered_by ? h('div', { class: 'small muted', style: { marginTop: '8px' } }, `Powered by ${me.agency.name}`) : null),
   );
+  // Unread messages + missed calls not yet called back.
+  get('/messages/summary').then((s) => {
+    const n = s.unread + s.missed_calls;
+    if (badges.messages && n) { badges.messages.textContent = n; badges.messages.hidden = false; }
+  }).catch(() => {});
 
   const notifWrap = h('div', { style: { position: 'relative' } });
   const bell = h('button', { class: 'icon-btn', title: 'Notifications', onclick: () => toggleNotifications(notifWrap) }, icon('bell'), me.unread ? h('span', { class: 'dot' }) : null);
   notifWrap.append(bell);
 
-  const orgSelect = select('org', me.orgs.map((o) => [o.id, o.name]), me.org.id);
+  const orgSelect = select('org', me.orgs.map((o) => [o.id, o.kind === 'agency' ? `${o.name} (agency)` : o.name]), me.org.id);
   orgSelect.addEventListener('change', async () => {
     try { await post('/auth/switch', { org_id: orgSelect.value }); location.hash = '#/'; router(); toast('Switched business'); } catch (err) { showError(err); }
   });

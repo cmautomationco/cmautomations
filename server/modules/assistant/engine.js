@@ -178,6 +178,35 @@ export function dataAnswer(kind, { db, org, user }) {
       const rows = db.all(`SELECT stage, COUNT(*) AS n, COALESCE(SUM(value),0) AS v FROM deals WHERE org_id = ? AND stage NOT IN ('won','lost') GROUP BY stage`, o);
       return { text: rows.length ? `Open deals: ${rows.map((r) => `${cap(r.stage)} ${r.n} (${money(r.v)})`).join(' · ')}.` : 'There are no open deals yet – press “New deal” to add one.' };
     }
+    case 'messages': {
+      const rows = db.all(`SELECT c.first_name, c.last_name, c.phone_e164, m.channel, m.body FROM messages m JOIN contacts c ON c.id = m.contact_id WHERE m.org_id = ? AND m.direction = 'in' AND m.read = 0 ORDER BY m.created_at DESC LIMIT 5`, o);
+      const urgent = db.get(`SELECT COUNT(*) AS n FROM tasks WHERE org_id = ? AND status != 'done' AND title LIKE '🚨%'`, o).n;
+      if (!rows.length) return { text: `No unread messages – everyone’s had a reply.${urgent ? ` (${plural(urgent, 'emergency task')} still open.)` : ''}` };
+      return { text: `${plural(rows.length, 'unread message')}${urgent ? `, ${urgent} flagged 🚨` : ''}:\n${rows.map((r) => `• ${[r.first_name, r.last_name].filter(Boolean).join(' ')} (${r.channel === 'sms' ? 'text' : r.channel}): “${r.body.slice(0, 70)}${r.body.length > 70 ? '…' : ''}”`).join('\n')}` };
+    }
+    case 'missed_calls': {
+      const rows = db.all(`SELECT k.from_number, k.texted_back, k.created_at, c.first_name, c.last_name FROM calls k LEFT JOIN contacts c ON c.id = k.contact_id WHERE k.org_id = ? AND k.status IN ('missed','voicemail') AND k.handled = 0 ORDER BY k.created_at DESC LIMIT 5`, o);
+      if (!rows.length) return { text: 'No missed calls waiting – everyone has been called back.' };
+      return { text: `${plural(rows.length, 'missed call')} still to call back:\n${rows.map((r) => `• ${r.first_name && r.first_name !== 'Caller' ? `${r.first_name} ${r.last_name || ''}`.trim() : r.from_number} – ${shortDate(r.created_at)}${r.texted_back ? ' (texted back automatically)' : ''}`).join('\n')}` };
+    }
+    case 'bookings': {
+      const rows = db.all(`SELECT b.starts_at, b.status, b.customer_confirmed_at, s.name, c.first_name FROM bookings b LEFT JOIN services s ON s.id = b.service_id LEFT JOIN contacts c ON c.id = b.contact_id WHERE b.org_id = ? AND b.starts_at >= ? AND b.status IN ('requested','confirmed') ORDER BY b.starts_at LIMIT 6`, o, now());
+      if (!rows.length) return { text: 'Nothing booked yet. Share your booking link or press “New booking”.' };
+      return { text: `Coming up:\n${rows.map((r) => `• ${shortDate(r.starts_at)} ${new Date(r.starts_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: org.timezone || 'Europe/London' })} – ${r.name || 'Booking'} for ${r.first_name || 'a customer'}${r.customer_confirmed_at ? ' ✓' : ''}`).join('\n')}\n\n✓ = the customer has confirmed.` };
+    }
+    case 'jobs_today': {
+      const start = new Date(); start.setUTCHours(0, 0, 0, 0);
+      const rows = db.all(`SELECT b.starts_at, b.status, b.address, b.postcode, s.name, c.first_name FROM bookings b LEFT JOIN services s ON s.id = b.service_id LEFT JOIN contacts c ON c.id = b.contact_id WHERE b.org_id = ? AND b.starts_at >= ? AND b.starts_at <= ? AND b.status != 'cancelled' ORDER BY b.starts_at`, o, start.toISOString(), endOfToday());
+      if (!rows.length) return { text: 'No jobs booked for today.' };
+      return { text: `Today’s jobs:\n${rows.map((r) => `• ${new Date(r.starts_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: org.timezone || 'Europe/London' })} ${r.name || 'Job'} – ${r.first_name || 'Customer'}${r.address ? `, ${[r.address, r.postcode].filter(Boolean).join(' ')}` : ''}${r.status === 'completed' ? ' (done)' : ''}`).join('\n')}` };
+    }
+    case 'money': {
+      const owed = db.get(`SELECT COALESCE(SUM(total_pence - paid_pence),0) AS v, COUNT(*) AS n FROM invoices WHERE org_id = ? AND kind = 'invoice' AND status IN ('sent','part_paid','overdue')`, o);
+      const late = db.all(`SELECT i.number, i.total_pence - i.paid_pence AS due, i.reminders_sent, c.first_name, c.last_name FROM invoices i LEFT JOIN contacts c ON c.id = i.contact_id WHERE i.org_id = ? AND i.kind = 'invoice' AND i.status = 'overdue' ORDER BY i.due_date LIMIT 5`, o);
+      const drafts = db.get(`SELECT COUNT(*) AS n FROM invoices WHERE org_id = ? AND kind = 'invoice' AND status = 'draft'`, o).n;
+      const pounds = (p) => `£${(p / 100).toLocaleString('en-GB', { minimumFractionDigits: 2 })}`;
+      return { text: `${pounds(owed.v)} is owed across ${plural(owed.n, 'invoice')}.${late.length ? `\nOverdue (being chased automatically):\n${late.map((r) => `• ${r.number} – ${[r.first_name, r.last_name].filter(Boolean).join(' ')} ${pounds(r.due)}${r.reminders_sent ? ` (${plural(r.reminders_sent, 'reminder')} sent)` : ''}`).join('\n')}` : ''}${drafts ? `\n${plural(drafts, 'draft invoice')} waiting to be checked and sent.` : ''}` };
+    }
     case 'issues': {
       const rows = db.all(`SELECT title, status, priority, due_at FROM issues WHERE org_id = ? AND status != 'resolved' AND (created_by = ? OR assignee_id = ?) ORDER BY due_at LIMIT 5`, o, user.id, user.id);
       return { text: rows.length ? `Your open issues:\n${rows.map((r) => `• ${r.title} – ${r.status.replace('_', ' ')}, ${r.priority}${r.due_at < now() ? ' (past its target)' : ''}`).join('\n')}` : 'You have no open issues – everything you raised has been sorted.' };

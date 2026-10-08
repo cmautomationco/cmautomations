@@ -26,6 +26,22 @@ export const PLACES = {
   automations: { hash: '#/automations', label: 'Automations', words: ['automations', 'automation', 'rules', 'workflows'] },
   helpdesk: { hash: '#/helpdesk', label: 'Help Desk', words: ['help desk', 'helpdesk', 'issues', 'tickets', 'support tickets'] },
   settings: { hash: '#/settings', label: 'Settings', words: ['settings', 'account', 'business settings', 'team settings'] },
+  messages: { hash: '#/messages', label: 'Messages', words: ['messages', 'inbox', 'whatsapp', 'texts', 'sms', 'conversations'] },
+  calls: { hash: '#/messages/calls', label: 'Calls', words: ['calls', 'call log', 'missed calls', 'voicemail', 'voicemails'] },
+  bookings: { hash: '#/bookings', label: 'Bookings', words: ['bookings', 'diary', 'appointments', 'booking calendar'] },
+  jobs: { hash: '#/bookings/today', label: 'Today’s jobs', words: ['todays jobs', 'today’s jobs', 'job sheet', 'jobs today'] },
+  services: { hash: '#/bookings/services', label: 'Services', words: ['services', 'service list', 'prices'] },
+  booking_settings: { hash: '#/bookings/settings', label: 'Hours & reminders', words: ['opening hours', 'hours', 'reminders settings', 'booking settings'] },
+  invoices: { hash: '#/invoices', label: 'Quotes & invoices', words: ['invoices', 'invoice list', 'billing', 'quotes & invoices'] },
+  quotes: { hash: '#/invoices/quotes', label: 'Quotes', words: ['quotes', 'estimates'] },
+  invoice_settings: { hash: '#/invoices/settings', label: 'Invoice settings', words: ['invoice settings', 'bank details', 'vat settings'] },
+  forms: { hash: '#/crm/forms', label: 'Lead forms', words: ['lead forms', 'forms', 'website form', 'contact form'] },
+  branding: { hash: '#/settings/branding', label: 'Branding', words: ['branding', 'logo', 'brand colour', 'colours', 'colors'] },
+  phone: { hash: '#/settings/phone', label: 'Phone & WhatsApp settings', words: ['phone settings', 'whatsapp settings', 'business number', 'twilio', 'call forwarding'] },
+  wording: { hash: '#/settings/wording', label: 'Message wording', words: ['message wording', 'templates', 'message templates', 'saved replies'] },
+  agency: { hash: '#/agency', label: 'Agency control centre', words: ['control centre', 'control center', 'agency', 'all clients', 'client overview'] },
+  audits: { hash: '#/agency/audits', label: 'Audits & proposals', words: ['audits', 'proposals', 'audit', 'proposal'] },
+  reports: { hash: '#/agency/reports', label: 'Monthly reports', words: ['monthly reports', 'client reports'] },
 };
 
 export const TOPICS = [
@@ -314,18 +330,169 @@ export const TOPICS = [
     go: { place: 'settings', highlight: 'Change my password' },
   },
 
-  // ── Coming soon (honest answers) ──
+  // ── Messages, calls & WhatsApp ──
   {
-    key: 'invoices', title: 'Invoices, quotes and payments',
-    keywords: ['invoice', 'invoices', 'quote', 'quotes', 'payment', 'payments', 'get paid', 'unpaid', 'billing', 'stripe', 'xero', 'quickbooks'],
-    answer: 'Invoicing isn’t part of the system yet – it’s on the roadmap. For now, the Build Funnel’s “Set up payments” step walks you through creating a payment link, and you can track unpaid invoices as tasks or Help Desk billing issues.',
-    data: 'funnel_step:pricing:payments', go: { place: 'funnel' },
+    key: 'messages', title: 'Check my messages',
+    keywords: ['messages', 'any messages', 'new messages', 'unread', 'inbox', 'whatsapps', 'texts from customers', 'who messaged'],
+    data: 'messages', go: { place: 'messages' },
   },
   {
-    key: 'bookings', title: 'Bookings and appointments',
-    keywords: ['booking', 'bookings', 'appointment', 'appointments', 'book a call', 'book a meeting', 'calendar booking', 'diary', 'availability'],
-    answer: 'Online booking isn’t built in yet – it’s on the roadmap. Until then, log meetings on a contact’s timeline and create a task with the date so it appears in My day.',
+    key: 'reply_message', title: 'Reply to a customer',
+    keywords: ['reply to', 'reply customer', 'message a customer', 'send a whatsapp', 'send a text', 'text a customer', 'whatsapp a customer', 'send a message'],
+    answer: 'Open Messages, pick the conversation and type your reply at the bottom – it goes by WhatsApp, text or email (whichever suits them) and is saved on their record. Replying also ticks off the “Reply to…” task.',
+    go: { place: 'messages' },
+  },
+  {
+    key: 'missed_calls', title: 'Missed calls',
+    keywords: ['missed call', 'missed calls', 'who called', 'voicemail', 'call back', 'callback', 'calls i missed'],
+    data: 'missed_calls', go: { place: 'calls' },
+  },
+  {
+    key: 'phone_setup', title: 'Link my phone number and WhatsApp',
+    keywords: ['link my phone', 'phone number', 'link whatsapp', 'connect whatsapp', 'whatsapp business', 'business number', 'forward calls', 'call forwarding', 'twilio', 'never miss a call', 'missed call text'],
+    answer: 'Go to Settings → Phone & WhatsApp. Add your business number and WhatsApp number, the mobile calls should ring, and where alerts go. Missed callers are texted straight back with your booking link, every WhatsApp and text lands in Messages, and emergencies alert you straight away. The page lists the one-off Twilio steps to go live.',
+    go: { place: 'phone' }, admin: true,
+  },
+  {
+    key: 'emergency', title: 'Emergency call-outs',
+    keywords: ['emergency', 'urgent job', 'emergency call out', 'call-out', 'callout', 'leak', 'burst pipe', 'no heating', 'no power'],
+    answer: 'Messages mentioning words like “leak”, “burst” or “no power” are flagged 🚨: everyone is alerted and an urgent reply task is made. To book one in, press New booking in Bookings and set Urgency to Emergency. You can change the emergency words in Settings → Phone & WhatsApp.',
+    go: { place: 'bookings', highlight: 'New booking' },
+  },
+  {
+    key: 'test_messages', title: 'Try a missed call or WhatsApp',
+    keywords: ['test whatsapp', 'test a missed call', 'try it', 'simulate', 'demo message', 'test message'],
+    answer: 'In Messages, press “Test an incoming WhatsApp” or “Test a missed call”. It runs exactly what happens for real: the contact is found or created, the caller is texted back, emergencies are flagged and the team is alerted.',
+    go: { place: 'messages', highlight: 'Test an incoming WhatsApp' }, admin: true,
+  },
+  {
+    key: 'message_wording', title: 'Change the wording of automatic messages',
+    keywords: ['change the wording', 'message wording', 'edit template', 'templates', 'change the text message', 'reminder wording', 'saved replies'],
+    answer: 'Go to Settings → Message wording. Every automatic message (missed-call text, booking reminders, invoice chasers…) is listed – press Edit to make it sound like you.',
+    go: { place: 'wording' }, admin: true,
+  },
+  {
+    key: 'opt_out', title: 'Customer said STOP',
+    keywords: ['stop', 'opt out', 'unsubscribe', 'stop texts', 'dont text', 'no more messages'],
+    answer: 'When a customer replies STOP they’re never texted or WhatsApped automatically again (START opts them back in). You can also tick “Don’t send texts or WhatsApp” on their contact with Edit.',
     go: { place: 'contacts' },
+  },
+
+  // ── Bookings ──
+  {
+    key: 'bookings', title: 'Bookings and appointments',
+    keywords: ['booking', 'bookings', 'appointment', 'appointments', 'diary', 'whats booked', 'what’s booked', 'jobs this week'],
+    data: 'bookings', go: { place: 'bookings' },
+  },
+  {
+    key: 'bookings_today', title: 'Today’s jobs',
+    keywords: ['jobs today', 'today’s jobs', 'todays jobs', 'job sheet', 'where am i going', 'next job'],
+    data: 'jobs_today', go: { place: 'jobs' },
+  },
+  {
+    key: 'booking_new', title: 'Book a job or appointment',
+    keywords: ['book a job', 'book someone in', 'new booking', 'add booking', 'make a booking', 'book an appointment', 'book in'],
+    answer: 'In Bookings press “New booking”, choose the service, the day and a free time, and add the customer. They get a confirmation by WhatsApp, text or email, plus reminders the day before and 2 hours before.',
+    go: { place: 'bookings', highlight: 'New booking' },
+  },
+  {
+    key: 'booking_link', title: 'Let customers book online',
+    keywords: ['booking link', 'booking page', 'book online', 'online booking', 'customers book', 'booking website'],
+    answer: 'Your booking page shows live availability for your services. Press “Copy booking link” in Bookings and put it on your website, Google profile and WhatsApp Business profile – it’s also sent when you miss a call.',
+    go: { place: 'bookings', highlight: 'Copy booking link' },
+  },
+  {
+    key: 'reminders', title: 'Appointment reminders and no-shows',
+    keywords: ['reminder', 'reminders', 'no show', 'no-show', 'no shows', 'remind customers', 'confirm appointment', 'not turning up', 'not turn up', 'dont turn up', 'didnt turn up', 'not showing up'],
+    answer: 'Reminders go automatically the day before and 2 hours before. Customers reply C to confirm or R to rearrange, which flags it for you. Turn them on or off and set the times in Bookings → Hours & reminders. Adding a deposit to a service also cuts no-shows.',
+    go: { place: 'booking_settings' }, admin: true,
+  },
+  {
+    key: 'on_my_way', title: 'Tell a customer I’m on my way',
+    keywords: ['on my way', 'running late', 'eta', 'on the way'],
+    answer: 'Open Today’s jobs in Bookings, choose the ETA and press “On my way” – the customer gets a WhatsApp or text straight away. Press Done when finished to send the review request and draft the invoice.',
+    go: { place: 'jobs', highlight: 'On my way' },
+  },
+  {
+    key: 'calendar_sync', title: 'See bookings in Google or Outlook',
+    keywords: ['google calendar', 'outlook', 'iphone calendar', 'sync calendar', 'calendar sync', 'phone calendar'],
+    answer: 'In Bookings, copy the calendar link under “Sync to Google, Outlook or iPhone” and subscribe to it once – every booking then appears in your phone’s calendar.',
+    go: { place: 'bookings' },
+  },
+  {
+    key: 'services', title: 'Services, prices and deposits',
+    keywords: ['add a service', 'services', 'price list', 'deposit', 'deposits', 'service length'],
+    answer: 'In Bookings → Services add what customers can book, how long it takes, the price and an optional deposit (taken by card when they book online).',
+    go: { place: 'services', highlight: 'Add service' }, admin: true,
+  },
+  {
+    key: 'opening_hours', title: 'Opening hours and time off',
+    keywords: ['opening hours', 'working hours', 'holiday', 'time off', 'day off', 'closed', 'availability'],
+    answer: 'In Bookings → Hours & reminders set your hours for each day, how many jobs can run at once, and add time off – those times disappear from the booking page.',
+    go: { place: 'booking_settings' }, admin: true,
+  },
+
+  // ── Quotes, invoices & payments ──
+  {
+    key: 'invoices', title: 'Invoices and money owed',
+    keywords: ['invoice', 'invoices', 'unpaid', 'owed', 'who owes', 'overdue invoice', 'outstanding', 'get paid', 'payments'],
+    data: 'money', go: { place: 'invoices' },
+  },
+  {
+    key: 'quote_new', title: 'Send a quote',
+    keywords: ['quote', 'quotes', 'send a quote', 'new quote', 'estimate', 'price up'],
+    answer: 'In Quotes & invoices press “New quote”, add the lines and press Save & send. The customer accepts online with one click, which marks the deal as won and creates a task to book the work in. Then press “Turn into invoice”.',
+    go: { place: 'invoices', highlight: 'New quote' },
+  },
+  {
+    key: 'invoice_new', title: 'Send an invoice',
+    keywords: ['send an invoice', 'new invoice', 'create invoice', 'raise an invoice', 'bill a customer'],
+    answer: 'Invoices are drafted automatically when a job is marked done. To make one yourself press “New invoice” in Quotes & invoices. The customer gets a link to view it and pay by card or bank transfer.',
+    go: { place: 'invoices', highlight: 'New invoice' },
+  },
+  {
+    key: 'chasing', title: 'Chasing unpaid invoices',
+    keywords: ['chase payment', 'chasing', 'payment reminder', 'late payment', 'not paid', 'chase invoice'],
+    answer: 'Overdue invoices are chased for you: a friendly reminder, then a firmer one, then a task for a person to call. Change the days in Quotes & invoices → Settings, or pause chasing on one invoice from its panel.',
+    go: { place: 'invoice_settings' },
+  },
+  {
+    key: 'card_payments', title: 'Take card payments',
+    keywords: ['card payment', 'pay by card', 'stripe', 'payment link', 'take payment', 'bank details'],
+    answer: 'Customers pay by card from the invoice link once Stripe is connected on the server. Until then (and as well) they see your bank details – add them in Quotes & invoices → Settings. Payments by bank or cash are recorded with “Record a payment”.',
+    go: { place: 'invoice_settings' }, admin: true,
+  },
+
+  // ── Forms, branding & agency ──
+  {
+    key: 'lead_form', title: 'Put a lead form on my website',
+    keywords: ['lead form', 'website form', 'contact form', 'enquiry form', 'embed', 'form on my website'],
+    answer: 'In CRM → Lead forms press “New form”, then “Copy embed code” and paste it into your website (or share the link). Every submission becomes a lead, gets an instant thank-you and runs your new-lead automations.',
+    go: { place: 'forms', highlight: 'New form' },
+  },
+  {
+    key: 'branding', title: 'Add my logo and colours',
+    keywords: ['logo', 'branding', 'brand colour', 'brand color', 'colours', 'white label', 'my own brand'],
+    answer: 'Go to Settings → Branding to add your logo, the name customers see and your main colour. It’s used in this system and on your booking page, quotes, invoices, forms and reports.',
+    go: { place: 'branding' }, admin: true,
+  },
+  {
+    key: 'agency', title: 'See all my clients',
+    keywords: ['all clients', 'control centre', 'control center', 'agency', 'client health', 'which clients need', 'clients need attention'],
+    answer: 'The Agency control centre shows every client business: hours saved, overdue tasks, open issues and anything that needs attention. Press an item to jump straight into that client’s system.',
+    go: { place: 'agency' },
+  },
+  {
+    key: 'audit', title: 'Run an audit and send a proposal',
+    keywords: ['audit', 'discovery call', 'proposal', 'new client proposal', 'time audit', 'roi'],
+    answer: 'In Agency press “New audit”. Fill in the discovery call and the time audit with the client, press “Score it & write the proposal”, then send it. When they accept online their branded system is created and you get a kick-off task.',
+    go: { place: 'agency', highlight: 'New audit' },
+  },
+  {
+    key: 'client_reports', title: 'Monthly client reports',
+    keywords: ['monthly report', 'client report', 'report for client', 'send report'],
+    answer: 'Agency → Monthly reports builds each client’s report (hours saved, leads followed up, missed calls texted back, bookings, money collected). They’re built automatically on the 1st – send them from there, or switch on automatic sending.',
+    go: { place: 'reports' },
   },
 ];
 
@@ -338,7 +505,11 @@ export const PAGE_HELP = {
   '/tasks': 'Tasks is the team’s to-do board. Many tasks are created automatically by the funnel, CRM and automations.',
   '/automations': 'Automations do the routine admin: WHEN something happens, IF it matches, THEN the system does the work.',
   '/helpdesk': 'The Help Desk tracks problems until they’re sorted, with a response target for each priority and alerts when one is overdue.',
-  '/settings': 'Settings is where you manage the business profile, team members, publishing channels and extra businesses.',
+  '/settings': 'Settings is where you manage the business profile, team, branding, phone & WhatsApp, the wording of automatic messages and extra businesses.',
+  '/messages': 'Messages is one inbox for WhatsApp, texts, emails and calls. Missed calls are texted back automatically and emergencies are flagged.',
+  '/bookings': 'Bookings is your diary: online bookings, reminders, today’s jobs with “On my way” and Done buttons, services and opening hours.',
+  '/invoices': 'Quotes & invoices: send quotes customers accept online, invoices they pay by card, and let the system chase anything overdue.',
+  '/agency': 'The Agency area shows every client in one place, runs audits and proposals, and builds each client’s monthly report.',
 };
 
 export const STARTER_PROMPTS = [

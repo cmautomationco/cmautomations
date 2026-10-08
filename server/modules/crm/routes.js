@@ -75,6 +75,9 @@ export function crmRoutes({ db, engine }) {
     contact.deals = db.all('SELECT * FROM deals WHERE contact_id = ? ORDER BY created_at DESC', contact.id);
     contact.activities = db.all('SELECT a.*, u.name AS author FROM activities a LEFT JOIN users u ON u.id = a.created_by WHERE a.contact_id = ? ORDER BY a.created_at DESC LIMIT 100', contact.id);
     contact.tasks = db.all(`SELECT id, title, status, due_at, priority FROM tasks WHERE org_id = ? AND source_ref = ? ORDER BY created_at DESC`, req.org.id, contact.id);
+    contact.messages = db.all('SELECT id, channel, direction, body, status, created_at FROM messages WHERE contact_id = ? ORDER BY created_at, rowid', contact.id);
+    contact.bookings = db.all('SELECT b.id, b.starts_at, b.status, s.name AS service_name FROM bookings b LEFT JOIN services s ON s.id = b.service_id WHERE b.contact_id = ? ORDER BY b.starts_at DESC LIMIT 20', contact.id);
+    contact.invoices = db.all('SELECT id, kind, number, status, total_pence FROM invoices WHERE contact_id = ? ORDER BY created_at DESC LIMIT 20', contact.id);
     res.json(contact);
   });
 

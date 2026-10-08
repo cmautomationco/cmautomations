@@ -9,12 +9,13 @@ import { buildBrief, generateIdeas } from '../modules/content/ideaEngine.js';
 import { stepsFor } from '../modules/funnel/blueprint.js';
 import { createTask } from '../modules/tasks/service.js';
 import { openDatabase, parseJson } from './index.js';
+import { seedBusinessTools } from './seedBusinessTools.js';
 
 /**
  * Seeds a realistic demo business so every screen has something to show.
  * Runs automatically the first time the server starts with an empty database.
  */
-export function seedDemo(db) {
+export async function seedDemo(db) {
   const engine = createEngine(db);
   const ts = now();
   const user = (name, email) => {
@@ -39,7 +40,7 @@ export function seedDemo(db) {
   }, 'org_id');
 
   // A second business under the same login shows multi-business switching.
-  provisionOrganization(db, { name: 'Glow Studio', niche: 'beauty', business_type: 'service', ownerId: owner.id });
+  const glow = provisionOrganization(db, { name: 'Glow Studio', niche: 'beauty', business_type: 'service', ownerId: owner.id });
 
   seedFunnel(db, org, owner);
   seedContent(db, org, owner, [priya, jordan]);
@@ -47,7 +48,46 @@ export function seedDemo(db) {
   seedTasks(db, org, [owner, priya, jordan, sam]);
   seedHistory(db, org, [owner, priya, jordan, sam]);
   seedHelpdesk(db, org, [owner, priya, jordan, sam]);
-  return { org, owner };
+  // The agency, its clients and a plumbing business on the phone and WhatsApp.
+  const extra = await seedBusinessTools(db, engine, {
+    owner, priya, user,
+    clientOrgs: [
+      [org, { contact_name: 'Alex Morgan', email: 'demo@cmautomations.com', monthly_fee_pence: 19900, hourly_cost_pence: 6000 }],
+      [glow, { contact_name: 'Mia Roberts', email: 'mia@glowstudio.example', monthly_fee_pence: 14900, hourly_cost_pence: 3000 }],
+    ],
+  });
+  // Let any messages still being handed to the (demo) provider finish.
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  return { org, owner, ...extra };
+}
+
+/**
+ * Test data saved by an earlier test build has no agency, plumbing business,
+ * bookings or invoices. Adds them alongside what's there, keeping any changes.
+ */
+export async function upgradeDemo(db) {
+  if (db.get(`SELECT 1 FROM organizations WHERE kind = 'agency'`)) return false;
+  const owner = db.get('SELECT * FROM users WHERE email = ?', 'demo@cmautomations.com');
+  const priya = db.get('SELECT * FROM users WHERE email = ?', 'priya@cmautomations.com');
+  const bright = db.get('SELECT * FROM organizations WHERE name = ?', 'Bright Path Coaching');
+  const glow = db.get('SELECT * FROM organizations WHERE name = ?', 'Glow Studio');
+  if (!owner || !priya || !bright || !glow) return false;
+  const user = (name, email) => {
+    const existing = db.get('SELECT * FROM users WHERE email = ?', email);
+    if (existing) return existing;
+    const u = { id: id('usr'), email, name, password_hash: hashPassword('demo1234'), created_at: now() };
+    db.insert('users', u);
+    return u;
+  };
+  await seedBusinessTools(db, createEngine(db), {
+    owner, priya, user,
+    clientOrgs: [
+      [bright, { contact_name: 'Alex Morgan', email: 'demo@cmautomations.com', monthly_fee_pence: 19900, hourly_cost_pence: 6000 }],
+      [glow, { contact_name: 'Mia Roberts', email: 'mia@glowstudio.example', monthly_fee_pence: 14900, hourly_cost_pence: 3000 }],
+    ],
+  });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  return true;
 }
 
 function seedFunnel(db, org, owner) {
@@ -241,6 +281,5 @@ function seedHelpdesk(db, org, [owner, priya, jordan, sam]) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   for (const suffix of ['', '-wal', '-shm']) fs.rmSync(config.databasePath + suffix, { force: true });
   const db = openDatabase(config.databasePath);
-  seedDemo(db);
-  console.log(`Seeded ${config.databasePath}. Sign in with demo@cmautomations.com / demo1234`);
+  seedDemo(db).then(() => console.log(`Seeded ${config.databasePath}. Sign in with demo@cmautomations.com / demo1234 (or dave@swiftplumbing.co.uk for the plumbing business)`));
 }

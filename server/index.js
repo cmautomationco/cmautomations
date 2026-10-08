@@ -7,8 +7,8 @@ import { installMissingRecipes } from './automation/recipes.js';
 
 const db = openDatabase(config.databasePath);
 if (!db.get('SELECT 1 FROM organizations LIMIT 1')) {
-  seedDemo(db);
-  console.log('Seeded demo business – sign in with demo@cmautomations.com / demo1234');
+  await seedDemo(db);
+  console.log('Seeded demo businesses – sign in with demo@cmautomations.com / demo1234');
 }
 
 // Businesses created before a release get that release's new automations.

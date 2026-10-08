@@ -173,7 +173,8 @@ export async function createBooking(ctx, orgId, data, { actorId = null, source =
     if (!c.first_name) throw badRequest('Add the customer’s name');
     if (!c.phone && !c.email) throw badRequest('Add a mobile number or email so we can confirm the booking');
     const sourceLabel = { online: 'Online booking', phone: 'Phone call', whatsapp: 'WhatsApp', manual: 'Booking' }[source];
-    const res = upsertContact(ctx, orgId, { ...c, address: data.address, postcode: data.postcode, source: sourceLabel }, { actorId });
+    // The booking itself is the follow-up, so new customers skip the "welcome call" automation.
+    const res = upsertContact(ctx, orgId, { ...c, address: data.address, postcode: data.postcode, source: sourceLabel }, { actorId, emit: false });
     contact = res.contact;
     contactCreated = res.created;
   }
@@ -205,7 +206,8 @@ export async function createBooking(ctx, orgId, data, { actorId = null, source =
       message = await sendBookingMessage(ctx, orgId, booking, status === 'confirmed' ? 'booking_confirmation' : 'booking_request_received', {}, { force: true });
     }
   }
-  if (source !== 'manual' || booking.urgency === 'emergency') {
+  // The team is told about bookings customers make themselves, and about emergencies.
+  if (source === 'online' || booking.urgency === 'emergency') {
     const vars = bookingVars(booking, service, tz);
     alertStaff(ctx, orgId, 'staff_new_booking', { ...vars, name: baseVars(org, contact).name }, { title: `${booking.urgency === 'emergency' ? '🚨 ' : '📅 '}New booking: ${service.name} – ${vars.date} ${vars.time}`, link: `#/bookings/${booking.id}` });
   }

@@ -1,6 +1,6 @@
 import { get, patch, post } from '../api.js';
 import { state } from '../app.js';
-import { ago, avatar, dateTime, field, h, icon, isOverdue, modal, money, mount, relative, select, showError, toast, PLATFORM_LABELS } from '../ui.js';
+import { ago, avatar, dateTime, field, h, icon, isOverdue, modal, money, mount, pounds, relative, select, showError, toast, PLATFORM_LABELS } from '../ui.js';
 
 export async function render(el) {
   const [d, kudos, team] = await Promise.all([get('/dashboard'), get('/kudos'), get('/team')]);
@@ -37,6 +37,7 @@ export async function render(el) {
       kpi('Open pipeline', money(kpis.pipeline_value), `${money(kpis.won_this_month)} won this month`, 'pound'),
       kpi('New leads (7 days)', kpis.new_leads_week, 'Follow-ups created automatically', 'users'),
       kpi('Tasks due today', kpis.tasks_due_today, `${kpis.posts_scheduled} posts scheduled · ${kpis.ideas_in_bank} ideas banked`, 'check')),
+    needsStrip(d.needs),
 
     h('div', { class: 'grid g3' },
       h('div', { class: 'card span2' },
@@ -92,4 +93,20 @@ function giveKudos(team) {
       return res;
     } },
   ] });
+}
+
+/** A row of things that need a person today: messages, missed calls, jobs, money. Hidden when all clear. */
+function needsStrip(n) {
+  if (!n) return null;
+  const items = [
+    n.urgent_messages ? ['red', 'alert', `${n.urgent_messages} emergency message${n.urgent_messages === 1 ? '' : 's'}`, '#/messages?filter=urgent'] : null,
+    n.unread_messages ? ['', 'inbox', `${n.unread_messages} unread message${n.unread_messages === 1 ? '' : 's'}`, '#/messages'] : null,
+    n.missed_calls ? ['', 'phoneMissed', `${n.missed_calls} missed call${n.missed_calls === 1 ? '' : 's'} to return`, '#/messages/calls'] : null,
+    n.jobs_today ? ['', 'calendar', `${n.jobs_today} job${n.jobs_today === 1 ? '' : 's'} today`, '#/bookings/today'] : null,
+    n.rearrange ? ['', 'calendar', `${n.rearrange} want${n.rearrange === 1 ? 's' : ''} to rearrange`, '#/bookings'] : null,
+    n.overdue_invoices ? ['', 'receipt', `${n.overdue_invoices} overdue invoice${n.overdue_invoices === 1 ? '' : 's'} (being chased)`, '#/invoices?status=overdue'] : null,
+    n.owed_pence ? ['', 'pound', `${pounds(n.owed_pence)} owed to you`, '#/invoices'] : null,
+  ].filter(Boolean);
+  if (!items.length) return null;
+  return h('div', { class: 'needs-strip' }, h('b', { class: 'small' }, 'Needs you:'), items.map(([cls, ic, text, href]) => h('a', { class: `att ${cls}`, href }, icon(ic), text)));
 }

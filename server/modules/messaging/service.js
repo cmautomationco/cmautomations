@@ -36,7 +36,7 @@ export const MESSAGING_DEFAULTS = {
   ring_seconds: 20,
   voicemail: true,
   // Messages containing these words are flagged as emergencies.
-  emergency_keywords: 'emergency, urgent, leak, leaking, flood, burst, no heating, no hot water, boiler, gas smell, smell gas, sparking, burning smell, no power, power cut, fuse box, tripping',
+  emergency_keywords: 'emergency, urgent, leak, leaking, flood, flooding, burst, pouring, overflowing, water through, no water, no heating, no hot water, gas smell, smell gas, smell of gas, sparking, burning smell, smoke, no power, power cut, tripping, shock',
   quiet_hours: { enabled: true, start: '20:00', end: '08:00' },
   webhook_url: '',
   review_link: '',
@@ -70,7 +70,8 @@ export function baseVars(org, contact, settings = {}) {
     first_name: first,
     first_name_spaced: first ? ` ${first}` : '',
     first_name_comma: first ? `, ${first}` : '',
-    name: name || displayPhone(contact?.phone_e164) || 'Someone',
+    // Contacts made from a call or message are known by their number until we learn their name.
+    name: (first ? name : '') || displayPhone(contact?.phone_e164) || contact?.email || name || 'Someone',
     phone: displayPhone(contact?.phone_e164) || contact?.phone || 'no number',
     booking_link: org?.slug ? publicLink(`book/${org.slug}`) : '',
     review_link: settings.review_link || '',
@@ -292,11 +293,12 @@ function contactFor(ctx, orgId, { phone, email, name, source, whatsapp }) {
     return { contact, created: false };
   }
   const [first, ...rest] = String(name || '').trim().split(/\s+/).filter(Boolean);
+  // No "welcome call" automation here: the reply / call-back task below covers it.
   const { contact: created } = createContact(ctx, orgId, {
     first_name: first || (whatsapp ? 'WhatsApp enquiry' : phone ? 'Caller' : 'New contact'),
     last_name: rest.join(' ') || null, phone: phone || null, email: email || null, source, whatsapp_opt_in: whatsapp,
     preferred_channel: whatsapp ? 'whatsapp' : 'auto',
-  });
+  }, { emit: false });
   return { contact: created, created: true };
 }
 

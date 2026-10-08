@@ -23,7 +23,7 @@ const { openDatabase } = await import('../server/db/index.js');
 const { seedDemo } = await import('../server/db/seed.js');
 const { createApp } = await import('../server/app.js');
 const db = openDatabase(dbFile);
-seedDemo(db);
+await seedDemo(db);
 const { app } = createApp(db);
 const server = app.listen(0);
 const base = `http://localhost:${server.address().port}`;
@@ -78,6 +78,26 @@ await shot('17-assistant', '#/', { before: async () => {
   }
   await page.waitForTimeout(400);
 } });
+
+// The plumbing business (phone & WhatsApp linked in), the agency and customer pages.
+const switchTo = async (name) => {
+  const me = await api('/api/me', { headers: auth });
+  await api('/api/auth/switch', { method: 'POST', headers: auth, body: JSON.stringify({ org_id: me.orgs.find((o) => o.name.startsWith(name)).id }) });
+};
+await switchTo('Swift');
+await shot('19-messages-whatsapp', '#/messages');
+await shot('20-missed-calls', '#/messages/calls');
+await shot('21-bookings-diary', '#/bookings', { full: true });
+await shot('22-bookings-today', '#/bookings/today', { full: true });
+await shot('23-quotes-invoices', '#/invoices');
+await shot('24-phone-whatsapp-settings', '#/settings/phone', { full: true });
+const tok = (sql) => db.get(sql).public_token;
+await shot('25-customer-booking-page', '#/book/swift-plumbing-and-heating', { before: async () => { await page.click('.pub-option >> nth=0'); await page.waitForTimeout(400); } });
+await shot('26-customer-invoice', `#/doc/${tok(`SELECT public_token FROM invoices WHERE status = 'overdue'`)}`);
+await switchTo('CM Automations');
+await shot('27-agency-control-centre', '#/agency', { full: true });
+await shot('28-agency-proposal', `#/proposal/${tok(`SELECT public_token FROM audits WHERE status = 'proposal_sent'`)}`, { full: true });
+await shot('29-client-monthly-report', `#/report/${tok(`SELECT r.public_token FROM reports r JOIN organizations o ON o.id = r.org_id WHERE o.name LIKE 'Swift%'`)}`, { full: true });
 
 await browser.close();
 server.close();

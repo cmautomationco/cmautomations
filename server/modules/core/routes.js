@@ -222,6 +222,16 @@ export function coreRoutes({ db }) {
         minutes_saved_week: one(`SELECT COALESCE(SUM(minutes_saved),0) AS m FROM automation_runs WHERE org_id = ? AND created_at >= ?`, week).m,
         automations_run_week: one(`SELECT COUNT(*) AS n FROM automation_runs WHERE org_id = ? AND created_at >= ? AND status = 'success'`, week).n,
       },
+      // What needs a person today, from Messages, Bookings and Invoices.
+      needs: {
+        unread_messages: one(`SELECT COUNT(*) AS n FROM messages WHERE org_id = ? AND direction = 'in' AND read = 0`).n,
+        urgent_messages: one(`SELECT COUNT(*) AS n FROM tasks WHERE org_id = ? AND status != 'done' AND title LIKE '🚨%'`).n,
+        missed_calls: one(`SELECT COUNT(*) AS n FROM calls WHERE org_id = ? AND status IN ('missed','voicemail') AND handled = 0`).n,
+        jobs_today: one(`SELECT COUNT(*) AS n FROM bookings WHERE org_id = ? AND starts_at >= ? AND starts_at <= ? AND status NOT IN ('cancelled')`, new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString(), endOfToday.toISOString()).n,
+        rearrange: one(`SELECT COUNT(*) AS n FROM bookings WHERE org_id = ? AND reschedule_requested = 1 AND status IN ('requested','confirmed') AND starts_at >= ?`, new Date().toISOString()).n,
+        overdue_invoices: one(`SELECT COUNT(*) AS n FROM invoices WHERE org_id = ? AND kind = 'invoice' AND status = 'overdue'`).n,
+        owed_pence: one(`SELECT COALESCE(SUM(total_pence - paid_pence),0) AS v FROM invoices WHERE org_id = ? AND kind = 'invoice' AND status IN ('sent','part_paid','overdue')`).v,
+      },
       projects,
       my_tasks: parseJson(db.all(`SELECT * FROM tasks WHERE org_id = ? AND assignee_id = ? AND status != 'done' ORDER BY (due_at IS NULL), due_at, CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END LIMIT 6`, o, req.user.id), 'checklist'),
       upcoming_posts: db.all(`SELECT p.*, c.platform, c.handle, i.title FROM scheduled_posts p JOIN channels c ON c.id = p.channel_id LEFT JOIN content_ideas i ON i.id = p.idea_id WHERE p.org_id = ? AND p.status = 'queued' ORDER BY p.publish_at LIMIT 5`, o),

@@ -11,6 +11,10 @@ It has three connected systems plus an automation engine that links them:
 | 👥 **CRM** + ✅ **Task Manager** | Handles leads, the deal pipeline, follow-ups and the team's daily tasks. Automations do the routine admin, and team wins and kudos help keep morale up. |
 | 💬 **Assistant** | A chat helper on every page. It works out the problem, takes you to the screen that solves it and points at the right button. It also answers questions from your own data, creates tasks and logs issues. |
 | 🛟 **Help Desk** | Tracks every problem until it's sorted. Issues are auto-assigned, each priority has a response target, missed targets are escalated, and the person who raised it is told when it's fixed. |
+| 📞 **Messages, calls & WhatsApp** | One inbox for WhatsApp, texts and email. Calls to the business number ring the owner's mobile; missed callers are texted back in seconds; emergencies ("leak", "no power") alert the whole team. Built so trades never miss a job while they're on the tools. |
+| 📅 **Bookings** | Online booking page with live availability, deposits, day-before and 2-hour reminders (reply C to confirm, R to rearrange), "on my way" texts, a morning job sheet to the team's phone and a calendar feed for Google, Outlook and iPhone. |
+| 💷 **Quotes, invoices & payments** | Deal or finished job → quote (accepted online) → invoice with a card-payment link. Overdue invoices are chased automatically: friendly, firmer, then a call task for a person. |
+| 🧭 **Agency control centre** | For the agency running all of this: every client on one screen with a health score, the audit → proposal → new client flow, white-label branding and an automatic monthly report per client. |
 | ⚡ **Automation engine** | Uses WHEN → IF → THEN rules to connect all of the above. It also logs the time it saves each business. |
 
 The design uses a deep nautical sky blue on a white background with black text. Headers and key figures are in blue text.
@@ -61,6 +65,28 @@ All screenshots come from the running app with the built-in demo business (`npm 
 |---|---|
 | ![Help Desk](docs/screenshots/16-help-desk.png) | ![Assistant](docs/screenshots/17-assistant.png) |
 
+### Messages, calls & WhatsApp (Swift Plumbing & Heating)
+| One inbox – the emergency is flagged 🚨 | Missed calls texted back in seconds |
+|---|---|
+| ![Messages](docs/screenshots/19-messages-whatsapp.png) | ![Calls](docs/screenshots/20-missed-calls.png) |
+
+![Phone & WhatsApp settings](docs/screenshots/24-phone-whatsapp-settings.png)
+
+### Bookings
+| The diary | Today's jobs (for the van) |
+|---|---|
+| ![Bookings](docs/screenshots/21-bookings-diary.png) | ![Today's jobs](docs/screenshots/22-bookings-today.png) |
+
+### Quotes, invoices & what customers see
+| Quotes & invoices | The customer's booking page | The customer's invoice |
+|---|---|---|
+| ![Invoices](docs/screenshots/23-quotes-invoices.png) | ![Booking page](docs/screenshots/25-customer-booking-page.png) | ![Invoice](docs/screenshots/26-customer-invoice.png) |
+
+### Agency
+| Control centre | Proposal the client accepts online | Client's monthly report |
+|---|---|---|
+| ![Control centre](docs/screenshots/27-agency-control-centre.png) | ![Proposal](docs/screenshots/28-agency-proposal.png) | ![Report](docs/screenshots/29-client-monthly-report.png) |
+
 ---
 
 ## Quick start
@@ -72,10 +98,11 @@ npm install
 npm start            # http://localhost:3000
 ```
 
-On first start the server seeds a demo business. Sign in with:
+On first start the server seeds demo data. Sign in with:
 
-- **Email:** `demo@cmautomations.com`
-- **Password:** `demo1234`
+- **Email:** `demo@cmautomations.com` (the agency owner – sees every business and the Agency control centre)
+- **Email:** `dave@swiftplumbing.co.uk` (the owner of Swift Plumbing & Heating – a client's view)
+- **Password:** `demo1234` for both
 
 Other commands:
 
@@ -95,6 +122,10 @@ Configuration is in `.env` (see `.env.example`):
 | `SCHEDULER_INTERVAL_SECONDS` | `30` | How often publishing, reminders and follow-ups run |
 | `REQUIRE_PASSWORDS` | `true` | Sign-in needs a password. `false` switches to email-only sign-in for short test sessions. |
 | `ANTHROPIC_API_KEY` | – | Optional. Turns on AI idea generation in the Idea Lab and upgrades the assistant to Claude. Without it, the built-in idea engine and built-in assistant are used. |
+| `PUBLIC_URL` | `http://localhost:3000` | The address customers reach the system on. Used in links sent by text, WhatsApp and email, and for webhook signatures. |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | – | Texts, WhatsApp, call forwarding and missed-call text-back. Without them, messages run in demo mode (saved and shown, not sent). |
+| `RESEND_API_KEY`, `EMAIL_FROM` | – | Sends email through Resend. `EMAIL_FROM` must be on a verified domain. |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | – | Card payments for invoices and booking deposits through Stripe Checkout. Without them, invoices show bank details. |
 
 ---
 
@@ -105,7 +136,7 @@ Configuration is in `.env` (see `.env.example`):
 - `demo/` holds the browser stand-ins for the few Node modules the server uses (`node:sqlite`, `node:crypto`, `node:fs`, Express's router), plus the boot script.
 - Data is saved in the viewer's browser, and **Reset data** restores the demo business.
 - A **Walkthrough** panel guides testers through every section. The same steps are written to [`docs/WALKTHROUGH.md`](docs/WALKTHROUGH.md).
-- In this build, publishing is simulated and timed automations run every 30 seconds while the page is open.
+- In this build, publishing, texts, WhatsApp, email and card payments are simulated (shown as "Demo – not actually sent" and a pretend card form), calls and customer messages are simulated with the **Test** buttons in Messages, and timed automations run every 30 seconds while the page is open.
 
 ---
 
@@ -115,7 +146,7 @@ Configuration is in `.env` (see `.env.example`):
 2. They choose a **niche**. The system then loads:
    - an audience profile, pains, desires and offers
    - 4 content pillars and default publishing channels
-   - all 9 recommended automations, switched on
+   - all the recommended automations, switched on (a couple that send messages unprompted start switched off)
 3. They start a build in **Build Funnel**, generate ideas in **Content Studio** and add leads in the **CRM**. The automations handle the rest.
 
 Supported niches: Coaching & Consulting, E-commerce, Local Services & Trades, Health & Fitness, Beauty & Salon, Hospitality & Food, Agency & Creative, Real Estate, and Software & Tech. You add a niche with one entry in `server/modules/core/niches.js`.
@@ -191,15 +222,60 @@ There are two engines with the same abilities and the same reply format:
 - **Response targets:** urgent 4 hours, high 1 day, medium 3 days, low 7 days. Missed targets are escalated to the assignee and admins (once).
 - Resolving an issue needs a short note, and the person who raised it is notified with that note.
 
-### 6. Automation walkthrough presentation
+### 6. Messages, calls & WhatsApp – never miss a job
 
-Automations → **Watch the walkthrough** opens a 29-slide presentation for showing a client how an automation project works, from first conversation to results:
+Made for trades like plumbers and electricians, who can't answer the phone up a ladder or under a sink:
+
+- **Calls** to the business number (a Twilio number) ring the owner's mobile. If nobody answers, the caller hears a short message and can leave a voicemail – and is **texted straight back** (by WhatsApp if they use it) with the booking link. A "Call back" task is made and the team's phone gets an alert. Repeat calls within 30 minutes don't send a second text.
+- **WhatsApp and text messages** land in one inbox and on the customer's CRM record. New numbers become contacts automatically; photos customers send (a leak, a fuse box) are kept with the message.
+- **Emergencies:** messages with words like "leak", "burst", "no heating" or "no power" are flagged 🚨, everyone is alerted and an urgent reply task is made. The words are editable.
+- **Nothing slips:** every customer message creates a "Reply to…" task that closes itself when someone replies from the inbox.
+- **Booking replies:** customers reply **C** to confirm or **R** to rearrange their next booking.
+- **Respectful sending:** STOP/START opt-outs, quiet hours (texts wait until morning), and WhatsApp's 24-hour rule (outside it, an approved template is used or it falls back to a text).
+- **Team alerts** go to a mobile by WhatsApp or text: new messages, missed calls, new bookings, rearrange requests, unpaid invoices and the morning job sheet.
+- Every automatic message's wording is editable per business (Settings → Message wording).
+
+Going live: buy a UK number in Twilio, add the keys to `.env`, and paste the two webhook addresses shown in **Settings → Phone & WhatsApp** into Twilio. Webhooks are verified with Twilio's signature. Without keys everything runs in demo mode, and the **Test a missed call / Test an incoming WhatsApp** buttons run exactly the same code.
+
+### 7. Bookings
+
+- **Services** with length, travel/tidy-up time, price and optional deposit.
+- **Opening hours**, how many jobs can run at once (e.g. number of engineers), minimum notice, how far ahead, and time off.
+- **Booking page** (`/#/book/<business>`): pick a service, day and time; trades also give the address and the problem. Online bookings create or update the contact, confirm by WhatsApp/text/email and alert the team. A deposit holds the booking until it's paid by card.
+- **The customer's own page** to confirm, move or cancel (within the notice period), and add it to their calendar.
+- **Reminders** the day before (at a set time) and 2 hours before – never in quiet hours.
+- **Today's jobs** for the van: call, WhatsApp, directions, "On my way" with an ETA, Done (drafts the invoice and queues a review request) and No-show (sends a rebooking link).
+- **Morning job sheet** to the team's phone, and a nudge if a finished job hasn't been closed off.
+- **Calendar feed** (iCal) to subscribe to in Google Calendar, Outlook or iPhone.
+
+### 8. Quotes, invoices & payments
+
+- Quotes and invoices with line items, VAT per line (if registered), numbering and notes. Money is stored in pence.
+- One click from a CRM deal or a finished job; a quote turns into an invoice.
+- Customers open a branded link: they **accept a quote** (the deal moves to Won and a "book the work in" task is made) or **pay by card** through Stripe Checkout (recorded automatically from Stripe's signed webhook) or by bank transfer.
+- **Automatic chasing** on the business's schedule (default 1, 7 and 14 days overdue): friendly reminder, firmer reminder, then an urgent task for a person to call. Can be paused per invoice. Unanswered quotes get a follow-up task.
+- Part payments, cash and bank transfers are recorded by hand; a full payment sends a thank-you and marks the contact as a customer.
+
+### 9. Agency control centre
+
+- **Every client on one screen**: hours saved (with trend), overdue tasks, open issues, new leads, and a health score with "needs attention" items (urgent issues, missed calls not called back, unread messages, overdue invoices…). Click one to jump into that client's system.
+- **White-label branding** per business: display name, logo and colour, applied to the app and every customer page, with an optional "Powered by" line.
+- **Audit & proposal builder**: client details → discovery call → time & task audit (pre-loaded with the tasks businesses in that niche do by hand) → the system scores each task, picks the quick wins, estimates hours saved and money recovered (with its assumptions spelled out) and writes a branded proposal. When the client accepts online, their system is created with the agency team on it and a kick-off checklist.
+- **Monthly reports** built automatically on the 1st for every client: hours saved and their value, leads followed up, missed calls texted back, bookings and no-shows, money collected and recovered by chasing, issues resolved and the hardest-working automations. Sent automatically or after review.
+
+### 10. Lead forms
+
+Build a form in **CRM → Lead forms**, share the link or paste the embed code into a website. Submissions create or update the contact (tagged), send a thank-you, and run the new-lead automations. Spam is filtered with a hidden field and rate limits.
+
+### 11. Automation walkthrough presentation
+
+Automations → **Watch the walkthrough** opens a 32-slide presentation for showing a client how an automation project works, from first conversation to results:
 
 1. **The problem:** where the day goes and the hidden cost to staff.
 2. **What changes:** before and after.
 3. **The 8-step onboarding journey:** discovery call, time & task audit (with an example audit), quick wins, system design, build & connect, team training, go-live with support, monthly measure & improve. Each step covers what the client does, what we do and what they get.
 4. **How it works:** the WHEN → IF → THEN rule and where AI fits, with people staying in control.
-5. **Seven worked examples** that run in the system today, each with its flow, result and time saved, plus examples for six different niches.
+5. **Ten worked examples** (including missed-call text-back for trades, self-reminding bookings and automatic invoice chasing) that run in the system today, each with its flow, result and time saved, plus examples for six different niches.
 6. **Your people:** how the system reduces pressure on staff.
 7. **Results:** live figures from the business's own system, and how success is measured.
 8. **Daily routines** by role, then next steps.
@@ -232,12 +308,21 @@ The presentation also has:
 | An issue is raised with an assignee | Tells the assignee it's theirs |
 | An issue passes its response target | Reminds the assignee and escalates to admins |
 | An issue is resolved | Tells whoever raised it, with the resolution |
+| A new lead is added (not from a call, message, form or booking) | Sends an instant welcome message with the booking link |
+| A customer's message mentions an emergency | Alerts everyone |
+| An existing contact fills in a form | Creates a reply task |
+| A booking is made | Tags the contact as booked |
+| A job is marked done | Drafts the invoice and asks someone to check and send it |
+| A customer doesn't turn up | Creates a call-back task |
+| A quote is accepted | Tells the team and creates a "book the work in" task |
+| An invoice is paid | Marks the contact as a customer |
+| An agency proposal is accepted | Tells the agency team |
 
 New automations added in a release are installed for existing businesses automatically, and one a business deleted on purpose is never brought back.
 
 Businesses can switch any of these off, duplicate and edit them, or build their own in the visual **WHEN → IF → THEN** builder.
 
-The available actions are: create a task, notify someone, update a contact, set a follow-up, log a CRM activity, and send to a webhook. Every run is logged with an estimate of the minutes saved, and that estimate drives the **time saved** figures in the app.
+The available actions are: create a task, notify someone, update a contact, set a follow-up, log a CRM activity, send to a webhook, **send an email, text or WhatsApp** (to the customer or the team, optionally after a delay) and **draft an invoice**. Built-in steps also handle missed-call text-back, booking reminders, the job sheet, invoice chasing and monthly reports. Every run is logged with an estimate of the minutes saved, and that estimate drives the **time saved** figures in the app.
 
 ---
 
@@ -267,6 +352,13 @@ server/
     tasks/                 task service (recurrence) + routes
     helpdesk/              issues, response targets, comments
     assistant/             knowledge base, built-in engine, Claude engine, routes
+    messaging/             templates, providers (Twilio, Resend, webhook, demo), inbox, calls
+    bookings/              services, availability, reminders, job sheet, calendar feed
+    billing/               quotes, invoices, payments, chasing, Stripe Checkout
+    agency/                audit scoring, proposals, control centre, monthly reports
+    forms/                 lead forms
+    public/                pages customers open without signing in
+    hooks/                 Twilio and Stripe webhooks (signature-checked)
 public/                    front end: plain ES modules, no build step
   css/app.css              design system (nautical sky blue / white / black)
   js/app.js                router + layout
@@ -296,6 +388,14 @@ All endpoints are under `/api` and use `Authorization: Bearer <token>`, except t
 | Automations | `GET/POST /automations`, `PATCH/DELETE /automations/:id`, `POST /automations/:id/test`, `GET /automations/runs`, `GET /automations/impact`, `GET /automations/meta` |
 | Help Desk | `GET /helpdesk/meta`, `GET/POST /helpdesk/issues`, `GET/PATCH/DELETE /helpdesk/issues/:id`, `POST /helpdesk/issues/:id/comments`, `GET /helpdesk/stats` |
 | Assistant | `GET /assistant/meta`, `POST /assistant/chat`, `GET /assistant/insights` (owners/admins) |
+| Messages | `GET /messages/summary`, `GET /messages/threads`, `GET /messages/threads/:contactId`, `POST /messages/threads/:contactId/send`, `GET /messages/calls`, `POST /messages/calls/:id/handled`, `GET /messages/alerts`, `GET/PUT/DELETE /messages/templates/:key`, `GET/PUT /messages/settings`, `POST /messages/simulate/inbound`, `POST /messages/simulate/missed-call` |
+| Bookings | `GET/POST /bookings`, `GET /bookings/overview`, `GET /bookings/today`, `GET/PATCH /bookings/:id`, `POST /bookings/:id/status`, `/remind`, `/invoice`, `GET/POST/PATCH/DELETE /bookings/services`, `GET /bookings/slots`, `GET/PUT /bookings/settings`, `GET/POST/DELETE /bookings/time-off` |
+| Quotes & invoices | `GET/POST /invoices`, `GET /invoices/summary`, `GET/PUT /invoices/settings`, `POST /invoices/from-deal/:dealId`, `GET/PATCH /invoices/:id`, `POST /invoices/:id/send`, `/accept`, `/decline`, `/convert`, `/void`, `/payments`, `/pay-link`, `/chase` |
+| Forms | `GET/POST /forms`, `GET/PATCH/DELETE /forms/:id` |
+| Agency | `GET /agency/hub`, `PUT /agency/settings`, `POST /agency/clients`, `GET/PATCH /agency/clients/:id`, `GET/POST /agency/audits`, `GET/PATCH/DELETE /agency/audits/:id`, `POST /agency/audits/:id/analyse`, `/send`, `GET/POST /agency/reports`, `POST /agency/reports/:id/send` |
+| Branding | `PATCH /org/brand` |
+| Public (no sign-in) | `GET/POST /public/book/:slug`, `/days`, `/slots`, `GET /public/booking/:token`, `POST /public/booking/:token/confirm|cancel|reschedule`, `GET/POST /public/form/:id`, `GET /public/doc/:token`, `POST /public/doc/:token/accept|decline|pay`, `GET /public/proposal/:token`, `POST /public/proposal/:token/accept|decline`, `GET /public/report/:token`, `GET /public/calendar/:slug/:token.ics` |
+| Webhooks | `POST /hooks/twilio/voice`, `/voice-status`, `/voicemail`, `/messages`, `/status`, `POST /hooks/stripe`, `POST /hooks/inbound/:token` |
 
 ---
 
