@@ -42,3 +42,22 @@ test('with passwords switched back on, the password is required and checked', as
   // Accounts made while passwords were off can't be signed into with a guess.
   assert.equal((await call('POST', '/auth/login', { email: 'nopass@test.com', password: 'anything' })).status, 401);
 });
+
+test('admins can set a teammate’s password and people can change their own', async () => {
+  config.requirePasswords = true;
+  const owner = await call('POST', '/auth/register', { name: 'Own', email: 'own@test.com', password: 'ownerpass1', business_name: 'Set Co' });
+  const mate = await call('POST', '/team', { name: 'Mate', email: 'setmate@test.com', password: 'temporary1', role: 'member' }, owner.body.token);
+  assert.equal((await call('POST', `/team/${mate.body.id}/password`, { password: 'short' }, owner.body.token)).status, 400);
+  assert.equal((await call('POST', `/team/${mate.body.id}/password`, { password: 'brandnew99' }, owner.body.token)).status, 200);
+  const login = await call('POST', '/auth/login', { email: 'setmate@test.com', password: 'brandnew99' });
+  assert.equal(login.status, 200);
+  // A member can't set other people's passwords…
+  assert.equal((await call('POST', `/team/${owner.body.user.id}/password`, { password: 'hijacked99' }, login.body.token)).status, 403);
+  // …but can change their own, given the current one.
+  assert.equal((await call('POST', '/me/password', { current_password: 'wrong', new_password: 'mine12345' }, login.body.token)).status, 400);
+  assert.equal((await call('POST', '/me/password', { current_password: 'brandnew99', new_password: 'mine12345' }, login.body.token)).status, 200);
+  assert.equal((await call('POST', '/auth/login', { email: 'setmate@test.com', password: 'mine12345' })).status, 200);
+  // Someone from another business can't touch this team.
+  const other = await call('POST', '/auth/register', { name: 'Other', email: 'other@test.com', password: 'otherpass1', business_name: 'Other Co' });
+  assert.equal((await call('POST', `/team/${mate.body.id}/password`, { password: 'takeover99' }, other.body.token)).status, 404);
+});

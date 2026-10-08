@@ -124,6 +124,27 @@ export function coreRoutes({ db }) {
       FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.org_id = ? ORDER BY u.name`, req.org.id));
   });
 
+  // Change your own password.
+  r.post('/me/password', auth, (req, res) => {
+    const body = pick(req.body, { current_password: {}, new_password: { required: true } });
+    if (body.new_password.length < 8) throw badRequest('New password must be at least 8 characters');
+    const user = db.get('SELECT * FROM users WHERE id = ?', req.user.id);
+    if (config.requirePasswords && !verifyPassword(body.current_password || '', user.password_hash)) throw badRequest('Your current password is incorrect');
+    db.update('users', user.id, { password_hash: hashPassword(body.new_password) });
+    res.json({ ok: true });
+  });
+
+  // Owners and admins set a teammate's password (e.g. a new starter, or someone locked out).
+  r.post('/team/:userId/password', auth, requireRole('owner', 'admin'), (req, res) => {
+    const body = pick(req.body, { password: { required: true } });
+    if (body.password.length < 8) throw badRequest('Password must be at least 8 characters');
+    const member = db.get('SELECT role FROM memberships WHERE org_id = ? AND user_id = ?', req.org.id, req.params.userId);
+    if (!member) throw new HttpError(404, 'That person is not in your team');
+    if (member.role === 'owner' && req.role !== 'owner') throw new HttpError(403, 'Only an owner can set an owner’s password');
+    db.update('users', req.params.userId, { password_hash: hashPassword(body.password) });
+    res.json({ ok: true });
+  });
+
   r.post('/team', auth, requireRole('owner', 'admin'), (req, res) => {
     const body = pick(req.body, { name: { required: true }, email: { required: true }, password: { required: config.requirePasswords }, role: { enum: ['admin', 'member'] } });
     const email = body.email.toLowerCase();

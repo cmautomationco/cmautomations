@@ -17,7 +17,9 @@ export async function render(el) {
     h('div', { class: 'page-head' },
       h('div', h('div', { class: 'eyebrow' }, 'Settings'), h('h1', { style: { marginTop: '6px' } }, 'Your ', h('span', { class: 'blue' }, 'business'), ' setup'),
         h('p', 'Run several businesses from one login – each has its own funnel, content, CRM, tasks and automations.')),
-      h('button', { class: 'btn soft', onclick: addBusiness }, icon('plus'), 'Add another business')),
+      h('div', { class: 'row' },
+        state.meta?.require_passwords !== false ? h('button', { class: 'btn', onclick: changePassword }, 'Change my password') : null,
+        h('button', { class: 'btn soft', onclick: addBusiness }, icon('plus'), 'Add another business'))),
     h('div', { class: 'grid g2', style: { alignItems: 'start' } },
       h('div', { class: 'card' },
         h('div', { class: 'card-head' }, h('h3', 'Business profile'), canEdit ? h('button', { class: 'btn sm primary', onclick: async () => { try { await patch('/org', formData(orgForm)); toast('Saved'); refresh(); } catch (err) { showError(err); } } }, 'Save') : null),
@@ -28,7 +30,9 @@ export async function render(el) {
         h('div', { class: 'card-body' }, team.map((m) => h('div', { class: 'list-item' }, avatar(m.name),
           h('div', { class: 'grow' }, h('div', { style: { fontWeight: 700 } }, m.name), h('div', { class: 'small muted' }, m.email)),
           h('span', { class: 'small muted' }, `${m.open_tasks} open · ${m.done_this_week} done this week`),
-          h('span', { class: `badge ${m.role === 'owner' ? 'solid' : 'blue'}` }, titleCase(m.role)))))),
+          h('span', { class: `badge ${m.role === 'owner' ? 'solid' : 'blue'}` }, titleCase(m.role)),
+          canEdit && m.id !== state.me.user.id && (m.role !== 'owner' || state.me.role === 'owner') && state.meta?.require_passwords !== false
+            ? h('button', { class: 'btn sm ghost', onclick: () => setPassword(m) }, 'Set password') : null)))),
 
       h('div', { class: 'card span2' },
         h('div', { class: 'card-head' }, h('h3', 'Publishing ', h('span', { class: 'blue' }, 'channels')), canEdit ? h('button', { class: 'btn sm soft', onclick: () => addChannel(reload) }, icon('plus'), 'Connect channel') : null),
@@ -80,4 +84,18 @@ function addBusiness() {
     location.hash = '#/';
     refresh();
   } }] });
+}
+
+function changePassword() {
+  const body = h('div', { class: 'stack' },
+    field('Current password', h('input', { name: 'current_password', type: 'password', autocomplete: 'current-password' })),
+    field('New password', h('input', { name: 'new_password', type: 'password', minLength: 8, autocomplete: 'new-password' }), { help: 'At least 8 characters' }));
+  modal('Change my password', body, { actions: [{ label: 'Cancel' }, { label: 'Save password', primary: true, onClick: async () => { await post('/me/password', formData(body)); toast('Password changed'); } }] });
+}
+
+function setPassword(member) {
+  const body = h('div', { class: 'stack' },
+    h('p', { class: 'small muted' }, `Set a new password for ${member.name}, then share it with them. They can change it in Settings.`),
+    field('New password', h('input', { name: 'password', type: 'text', value: Math.random().toString(36).slice(2, 12) }), { help: 'At least 8 characters' }));
+  modal(`Set password for ${member.name}`, body, { actions: [{ label: 'Cancel' }, { label: 'Set password', primary: true, onClick: async () => { await post(`/team/${member.id}/password`, formData(body)); toast(`Password set for ${member.name}`); } }] });
 }

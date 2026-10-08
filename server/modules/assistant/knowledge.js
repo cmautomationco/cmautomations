@@ -304,8 +304,8 @@ export const TOPICS = [
   {
     key: 'password', title: 'Change my password or sign-in details',
     keywords: ['password', 'forgot password', 'reset password', 'change password', 'login', 'log in', 'sign in', 'email address'],
-    answer: 'Changing passwords isn’t on screen yet in this version. I can raise it with an admin who can reset it for you.',
-    say: 'Report a problem: Please reset my password',
+    answer: 'To change your own password, go to Settings and press “Change my password”. If you’re locked out, an owner or admin can set a new one for you in Settings → Team with “Set password”.',
+    go: { place: 'settings', highlight: 'Change my password' },
   },
 
   // ── Coming soon (honest answers) ──

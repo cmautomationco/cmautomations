@@ -16,8 +16,7 @@ export const config = {
   schedulerIntervalSeconds: Number(process.env.SCHEDULER_INTERVAL_SECONDS || 30),
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
   sessionDays: 30,
-  // Passwords are switched OFF while the system is being tested: signing in
-  // needs only an email. To switch them back on, set this to true (or set
-  // REQUIRE_PASSWORDS=true in .env).
-  requirePasswords: process.env.REQUIRE_PASSWORDS === 'true',
+  // Sign-in needs a password. Setting REQUIRE_PASSWORDS=false in .env switches
+  // to email-only sign-in (useful for short test sessions only).
+  requirePasswords: process.env.REQUIRE_PASSWORDS !== 'false',
 };

@@ -75,7 +75,7 @@ npm start            # http://localhost:3000
 On first start the server seeds a demo business. Sign in with:
 
 - **Email:** `demo@cmautomations.com`
-- **Password:** `demo1234` (only needed once passwords are switched back on, see `REQUIRE_PASSWORDS` below)
+- **Password:** `demo1234`
 
 Other commands:
 
@@ -93,7 +93,7 @@ Configuration is in `.env` (see `.env.example`):
 | `PORT` | `3000` | Web + API port |
 | `DATABASE_PATH` | `./data/cm-automations.db` | SQLite file |
 | `SCHEDULER_INTERVAL_SECONDS` | `30` | How often publishing, reminders and follow-ups run |
-| `REQUIRE_PASSWORDS` | `false` | **Passwords are switched off while the system is being tested**: signing in, creating a business and adding a team member need only an email. Set to `true` to switch passwords back on. |
+| `REQUIRE_PASSWORDS` | `true` | Sign-in needs a password. `false` switches to email-only sign-in for short test sessions. |
 | `ANTHROPIC_API_KEY` | – | Optional. Turns on AI idea generation in the Idea Lab and upgrades the assistant to Claude. Without it, the built-in idea engine and built-in assistant are used. |
 
 ---

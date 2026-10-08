@@ -5,7 +5,7 @@ export const GUIDE = [
     title: 'Getting started',
     intro: 'This is the full system running in your browser with a demo business, Bright Path Coaching. Everything you change is saved in this browser.',
     steps: [
-      ['Sign in. The demo email is already filled in and no password is needed while you test – just press Sign in.', '#/login'],
+      ['Sign in. The demo email and password (demo1234) are already filled in, so just press Sign in.', '#/login'],
       ['Use the business switcher at the top to jump between Bright Path Coaching and Glow Studio. Each business has its own data.', null],
       ['Use Reset data at the bottom of the screen at any time to go back to the original demo.', null],
     ],
