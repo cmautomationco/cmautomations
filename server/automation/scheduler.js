@@ -1,6 +1,10 @@
 import { parseJson } from '../db/index.js';
 import { notifyUsers } from '../modules/core/notifications.js';
 import { publishPost } from './publishers.js';
+import { dispatchDue } from '../modules/messaging/service.js';
+import { runBookingSchedule } from '../modules/bookings/service.js';
+import { runBillingChase } from '../modules/billing/service.js';
+import { runMonthlyReports } from '../modules/agency/service.js';
 
 /**
  * The scheduler runs the time-based side of the system every tick:
@@ -9,6 +13,10 @@ import { publishPost } from './publishers.js';
  *   3. turns due CRM follow-ups into tasks (contact.follow_up_due)
  *   4. escalates Help Desk issues past their response target (issue.overdue)
  *   5. sends each person a morning digest and fires schedule.daily
+ *   6. sends held messages (quiet hours over, review requests due)
+ *   7. booking reminders, the morning job sheet and "was the job done?" nudges
+ *   8. marks invoices overdue and chases them; flags unanswered quotes
+ *   9. builds last month's client reports on the 1st (agencies)
  */
 export function createScheduler(ctx, { intervalSeconds = 30, digestHourUtc = 7 } = {}) {
   let timer = null;
@@ -19,7 +27,7 @@ export function createScheduler(ctx, { intervalSeconds = 30, digestHourUtc = 7 }
     running = true;
     const { db, engine } = ctx;
     const iso = at.toISOString();
-    const summary = { published: 0, overdue: 0, followUps: 0, issues: 0, digests: 0 };
+    const summary = { published: 0, overdue: 0, followUps: 0, issues: 0, digests: 0, messages: 0, bookings: null, billing: null, reports: 0 };
     try {
       for (const post of db.all(`SELECT * FROM scheduled_posts WHERE status = 'queued' AND publish_at <= ? ORDER BY publish_at LIMIT 50`, iso)) {
         const result = await publishPost(ctx, post);
@@ -56,6 +64,13 @@ export function createScheduler(ctx, { intervalSeconds = 30, digestHourUtc = 7 }
           summary.digests++;
         }
       }
+
+      // Each step is independent: one failing must not stop the others.
+      const step = async (name, fn) => { try { return await fn(); } catch (err) { console.error(`[scheduler] ${name}`, err); return null; } };
+      summary.messages = await step('messages', () => dispatchDue(ctx, at));
+      summary.bookings = await step('bookings', () => runBookingSchedule(ctx, at));
+      summary.billing = await step('billing', () => runBillingChase(ctx, at));
+      summary.reports = await step('reports', () => runMonthlyReports(ctx, at));
     } finally {
       running = false;
     }

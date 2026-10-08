@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
+import { migrate } from './migrate.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -14,6 +15,7 @@ export function openDatabase(file) {
   const db = new DatabaseSync(file);
   db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   db.exec(fs.readFileSync(path.join(here, 'schema.sql'), 'utf8'));
+  migrate(db);
   return wrap(db);
 }
 

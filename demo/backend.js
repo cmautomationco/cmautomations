@@ -11,11 +11,18 @@ import { funnelRoutes } from '../server/modules/funnel/routes.js';
 import { taskRoutes } from '../server/modules/tasks/routes.js';
 import { helpdeskRoutes } from '../server/modules/helpdesk/routes.js';
 import { assistantRoutes } from '../server/modules/assistant/routes.js';
+import { messagingRoutes } from '../server/modules/messaging/routes.js';
+import { formRoutes } from '../server/modules/forms/routes.js';
+import { bookingRoutes } from '../server/modules/bookings/routes.js';
+import { billingRoutes } from '../server/modules/billing/routes.js';
+import { agencyRoutes } from '../server/modules/agency/routes.js';
+import { publicRoutes } from '../server/modules/public/routes.js';
 
 export function createBackend(db, { onWrite = () => {} } = {}) {
   const engine = createEngine(db);
   const ctx = { db, engine };
-  // Same order as server/app.js.
+  // Same order as server/app.js. (Webhooks from Twilio/Stripe can't reach a browser,
+  // so the test build simulates calls, messages and payments instead.)
   const mounts = [
     ['/api', coreRoutes(ctx)],
     ['/api/funnel', funnelRoutes(ctx)],
@@ -25,6 +32,12 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
     ['/api/automations', automationRoutes(ctx)],
     ['/api/helpdesk', helpdeskRoutes(ctx)],
     ['/api/assistant', assistantRoutes(ctx)],
+    ['/api/messages', messagingRoutes(ctx)],
+    ['/api/forms', formRoutes(ctx)],
+    ['/api/bookings', bookingRoutes(ctx)],
+    ['/api/invoices', billingRoutes(ctx)],
+    ['/api/agency', agencyRoutes(ctx)],
+    ['/api/public', publicRoutes(ctx)],
   ];
 
   async function request(method, url, headers = {}, rawBody) {
@@ -37,12 +50,15 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
       params: {},
       body: rawBody ? JSON.parse(rawBody) : {},
       get: (name) => lowerHeaders[name.toLowerCase()],
+      ip: 'browser',
     };
     const res = {
       statusCode: 200,
       body: undefined,
       status(code) { this.statusCode = code; return this; },
       json(data) { this.body = data; return this; },
+      type() { return this; },
+      send(data) { this.body = data; return this; },
     };
     try {
       if (req.path === '/api/health') return { status: 200, body: { ok: true } };

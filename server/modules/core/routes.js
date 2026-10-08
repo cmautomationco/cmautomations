@@ -6,18 +6,23 @@ import { config } from '../../config.js';
 import { HttpError, badRequest, id, now, pick } from '../../lib/util.js';
 import { installMissingRecipes } from '../../automation/recipes.js';
 import { NICHES, PLATFORMS, getNiche } from './niches.js';
+import { cleanBrand } from '../../lib/brand.js';
+import { uniqueSlug } from '../../db/migrate.js';
+
+const parseBrandSafe = (raw) => { if (raw && typeof raw === 'object') return raw; try { return JSON.parse(raw || '{}') || {}; } catch { return {}; } };
 
 /**
  * Creates a new business (tenant) and seeds it from its niche preset:
  * brand profile, content pillars, a default publishing channel and all
  * recommended automations.
  */
-export function provisionOrganization(db, { name, niche, business_type, ownerId }) {
+export function provisionOrganization(db, { name, niche, business_type, ownerId, kind = 'business' }) {
   const preset = getNiche(niche);
   const ts = now();
   const org = {
     id: id('org'), name, niche: NICHES[niche] ? niche : 'coaching',
     business_type: business_type || preset.businessType, timezone: 'Europe/London', created_at: ts,
+    kind: kind === 'agency' ? 'agency' : 'business', slug: uniqueSlug(db.raw || db, name), brand: {},
   };
   db.insert('organizations', org);
   db.insert('memberships', { org_id: org.id, user_id: ownerId, role: 'owner' });
@@ -89,9 +94,24 @@ export function coreRoutes({ db }) {
   });
 
   r.get('/me', auth, (req, res) => {
-    const orgs = db.all(`SELECT o.id, o.name, o.niche, m.role FROM memberships m JOIN organizations o ON o.id = m.org_id WHERE m.user_id = ? ORDER BY o.name`, req.user.id);
+    const orgs = db.all(`SELECT o.id, o.name, o.niche, o.kind, o.agency_id, m.role FROM memberships m JOIN organizations o ON o.id = m.org_id WHERE m.user_id = ? ORDER BY o.kind = 'agency' DESC, o.name`, req.user.id);
     const unread = db.get('SELECT COUNT(*) AS n FROM notifications WHERE user_id = ? AND org_id = ? AND read = 0', req.user.id, req.org.id).n;
-    res.json({ user: req.user, org: req.org, role: req.role, orgs, unread, niche: { key: req.org.niche, label: getNiche(req.org.niche).label } });
+    const agency = req.org.agency_id ? db.get('SELECT id, name, brand FROM organizations WHERE id = ?', req.org.agency_id) : null;
+    // Agency owners/admins see the control centre from any business they manage.
+    const agencyAccess = orgs.some((o) => o.kind === 'agency' && ['owner', 'admin'].includes(o.role));
+    res.json({
+      user: req.user, org: { ...req.org, brand: parseBrandSafe(req.org.brand) }, role: req.role, orgs, unread,
+      niche: { key: req.org.niche, label: getNiche(req.org.niche).label },
+      agency: agency ? { id: agency.id, name: parseBrandSafe(agency.brand).display_name || agency.name } : null,
+      agency_access: agencyAccess,
+    });
+  });
+
+  /** White-label branding for the current business: display name, logo and colour. */
+  r.patch('/org/brand', auth, requireRole('owner', 'admin'), (req, res) => {
+    const brand = cleanBrand(req.body || {}, parseBrandSafe(req.org.brand));
+    db.update('organizations', req.org.id, { brand });
+    res.json(brand);
   });
 
   // Switch the active business (one login can manage several businesses).
@@ -104,8 +124,8 @@ export function coreRoutes({ db }) {
 
   // Add another business under the same login (agency / multi-business owners).
   r.post('/orgs', auth, (req, res) => {
-    const body = pick(req.body, { name: { required: true, max: 120 }, niche: { enum: Object.keys(NICHES) }, business_type: { enum: ['product', 'service', 'hybrid'] } });
-    const org = db.tx(() => provisionOrganization(db, { ...body, niche: body.niche || 'coaching', ownerId: req.user.id }));
+    const body = pick(req.body, { name: { required: true, max: 120 }, niche: { enum: Object.keys(NICHES) }, business_type: { enum: ['product', 'service', 'hybrid'] }, kind: { enum: ['business', 'agency'] } });
+    const org = db.tx(() => provisionOrganization(db, { ...body, niche: body.niche || (body.kind === 'agency' ? 'agency' : 'coaching'), ownerId: req.user.id }));
     res.status(201).json(org);
   });
 

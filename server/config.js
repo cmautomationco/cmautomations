@@ -16,7 +16,21 @@ export const config = {
   schedulerIntervalSeconds: Number(process.env.SCHEDULER_INTERVAL_SECONDS || 30),
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
   sessionDays: 30,
+  // The address people use to reach this system; used in links sent by text,
+  // WhatsApp and email (booking pages, invoices, proposals, reports).
+  publicUrl: (process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, ''),
+  // Texts, WhatsApp and calls (Twilio). Without these, messages run in demo mode.
+  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || '',
+  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || '',
+  // Email sending (Resend). Without a key, email runs in demo mode.
+  resendApiKey: process.env.RESEND_API_KEY || '',
+  emailFrom: process.env.EMAIL_FROM || '',
+  // Card payments (Stripe). Without a key, invoices show bank transfer details.
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY || '',
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
   // Sign-in needs a password. Setting REQUIRE_PASSWORDS=false in .env switches
   // to email-only sign-in (useful for short test sessions only).
   requirePasswords: process.env.REQUIRE_PASSWORDS !== 'false',
+  // Test builds only: lets "pay by card" be simulated without Stripe. Never set this on a live system.
+  demoMode: process.env.DEMO_MODE === 'true',
 };

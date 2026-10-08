@@ -10,6 +10,13 @@ import { funnelRoutes } from './modules/funnel/routes.js';
 import { taskRoutes } from './modules/tasks/routes.js';
 import { helpdeskRoutes } from './modules/helpdesk/routes.js';
 import { assistantRoutes } from './modules/assistant/routes.js';
+import { messagingRoutes } from './modules/messaging/routes.js';
+import { formRoutes } from './modules/forms/routes.js';
+import { bookingRoutes } from './modules/bookings/routes.js';
+import { billingRoutes } from './modules/billing/routes.js';
+import { agencyRoutes } from './modules/agency/routes.js';
+import { publicRoutes } from './modules/public/routes.js';
+import { hookRoutes } from './modules/hooks/routes.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -20,7 +27,12 @@ export function createApp(db) {
   const app = express();
 
   app.disable('x-powered-by');
-  app.use(express.json({ limit: '1mb' }));
+  // Behind a proxy (Render, Fly, Railway…) so rate limits see the real visitor address.
+  app.set('trust proxy', 1);
+  // Keep the raw body: Stripe and Twilio sign their webhooks over it.
+  const keepRaw = (req, _res, buf) => { req.rawBody = buf.toString('utf8'); };
+  app.use(express.json({ limit: '1mb', verify: keepRaw }));
+  app.use(express.urlencoded({ extended: false, limit: '1mb', verify: keepRaw }));
 
   app.get('/api/health', (_req, res) => res.json({ ok: true }));
   app.use('/api', coreRoutes(ctx));
@@ -31,6 +43,13 @@ export function createApp(db) {
   app.use('/api/automations', automationRoutes(ctx));
   app.use('/api/helpdesk', helpdeskRoutes(ctx));
   app.use('/api/assistant', assistantRoutes(ctx));
+  app.use('/api/messages', messagingRoutes(ctx));
+  app.use('/api/forms', formRoutes(ctx));
+  app.use('/api/bookings', bookingRoutes(ctx));
+  app.use('/api/invoices', billingRoutes(ctx));
+  app.use('/api/agency', agencyRoutes(ctx));
+  app.use('/api/public', publicRoutes(ctx));
+  app.use('/api/hooks', hookRoutes(ctx));
 
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 

@@ -301,3 +301,237 @@ CREATE TABLE IF NOT EXISTS assistant_logs (
   resolved   INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL
 );
+
+-- ───────────────────────── Messages (email, SMS, WhatsApp) ─────────────────────────
+CREATE TABLE IF NOT EXISTS messages (
+  id            TEXT PRIMARY KEY,
+  org_id        TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  contact_id    TEXT REFERENCES contacts(id) ON DELETE SET NULL,
+  channel       TEXT NOT NULL CHECK (channel IN ('email','sms','whatsapp')),
+  direction     TEXT NOT NULL CHECK (direction IN ('out','in')),
+  to_addr       TEXT,
+  from_addr     TEXT,
+  subject       TEXT,
+  body          TEXT NOT NULL,
+  status        TEXT NOT NULL CHECK (status IN ('queued','sent','delivered','failed','demo','blocked','received')),
+  provider      TEXT,
+  provider_id   TEXT,
+  error         TEXT,
+  template_key  TEXT,
+  related_type  TEXT,
+  related_id    TEXT,
+  send_after    TEXT,
+  read          INTEGER NOT NULL DEFAULT 1,
+  created_by    TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at    TEXT NOT NULL,
+  sent_at       TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_messages_org ON messages(org_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_messages_contact ON messages(contact_id, created_at);
+
+CREATE TABLE IF NOT EXISTS message_templates (
+  org_id     TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  key        TEXT NOT NULL,
+  subject    TEXT,
+  body       TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (org_id, key)
+);
+
+-- Calls to the business number (forwarded to a mobile; missed ones get a text back).
+CREATE TABLE IF NOT EXISTS calls (
+  id               TEXT PRIMARY KEY,
+  org_id           TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  contact_id       TEXT REFERENCES contacts(id) ON DELETE SET NULL,
+  from_number      TEXT NOT NULL,
+  to_number        TEXT,
+  status           TEXT NOT NULL CHECK (status IN ('missed','answered','voicemail')),
+  duration_seconds INTEGER,
+  recording_url    TEXT,
+  provider_id      TEXT,
+  texted_back      INTEGER NOT NULL DEFAULT 0,
+  handled          INTEGER NOT NULL DEFAULT 0,
+  created_at       TEXT NOT NULL
+);
+
+-- ───────────────────────── Lead capture forms ─────────────────────────
+CREATE TABLE IF NOT EXISTS forms (
+  id             TEXT PRIMARY KEY,
+  org_id         TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  name           TEXT NOT NULL,
+  title          TEXT NOT NULL,
+  intro          TEXT,
+  fields         TEXT NOT NULL DEFAULT '[]',
+  button_label   TEXT NOT NULL DEFAULT 'Send',
+  thank_you      TEXT NOT NULL,
+  send_thank_you INTEGER NOT NULL DEFAULT 1,
+  tags           TEXT NOT NULL DEFAULT '[]',
+  active         INTEGER NOT NULL DEFAULT 1,
+  submissions    INTEGER NOT NULL DEFAULT 0,
+  created_at     TEXT NOT NULL,
+  updated_at     TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS form_submissions (
+  id         TEXT PRIMARY KEY,
+  form_id    TEXT NOT NULL REFERENCES forms(id) ON DELETE CASCADE,
+  org_id     TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  contact_id TEXT REFERENCES contacts(id) ON DELETE SET NULL,
+  data       TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+-- ───────────────────────── Bookings ─────────────────────────
+CREATE TABLE IF NOT EXISTS services (
+  id            TEXT PRIMARY KEY,
+  org_id        TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  name          TEXT NOT NULL,
+  description   TEXT,
+  kind          TEXT NOT NULL DEFAULT 'appointment' CHECK (kind IN ('appointment','callout','quote_visit','job')),
+  duration_min  INTEGER NOT NULL DEFAULT 60,
+  buffer_min    INTEGER NOT NULL DEFAULT 0,
+  price_pence   INTEGER NOT NULL DEFAULT 0,
+  deposit_pence INTEGER NOT NULL DEFAULT 0,
+  online        INTEGER NOT NULL DEFAULT 1,
+  active        INTEGER NOT NULL DEFAULT 1,
+  position      INTEGER NOT NULL DEFAULT 0,
+  created_at    TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bookings (
+  id                    TEXT PRIMARY KEY,
+  org_id                TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  service_id            TEXT REFERENCES services(id) ON DELETE SET NULL,
+  contact_id            TEXT REFERENCES contacts(id) ON DELETE SET NULL,
+  staff_id              TEXT REFERENCES users(id) ON DELETE SET NULL,
+  starts_at             TEXT NOT NULL,
+  ends_at               TEXT NOT NULL,
+  status                TEXT NOT NULL DEFAULT 'confirmed' CHECK (status IN ('requested','confirmed','on_the_way','completed','cancelled','no_show')),
+  urgency               TEXT NOT NULL DEFAULT 'normal' CHECK (urgency IN ('normal','emergency')),
+  source                TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('online','phone','whatsapp','manual')),
+  address               TEXT,
+  postcode              TEXT,
+  notes                 TEXT,
+  customer_confirmed_at TEXT,
+  reschedule_requested  INTEGER NOT NULL DEFAULT 0,
+  reminder_24h_at       TEXT,
+  reminder_2h_at        TEXT,
+  on_the_way_at         TEXT,
+  completed_at          TEXT,
+  cancelled_at          TEXT,
+  cancel_reason         TEXT,
+  deposit_pence         INTEGER NOT NULL DEFAULT 0,
+  price_pence           INTEGER NOT NULL DEFAULT 0,
+  invoice_id            TEXT,
+  check_notified        INTEGER NOT NULL DEFAULT 0,
+  public_token          TEXT NOT NULL,
+  created_by            TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at            TEXT NOT NULL,
+  updated_at            TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_bookings_org_time ON bookings(org_id, starts_at);
+
+CREATE TABLE IF NOT EXISTS time_off (
+  id        TEXT PRIMARY KEY,
+  org_id    TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  staff_id  TEXT REFERENCES users(id) ON DELETE CASCADE,
+  starts_at TEXT NOT NULL,
+  ends_at   TEXT NOT NULL,
+  reason    TEXT
+);
+
+-- ───────────────────────── Quotes, invoices & payments ─────────────────────────
+CREATE TABLE IF NOT EXISTS invoices (
+  id                   TEXT PRIMARY KEY,
+  org_id               TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  kind                 TEXT NOT NULL CHECK (kind IN ('quote','invoice')),
+  purpose              TEXT NOT NULL DEFAULT 'standard' CHECK (purpose IN ('standard','deposit')),
+  number               TEXT NOT NULL,
+  contact_id           TEXT REFERENCES contacts(id) ON DELETE SET NULL,
+  deal_id              TEXT REFERENCES deals(id) ON DELETE SET NULL,
+  booking_id           TEXT REFERENCES bookings(id) ON DELETE SET NULL,
+  status               TEXT NOT NULL CHECK (status IN ('draft','sent','accepted','declined','converted','part_paid','paid','overdue','void')),
+  title                TEXT,
+  issue_date           TEXT NOT NULL,
+  due_date             TEXT,
+  line_items           TEXT NOT NULL DEFAULT '[]',
+  subtotal_pence       INTEGER NOT NULL DEFAULT 0,
+  vat_pence            INTEGER NOT NULL DEFAULT 0,
+  total_pence          INTEGER NOT NULL DEFAULT 0,
+  paid_pence           INTEGER NOT NULL DEFAULT 0,
+  notes                TEXT,
+  public_token         TEXT NOT NULL,
+  checkout_session     TEXT,
+  sent_at              TEXT,
+  accepted_at          TEXT,
+  accepted_by          TEXT,
+  declined_at          TEXT,
+  decline_reason       TEXT,
+  paid_at              TEXT,
+  from_quote_id        TEXT,
+  converted_invoice_id TEXT,
+  chase                INTEGER NOT NULL DEFAULT 1,
+  reminders_sent       INTEGER NOT NULL DEFAULT 0,
+  last_reminder_at     TEXT,
+  followed_up          INTEGER NOT NULL DEFAULT 0,
+  created_by           TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at           TEXT NOT NULL,
+  updated_at           TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_invoices_org ON invoices(org_id, kind, status);
+
+CREATE TABLE IF NOT EXISTS payments (
+  id           TEXT PRIMARY KEY,
+  org_id       TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  invoice_id   TEXT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+  amount_pence INTEGER NOT NULL,
+  method       TEXT NOT NULL CHECK (method IN ('card','bank_transfer','cash','other')),
+  reference    TEXT,
+  provider_id  TEXT,
+  created_by   TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at   TEXT NOT NULL
+);
+
+-- ───────────────────────── Agency: audits, proposals & monthly reports ─────────────────────────
+CREATE TABLE IF NOT EXISTS audits (
+  id                TEXT PRIMARY KEY,
+  org_id            TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  client_name       TEXT NOT NULL,
+  contact_name      TEXT,
+  contact_email     TEXT,
+  contact_phone     TEXT,
+  niche             TEXT NOT NULL DEFAULT 'coaching',
+  team_size         INTEGER NOT NULL DEFAULT 1,
+  hourly_cost_pence INTEGER NOT NULL DEFAULT 2500,
+  setup_fee_pence   INTEGER NOT NULL DEFAULT 0,
+  monthly_fee_pence INTEGER NOT NULL DEFAULT 0,
+  discovery         TEXT NOT NULL DEFAULT '{}',
+  tasks             TEXT NOT NULL DEFAULT '[]',
+  analysis          TEXT NOT NULL DEFAULT '{}',
+  proposal          TEXT NOT NULL DEFAULT '{}',
+  status            TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','proposal_sent','accepted','declined')),
+  public_token      TEXT NOT NULL,
+  client_org_id     TEXT REFERENCES organizations(id) ON DELETE SET NULL,
+  created_by        TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at        TEXT NOT NULL,
+  updated_at        TEXT NOT NULL,
+  sent_at           TEXT,
+  accepted_at       TEXT,
+  accepted_by       TEXT,
+  declined_at       TEXT,
+  decline_reason    TEXT
+);
+
+CREATE TABLE IF NOT EXISTS reports (
+  id           TEXT PRIMARY KEY,
+  org_id       TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  agency_id    TEXT REFERENCES organizations(id) ON DELETE SET NULL,
+  period       TEXT NOT NULL,
+  data         TEXT NOT NULL,
+  summary      TEXT,
+  status       TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','sent')),
+  public_token TEXT NOT NULL,
+  created_at   TEXT NOT NULL,
+  sent_at      TEXT,
+  UNIQUE (org_id, period)
+);

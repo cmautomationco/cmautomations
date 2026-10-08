@@ -145,6 +145,111 @@ export const RECIPES = [
       { type: 'notify', to: 'reporter', title: '✅ Sorted: {{issue.title}}', body: '{{issue.resolution}}', link: '#/helpdesk/{{issue.id}}' },
     ],
   },
+  {
+    recipe: 'new_lead_welcome_message',
+    name: 'New lead → instant welcome message',
+    description: 'Sends every new enquiry a friendly welcome by WhatsApp, text or email straight away, with your booking link. (Missed calls, forms and bookings send their own replies.)',
+    trigger: 'contact.created',
+    conditions: [
+      { field: 'contact.lifecycle', op: 'eq', value: 'lead' },
+      { field: 'contact.source', op: 'not_in', value: 'Phone call,WhatsApp,Text message,Email,Website form,Online booking,Booking' },
+    ],
+    actions: [
+      { type: 'send_message', template: 'new_lead_welcome', channel: 'auto' },
+    ],
+  },
+  {
+    recipe: 'follow_up_check_in',
+    name: 'Follow-up date reached → check-in message',
+    description: 'Sends a short check-in when a follow-up date arrives. Off by default – switch on if you’d like the first nudge to go automatically.',
+    trigger: 'contact.follow_up_due',
+    enabled: false,
+    conditions: [{ field: 'contact.lifecycle', op: 'in', value: 'lead,prospect' }],
+    actions: [
+      { type: 'send_message', channel: 'auto', subject: 'Just checking in', body: 'Hi{{first_name_spaced}}, just checking in – is there anything we can help with? You can book a time here: {{booking_link}} – {{business}}' },
+    ],
+  },
+  {
+    recipe: 'emergency_message_alert',
+    name: 'Emergency message → alert everyone',
+    description: 'If a customer’s text or WhatsApp mentions a leak, no heating, no power or similar, everyone in the team is alerted straight away.',
+    trigger: 'message.received',
+    conditions: [{ field: 'urgent', op: 'eq', value: 'true' }],
+    actions: [
+      { type: 'notify', to: 'all', title: '🚨 Emergency message from {{contact.first_name}} {{contact.last_name}}', body: '“{{message.body}}”', link: '#/messages/{{contact.id}}' },
+    ],
+  },
+  {
+    recipe: 'form_existing_contact',
+    name: 'Form from an existing contact → reply task',
+    description: 'When someone already in the CRM fills in a form, the contact owner gets a task to reply (new leads already get a welcome call task).',
+    trigger: 'form.submitted',
+    conditions: [{ field: 'created', op: 'eq', value: 'false' }],
+    actions: [
+      { type: 'create_task', title: 'Reply to {{contact.first_name}}’s web enquiry ({{form.name}})', description: '{{summary}}', priority: 'high', due_in_days: 0, assign_to: 'owner' },
+    ],
+  },
+  {
+    recipe: 'booking_to_crm',
+    name: 'New booking → update the CRM',
+    description: 'Every booking is logged against the customer and tagged, so the CRM always shows who’s booked in.',
+    trigger: 'booking.created',
+    conditions: [],
+    actions: [
+      { type: 'update_contact', add_tag: 'booked' },
+    ],
+  },
+  {
+    recipe: 'job_done_invoice',
+    name: 'Job done → draft the invoice',
+    description: 'When a booking is marked done, the invoice is drafted from the service price (less any deposit) and someone is asked to check and send it.',
+    trigger: 'booking.completed',
+    conditions: [{ field: 'booking.price_pence', op: 'gt', value: '0' }],
+    actions: [
+      { type: 'create_invoice', assign_to: 'admins' },
+    ],
+  },
+  {
+    recipe: 'no_show_follow_up',
+    name: 'No-show → follow-up task',
+    description: 'When someone doesn’t turn up, they get a “sorry we missed you” message with a rebooking link, and the owner gets a call-back task.',
+    trigger: 'booking.no_show',
+    conditions: [],
+    actions: [
+      { type: 'create_task', title: 'Call {{contact.first_name}} {{contact.last_name}} – missed their {{service.name}}', priority: 'medium', due_in_days: 1, assign_to: 'owner' },
+    ],
+  },
+  {
+    recipe: 'quote_accepted_book_in',
+    name: 'Quote accepted → book the work in',
+    description: 'When a customer accepts a quote online, the team is told and a task is created to book the work in.',
+    trigger: 'quote.accepted',
+    conditions: [],
+    actions: [
+      { type: 'notify', to: 'all', title: '✅ Quote {{quote.number}} accepted', body: '{{contact.first_name}} {{contact.last_name}} accepted the quote.', link: '#/invoices/{{quote.id}}' },
+      { type: 'create_task', title: 'Book in the work for {{contact.first_name}} {{contact.last_name}} (quote {{quote.number}})', description: 'Quote accepted online. Agree a date, add it in Bookings, then convert the quote to an invoice when the work is done.', priority: 'high', due_in_days: 1, assign_to: 'admins' },
+    ],
+  },
+  {
+    recipe: 'invoice_paid_customer',
+    name: 'Invoice paid → mark as customer',
+    description: 'When an invoice is paid in full the contact is marked as a customer and tagged “paid”.',
+    trigger: 'invoice.paid',
+    conditions: [],
+    actions: [
+      { type: 'update_contact', lifecycle: 'customer', add_tag: 'paid' },
+    ],
+  },
+  {
+    recipe: 'proposal_accepted_celebrate',
+    name: 'Proposal accepted → tell the agency team',
+    description: 'When a prospect accepts an agency proposal, everyone in the agency hears about it.',
+    trigger: 'proposal.accepted',
+    conditions: [],
+    actions: [
+      { type: 'notify', to: 'all', title: '🎉 New client: {{audit.client_name}}', body: 'Their system has been created and a kick-off task is ready.', link: '#/agency' },
+    ],
+  },
 ];
 
 /**
@@ -162,7 +267,7 @@ export function installMissingRecipes(db, orgId) {
       if (installed.has(r.recipe)) continue;
       db.insert('automations', {
         id: id('aut'), org_id: org.id, name: r.name, description: r.description, trigger: r.trigger,
-        conditions: r.conditions, actions: r.actions, enabled: 1, recipe: r.recipe, run_count: 0, created_at: now(),
+        conditions: r.conditions, actions: r.actions, enabled: r.enabled === false ? 0 : 1, recipe: r.recipe, run_count: 0, created_at: now(),
       });
       installed.add(r.recipe);
       added++;

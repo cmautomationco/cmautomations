@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { parseJson } from '../../db/index.js';
 import { requireAuth } from '../../lib/auth.js';
+import { toE164 } from '../../lib/phone.js';
+import { createContact } from './service.js';
 import { badRequest, id, notFound, now, pick } from '../../lib/util.js';
 
 export const DEAL_STAGES = ['new', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
@@ -9,7 +11,9 @@ const LIFECYCLES = ['lead', 'prospect', 'customer', 'churned'];
 const contactSchema = {
   first_name: { required: true, max: 80 }, last_name: { max: 80 }, email: { max: 200 }, phone: { max: 40 },
   company: { max: 120 }, source: { max: 80 }, lifecycle: { enum: LIFECYCLES }, owner_id: {}, tags: { type: 'array' },
-  next_follow_up_at: {},
+  next_follow_up_at: {}, address: { max: 300 }, postcode: { max: 12 },
+  preferred_channel: { enum: ['auto', 'email', 'sms', 'whatsapp'] }, whatsapp_opt_in: { type: 'boolean' },
+  sms_opt_out: { type: 'boolean' }, email_opt_out: { type: 'boolean' },
 };
 
 function getContact(db, orgId, contactId) {
@@ -50,13 +54,7 @@ export function crmRoutes({ db, engine }) {
   r.post('/contacts', (req, res) => {
     const body = pick(req.body, contactSchema);
     assertMember(db, req.org.id, body.owner_id);
-    const ts = now();
-    const contact = {
-      id: id('con'), org_id: req.org.id, ...body, lifecycle: body.lifecycle || 'lead', owner_id: body.owner_id || req.user.id,
-      tags: body.tags || [], created_at: ts, updated_at: ts,
-    };
-    db.insert('contacts', contact);
-    const automations = engine.emit(req.org.id, 'contact.created', { contact }, { actorId: req.user.id });
+    const { contact, automations } = createContact({ db, engine }, req.org.id, { ...body, owner_id: body.owner_id || req.user.id }, { actorId: req.user.id });
     res.status(201).json({ contact: getContact(db, req.org.id, contact.id), automations });
   });
 
@@ -66,10 +64,7 @@ export function crmRoutes({ db, engine }) {
     const created = [];
     for (const raw of req.body.contacts.slice(0, 1000)) {
       const body = pick(raw, contactSchema);
-      const ts = now();
-      const contact = { id: id('con'), org_id: req.org.id, ...body, lifecycle: body.lifecycle || 'lead', owner_id: req.user.id, tags: body.tags || [], created_at: ts, updated_at: ts };
-      db.insert('contacts', contact);
-      engine.emit(req.org.id, 'contact.created', { contact }, { actorId: req.user.id });
+      const { contact } = createContact({ db, engine }, req.org.id, { ...body, owner_id: req.user.id }, { actorId: req.user.id });
       created.push(contact.id);
     }
     res.status(201).json({ imported: created.length });
@@ -87,6 +82,8 @@ export function crmRoutes({ db, engine }) {
     getContact(db, req.org.id, req.params.id);
     const patch = pick(req.body, contactSchema, { partial: true });
     assertMember(db, req.org.id, patch.owner_id);
+    if (patch.phone !== undefined) patch.phone_e164 = toE164(patch.phone);
+    if (patch.postcode) patch.postcode = patch.postcode.toUpperCase();
     db.update('contacts', req.params.id, { ...patch, updated_at: now() });
     res.json(getContact(db, req.org.id, req.params.id));
   });

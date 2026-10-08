@@ -2,6 +2,8 @@ import crypto from 'node:crypto';
 
 export const id = (prefix) => `${prefix}_${crypto.randomBytes(8).toString('hex')}`;
 export const now = () => new Date().toISOString();
+/** Unguessable token for links people open without signing in (invoices, bookings, proposals). */
+export const publicToken = () => crypto.randomBytes(18).toString('hex');
 
 export function addDays(date, days) {
   const d = new Date(date);

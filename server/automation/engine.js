@@ -2,6 +2,8 @@ import { parseJson } from '../db/index.js';
 import { addDays, id, now, render } from '../lib/util.js';
 import { createTask } from '../modules/tasks/service.js';
 import { notifyUsers, resolveRecipients } from '../modules/core/notifications.js';
+import { alertStaff, bookingVars, sendInBackground } from '../modules/messaging/service.js';
+import { documentVars, invoiceFrom } from '../modules/billing/service.js';
 
 /**
  * The automation engine.
@@ -29,6 +31,23 @@ export const TRIGGERS = {
   'issue.created': 'A Help Desk issue is raised',
   'issue.overdue': 'A Help Desk issue passes its response target',
   'issue.resolved': 'A Help Desk issue is resolved',
+  'message.received': 'A customer sends a text, WhatsApp or email',
+  'call.missed': 'A call to the business number is missed',
+  'form.submitted': 'A website lead form is submitted',
+  'booking.created': 'A booking is made (online, by phone or WhatsApp)',
+  'booking.customer_confirmed': 'A customer confirms their booking (replies C)',
+  'booking.reschedule_requested': 'A customer asks to rearrange (replies R)',
+  'booking.on_the_way': 'The team is on the way to a booking',
+  'booking.completed': 'A booking or job is marked done',
+  'booking.no_show': 'A customer doesn’t turn up',
+  'booking.cancelled': 'A booking is cancelled',
+  'quote.sent': 'A quote is sent',
+  'quote.accepted': 'A customer accepts a quote',
+  'quote.declined': 'A customer declines a quote',
+  'invoice.sent': 'An invoice is sent',
+  'invoice.paid': 'An invoice is paid in full',
+  'invoice.overdue': 'An invoice becomes overdue',
+  'proposal.accepted': 'A client accepts an agency proposal',
 };
 
 export const ACTIONS = {
@@ -38,6 +57,8 @@ export const ACTIONS = {
   set_follow_up: { label: 'Set a follow-up date', minutes: 2 },
   log_activity: { label: 'Log a CRM activity', minutes: 2 },
   webhook: { label: 'Send to a webhook (Zapier, Make, etc.)', minutes: 5 },
+  send_message: { label: 'Send an email, text or WhatsApp', minutes: 4 },
+  create_invoice: { label: 'Draft an invoice', minutes: 10 },
 };
 
 const OPERATORS = {
@@ -48,6 +69,7 @@ const OPERATORS = {
   lt: (a, b) => Number(a) < Number(b),
   contains: (a, b) => (Array.isArray(a) ? a.map(String).includes(String(b)) : String(a ?? '').toLowerCase().includes(String(b).toLowerCase())),
   in: (a, b) => (Array.isArray(b) ? b : String(b).split(',').map((s) => s.trim())).includes(String(a)),
+  not_in: (a, b) => !(Array.isArray(b) ? b : String(b).split(',').map((s) => s.trim())).includes(String(a)),
   exists: (a) => a !== undefined && a !== null && a !== '',
 };
 
@@ -128,7 +150,7 @@ function runAction(db, engine, orgId, action, ctx, { actorId }) {
         assignee_id: assignee || null,
         checklist: (action.checklist || []).map((text) => ({ text: r(text), done: false })),
         source: 'automation',
-        source_ref: ctx.contact?.id || ctx.deal?.id || ctx.project?.id || ctx.idea?.id || ctx.post?.id || ctx.issue?.id || ctx.task?.id || null,
+        source_ref: ctx.contact?.id || ctx.deal?.id || ctx.booking?.contact_id || ctx.invoice?.contact_id || ctx.project?.id || ctx.idea?.id || ctx.post?.id || ctx.issue?.id || ctx.task?.id || null,
       }, { actorId, emit: false });
       return `Created task “${task.title}”`;
     }
@@ -174,6 +196,40 @@ function runAction(db, engine, orgId, action, ctx, { actorId }) {
         signal: AbortSignal.timeout(10_000),
       }).catch((err) => engine.logSystemRun(orgId, 'Webhook delivery', 'webhook', `Failed: ${err.message}`, 0, 'error'));
       return `Sent webhook to ${new URL(action.url).host}`;
+    }
+    case 'send_message': {
+      // Placeholders can use the event (e.g. {{contact.first_name}}) and the message ones (e.g. {{first_name_spaced}}).
+      const extra = {};
+      if (ctx.booking) Object.assign(extra, bookingVars(ctx.booking, ctx.service || { name: ctx.booking.service_name }, ctx.org?.timezone));
+      if (ctx.invoice) Object.assign(extra, documentVars(ctx.invoice, ctx.org));
+      const vars = { ...extra, ...ctx };
+      if (action.to === 'team') {
+        const sent = alertStaff({ db, engine }, orgId, action.template || 'staff_custom', { ...vars, message: r(action.body || '') }, { title: r(action.title || action.body || 'Automation alert'), link: r(action.link || '') || '#/' });
+        return sent?.message ? 'Alerted the team' : 'Alerted the team in the app';
+      }
+      const contactId = ctx.contact?.id || ctx.deal?.contact_id || ctx.booking?.contact_id || ctx.invoice?.contact_id;
+      if (!contactId) return 'No contact to message';
+      const sendAfter = Number(action.delay_hours) > 0 ? new Date(Date.now() + Number(action.delay_hours) * 3600_000).toISOString() : null;
+      const { message, skipped } = sendInBackground({ db, engine }, orgId, {
+        contactId, channel: action.channel || 'auto', template: action.template || undefined,
+        subject: action.subject || undefined, body: action.template ? undefined : action.body, vars, sendAfter,
+        related: ctx.booking ? { type: 'booking', id: ctx.booking.id } : ctx.invoice ? { type: 'invoice', id: ctx.invoice.id } : null,
+      });
+      if (!message) return `Message not sent: ${skipped}`;
+      if (message.status === 'blocked') return `Message blocked: ${message.error}`;
+      const how = { sms: 'text', whatsapp: 'WhatsApp', email: 'email' }[message.channel];
+      return sendAfter ? `Scheduled a ${how} for ${action.delay_hours}h from now` : message.send_after ? `Queued a ${how} until quiet hours end` : `Sent a ${how}`;
+    }
+    case 'create_invoice': {
+      const invoice = invoiceFrom({ db, engine }, orgId, { booking: ctx.booking || null, deal: ctx.booking ? null : ctx.deal || null }, { actorId });
+      if (action.task !== false) {
+        const [assignee] = resolveRecipients(db, orgId, action.assign_to || 'admins', ctx);
+        createTask({ db, engine }, orgId, {
+          title: `Check & send invoice ${invoice.number}`, description: `Drafted automatically for ${invoice.title || 'the job'} – check the lines and press Send.`,
+          priority: 'high', due_at: addDays(now(), 0), assignee_id: assignee || null, source: 'automation', source_ref: invoice.contact_id,
+        }, { actorId, emit: false });
+      }
+      return `Drafted invoice ${invoice.number}`;
     }
     default:
       throw new Error(`Unknown action ${action.type}`);
