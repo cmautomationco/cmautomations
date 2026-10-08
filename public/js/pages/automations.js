@@ -1,8 +1,10 @@
 import { del, get, patch, post } from '../api.js';
 import { state } from '../app.js';
+import * as presentation from './presentation.js';
 import { ago, announce, confirmDialog, date, field, h, icon, modal, mount, select, showError, toast } from '../ui.js';
 
-export async function render(el) {
+export async function render(el, route = { parts: [], query: {} }) {
+  if (route.parts?.[1] === 'presentation') return presentation.render(el, route);
   const [rules, runs, impact, meta, team] = await Promise.all([get('/automations'), get('/automations/runs'), get('/automations/impact'), get('/automations/meta'), get('/team')]);
   const reload = () => render(el);
   const canEdit = state.me.role !== 'member';
@@ -13,7 +15,9 @@ export async function render(el) {
       h('div', h('div', { class: 'eyebrow' }, 'Automation engine'),
         h('h1', { style: { marginTop: '6px' } }, 'The mundane stuff, ', h('span', { class: 'blue' }, 'handled')),
         h('p', 'Every automation follows a simple rule: ', h('b', { class: 'blue' }, 'WHEN'), ' something happens, ', h('b', { class: 'blue' }, 'IF'), ' it matches, ', h('b', { class: 'blue' }, 'THEN'), ' do the work. They connect the funnel, content, CRM and tasks so your team can focus on real work.')),
-      canEdit ? h('button', { class: 'btn primary', onclick: () => builder(null, meta, team, reload) }, icon('plus'), 'New automation') : null),
+      h('div', { class: 'row' },
+        h('a', { class: 'btn soft', href: '#/automations/presentation' }, icon('screen'), 'Watch the walkthrough'),
+        canEdit ? h('button', { class: 'btn primary', onclick: () => builder(null, meta, team, reload) }, icon('plus'), 'New automation') : null)),
 
     h('div', { class: 'grid g3', style: { marginBottom: '16px' } },
       h('div', { class: 'card card-pad span2' },

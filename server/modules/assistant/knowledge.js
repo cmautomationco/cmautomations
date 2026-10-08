@@ -252,6 +252,12 @@ export const TOPICS = [
     go: { place: 'automations' },
   },
   {
+    key: 'auto_presentation', title: 'Show a client how automation works',
+    keywords: ['presentation', 'walkthrough', 'present', 'pitch', 'show a client', 'explain automation', 'onboarding process', 'how we onboard', 'slides', 'demo for client', 'sell automation'],
+    answer: 'The Automations section has a full presentation you can show clients: the problems, the 8-step onboarding journey, how it works, live examples, what it means for staff, and next steps. Press “Watch the walkthrough”. Use the arrow keys to move, N for presenter notes and Present for full screen.',
+    go: { place: 'automations', highlight: 'Watch the walkthrough' },
+  },
+  {
     key: 'auto_new', title: 'Automate something new',
     keywords: ['automate', 'new automation', 'create automation', 'set up automation', 'create a rule', 'workflow', 'stop doing manually', 'do it automatically'],
     answer: 'Press “New automation”, choose WHEN (the trigger), add any IF conditions, then the THEN actions. Use placeholders like {{contact.first_name}} in the text. “Test run” lets you check it.',

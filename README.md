@@ -191,6 +191,28 @@ There are two engines with the same abilities and the same reply format:
 - **Response targets:** urgent 4 hours, high 1 day, medium 3 days, low 7 days. Missed targets are escalated to the assignee and admins (once).
 - Resolving an issue needs a short note, and the person who raised it is notified with that note.
 
+### 6. Automation walkthrough presentation
+
+Automations → **Watch the walkthrough** opens a 29-slide presentation for showing a client how an automation project works, from first conversation to results:
+
+1. **The problem:** where the day goes and the hidden cost to staff.
+2. **What changes:** before and after.
+3. **The 8-step onboarding journey:** discovery call, time & task audit (with an example audit), quick wins, system design, build & connect, team training, go-live with support, monthly measure & improve. Each step covers what the client does, what we do and what they get.
+4. **How it works:** the WHEN → IF → THEN rule and where AI fits, with people staying in control.
+5. **Seven worked examples** that run in the system today, each with its flow, result and time saved, plus examples for six different niches.
+6. **Your people:** how the system reduces pressure on staff.
+7. **Results:** live figures from the business's own system, and how success is measured.
+8. **Daily routines** by role, then next steps.
+
+The presentation also has:
+
+- **Presenter notes** on every slide (Notes, or press N).
+- **Full-screen mode** (Present, or press F).
+- Arrow keys and swipe to move between slides, and chapter tabs to jump around.
+- "See it live" buttons that open the real feature mid-presentation.
+
+![Automation presentation](docs/screenshots/18-automation-presentation.png)
+
 ### ⚡ Built-in automations (installed for every business)
 
 | When… | …the system |

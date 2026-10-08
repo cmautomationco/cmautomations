@@ -67,6 +67,7 @@ await shot('13-tasks-my-day', '#/tasks/today', { full: true });
 await shot('14-automations', '#/automations', { full: true });
 await shot('15-content-academy', '#/content/academy', { full: true });
 await shot('16-help-desk', '#/helpdesk', { full: true });
+await shot('18-automation-presentation', '#/automations/presentation?s=12');
 await shot('17-assistant', '#/', { before: async () => {
   await page.click('.as-fab');
   for (const q of ['What do I need to do today?', 'Report a problem: the booking page won’t take payments']) {

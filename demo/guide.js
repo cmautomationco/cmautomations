@@ -71,6 +71,7 @@ export const GUIDE = [
       ['Press Edit on one to see its trigger, conditions and actions, or Duplicate it.', '#/automations'],
       ['Press New automation and build your own. Use {{contact.first_name}} style placeholders in text.', '#/automations'],
       ['Check the activity log and the time-saved chart to see everything it has done.', '#/automations'],
+      ['Press “Watch the walkthrough” for the client presentation: the onboarding journey, how it works and live examples. Use ← → to move, Notes for what to say, Present for full screen.', '#/automations/presentation'],
     ],
   },
   {
