@@ -70,7 +70,13 @@ All screenshots come from the running app with the built-in demo business (`npm 
 |---|---|
 | ![Messages](docs/screenshots/19-messages-whatsapp.png) | ![Calls](docs/screenshots/20-missed-calls.png) |
 
-![Phone & WhatsApp settings](docs/screenshots/24-phone-whatsapp-settings.png)
+| Booking a job on WhatsApp with the booking assistant | Settings → WhatsApp |
+|---|---|
+| ![WhatsApp booking assistant](docs/screenshots/30-whatsapp-booking-assistant.png) | ![WhatsApp settings](docs/screenshots/31-whatsapp-settings.png) |
+
+| Settings → Connections (each business's own Twilio, Stripe and email) | Settings → Phone & alerts |
+|---|---|
+| ![Connections](docs/screenshots/32-connections.png) | ![Phone & alerts settings](docs/screenshots/24-phone-whatsapp-settings.png) |
 
 ### Bookings
 | The diary | Today's jobs (for the van) |
@@ -110,6 +116,7 @@ Other commands:
 npm run dev          # restart on file changes
 npm run seed         # reset the database with fresh demo data
 npm test             # API + automation test suite
+npm run check:live   # on a live server: checks settings and every business's connected accounts
 npm run screenshots  # regenerate docs/screenshots (uses Playwright)
 ```
 
@@ -126,6 +133,14 @@ Configuration is in `.env` (see `.env.example`):
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | – | Texts, WhatsApp, call forwarding and missed-call text-back. Without them, messages run in demo mode (saved and shown, not sent). |
 | `RESEND_API_KEY`, `EMAIL_FROM` | – | Sends email through Resend. `EMAIL_FROM` must be on a verified domain. |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | – | Card payments for invoices and booking deposits through Stripe Checkout. Without them, invoices show bank details. |
+| `APP_SECRET` | – | Encrypts the keys each business connects in Settings → Connections. Set it on a live server and keep a copy safe. Without it, a key is created next to the database. |
+| `SEED_DEMO` | `true` | Adds the demo businesses when the database is empty. Set `false` on a live server. |
+
+The Twilio, Resend and Stripe variables are server-wide fallbacks. Normally each business connects its own accounts in **Settings → Connections**.
+
+### Deploying
+
+The repository includes a `Dockerfile` and a `render.yaml` blueprint (https, a persistent disk, and generated `APP_SECRET`). [docs/GO-LIVE.md](docs/GO-LIVE.md) walks through the server, Twilio (number, WhatsApp sender, templates), Resend and Stripe. `npm run check:live` checks it all against the real services without sending anything.
 
 ---
 
@@ -230,12 +245,42 @@ Made for trades like plumbers and electricians, who can't answer the phone up a 
 - **WhatsApp and text messages** land in one inbox and on the customer's CRM record. New numbers become contacts automatically; photos customers send (a leak, a fuse box) are kept with the message.
 - **Emergencies:** messages with words like "leak", "burst", "no heating" or "no power" are flagged 🚨, everyone is alerted and an urgent reply task is made. The words are editable.
 - **Nothing slips:** every customer message creates a "Reply to…" task that closes itself when someone replies from the inbox.
-- **Booking replies:** customers reply **C** to confirm or **R** to rearrange their next booking.
+- **Book on WhatsApp:** the booking assistant lets customers book, move (**R**) or cancel (**CANCEL**) a job without leaving WhatsApp (or texts) – see below. **C** confirms their next booking.
+- **Instant replies:** a new message gets an immediate reply inviting them to book (once every 12 hours), and emergencies get a reply with safety advice (gas: 0800 111 999) while the team is alerted.
 - **Respectful sending:** STOP/START opt-outs, quiet hours (texts wait until morning), and WhatsApp's 24-hour rule (outside it, an approved template is used or it falls back to a text).
 - **Team alerts** go to a mobile by WhatsApp or text: new messages, missed calls, new bookings, rearrange requests, unpaid invoices and the morning job sheet.
 - Every automatic message's wording is editable per business (Settings → Message wording).
 
-Going live: buy a UK number in Twilio, add the keys to `.env`, and paste the two webhook addresses shown in **Settings → Phone & WhatsApp** into Twilio. Webhooks are verified with Twilio's signature. Without keys everything runs in demo mode, and the **Test a missed call / Test an incoming WhatsApp** buttons run exactly the same code.
+**WhatsApp booking assistant.** A customer messages **BOOK** (or just "can I book a boiler service?") and the assistant replies with numbered lists:
+
+```
+What do you need? Reply with a number:
+1. Boiler service (£85)
+2. Leak call-out (£95)
+3. Radiator fit (£220)
+```
+
+They pick a day and a time from what's really free, and give their name (skipped if known), the address with postcode (for trades) and a short note about the job. Then they reply **YES**. The booking goes straight into the diary, confirmed. A deposit link is sent if the service needs one. The team's phone is told and the normal reminders follow. Numbers, day names ("Fri") and times ("10am") are all understood.
+
+- **R** offers new times for their next booking.
+- **CANCEL** cancels it, respecting the cancellation notice (inside it, the team is asked to call).
+- **0** stops the assistant.
+- Two replies it can't follow, or an emergency mid-conversation, hand it to a person with a reply task.
+- Anyone who goes quiet mid-booking for 2 hours gets a follow-up task.
+
+Switch it on or off and get the **Book on WhatsApp** link (`wa.me/…?text=BOOK`) in **Settings → WhatsApp**. The link also appears on the online booking page.
+
+**Going live.** Each business connects **its own** Twilio, Stripe and Resend accounts in **Settings → Connections**:
+
+- Keys are stored encrypted (AES-256-GCM).
+- Each connection has a **Test connection** button that checks it against the real service and explains problems in plain English, plus **Send a real test message**.
+- **Point my numbers here** configures the Twilio numbers.
+- **Set up payment notifications** creates the Stripe webhook.
+- Webhooks are verified with each business's own Twilio Auth Token and Stripe signing secret.
+
+WhatsApp messages sent outside the 24-hour window use Meta-approved templates. Settings → WhatsApp gives the exact text to submit and stores each Content SID. Until a template is approved, that message goes by text.
+
+Step-by-step guide: **[docs/GO-LIVE.md](docs/GO-LIVE.md)**. Run `npm run check:live` on the server to check everything. Without connected accounts everything runs in demo mode, and the **Test a missed call / Test an incoming WhatsApp** buttons run exactly the same code.
 
 ### 7. Bookings
 
@@ -252,7 +297,8 @@ Going live: buy a UK number in Twilio, add the keys to `.env`, and paste the two
 
 - Quotes and invoices with line items, VAT per line (if registered), numbering and notes. Money is stored in pence.
 - One click from a CRM deal or a finished job; a quote turns into an invoice.
-- Customers open a branded link: they **accept a quote** (the deal moves to Won and a "book the work in" task is made) or **pay by card** through Stripe Checkout (recorded automatically from Stripe's signed webhook) or by bank transfer.
+- Customers open a branded link. They **accept a quote** (the deal moves to Won and a "book the work in" task is made), **pay by card**, or pay by bank transfer.
+- Card payments go through Stripe Checkout on **the business's own Stripe account**. They are recorded automatically from Stripe's signed webhook, and confirmed again when the customer returns to the page. A payment is never counted twice.
 - **Automatic chasing** on the business's schedule (default 1, 7 and 14 days overdue): friendly reminder, firmer reminder, then an urgent task for a person to call. Can be paused per invoice. Unanswered quotes get a follow-up task.
 - Part payments, cash and bank transfers are recorded by hand; a full payment sends a thank-you and marks the contact as a customer.
 
@@ -352,8 +398,9 @@ server/
     tasks/                 task service (recurrence) + routes
     helpdesk/              issues, response targets, comments
     assistant/             knowledge base, built-in engine, Claude engine, routes
-    messaging/             templates, providers (Twilio, Resend, webhook, demo), inbox, calls
-    bookings/              services, availability, reminders, job sheet, calendar feed
+    messaging/             templates, providers (Twilio, Resend, webhook, demo), WhatsApp templates, inbox, calls
+    bookings/              services, availability, reminders, job sheet, calendar feed, WhatsApp booking assistant (chat.js)
+    integrations/          each business's own Twilio, Stripe and email accounts (encrypted), checks and set-up
     billing/               quotes, invoices, payments, chasing, Stripe Checkout
     agency/                audit scoring, proposals, control centre, monthly reports
     forms/                 lead forms
@@ -388,14 +435,15 @@ All endpoints are under `/api` and use `Authorization: Bearer <token>`, except t
 | Automations | `GET/POST /automations`, `PATCH/DELETE /automations/:id`, `POST /automations/:id/test`, `GET /automations/runs`, `GET /automations/impact`, `GET /automations/meta` |
 | Help Desk | `GET /helpdesk/meta`, `GET/POST /helpdesk/issues`, `GET/PATCH/DELETE /helpdesk/issues/:id`, `POST /helpdesk/issues/:id/comments`, `GET /helpdesk/stats` |
 | Assistant | `GET /assistant/meta`, `POST /assistant/chat`, `GET /assistant/insights` (owners/admins) |
-| Messages | `GET /messages/summary`, `GET /messages/threads`, `GET /messages/threads/:contactId`, `POST /messages/threads/:contactId/send`, `GET /messages/calls`, `POST /messages/calls/:id/handled`, `GET /messages/alerts`, `GET/PUT/DELETE /messages/templates/:key`, `GET/PUT /messages/settings`, `POST /messages/simulate/inbound`, `POST /messages/simulate/missed-call` |
+| Connections | `GET /integrations`, `PUT/DELETE /integrations/:kind` (twilio, stripe, email), `POST /integrations/:kind/check`, `POST /integrations/twilio/connect-numbers`, `POST /integrations/stripe/webhook`, `POST /integrations/test-message` |
+| Messages | `GET /messages/summary`, `GET /messages/threads` (`?channel=whatsapp`), `GET /messages/threads/:contactId`, `POST /messages/threads/:contactId/send`, `GET /messages/calls`, `POST /messages/calls/:id/handled`, `GET /messages/alerts`, `GET/PUT/DELETE /messages/templates/:key`, `PUT /messages/templates/:key/whatsapp`, `GET/PUT /messages/settings`, `POST /messages/simulate/inbound`, `POST /messages/simulate/missed-call` |
 | Bookings | `GET/POST /bookings`, `GET /bookings/overview`, `GET /bookings/today`, `GET/PATCH /bookings/:id`, `POST /bookings/:id/status`, `/remind`, `/invoice`, `GET/POST/PATCH/DELETE /bookings/services`, `GET /bookings/slots`, `GET/PUT /bookings/settings`, `GET/POST/DELETE /bookings/time-off` |
 | Quotes & invoices | `GET/POST /invoices`, `GET /invoices/summary`, `GET/PUT /invoices/settings`, `POST /invoices/from-deal/:dealId`, `GET/PATCH /invoices/:id`, `POST /invoices/:id/send`, `/accept`, `/decline`, `/convert`, `/void`, `/payments`, `/pay-link`, `/chase` |
 | Forms | `GET/POST /forms`, `GET/PATCH/DELETE /forms/:id` |
 | Agency | `GET /agency/hub`, `PUT /agency/settings`, `POST /agency/clients`, `GET/PATCH /agency/clients/:id`, `GET/POST /agency/audits`, `GET/PATCH/DELETE /agency/audits/:id`, `POST /agency/audits/:id/analyse`, `/send`, `GET/POST /agency/reports`, `POST /agency/reports/:id/send` |
 | Branding | `PATCH /org/brand` |
-| Public (no sign-in) | `GET/POST /public/book/:slug`, `/days`, `/slots`, `GET /public/booking/:token`, `POST /public/booking/:token/confirm|cancel|reschedule`, `GET/POST /public/form/:id`, `GET /public/doc/:token`, `POST /public/doc/:token/accept|decline|pay`, `GET /public/proposal/:token`, `POST /public/proposal/:token/accept|decline`, `GET /public/report/:token`, `GET /public/calendar/:slug/:token.ics` |
-| Webhooks | `POST /hooks/twilio/voice`, `/voice-status`, `/voicemail`, `/messages`, `/status`, `POST /hooks/stripe`, `POST /hooks/inbound/:token` |
+| Public (no sign-in) | `GET/POST /public/book/:slug`, `/days`, `/slots`, `GET /public/booking/:token`, `POST /public/booking/:token/confirm|cancel|reschedule`, `GET/POST /public/form/:id`, `GET /public/doc/:token`, `POST /public/doc/:token/accept|decline|pay|confirm-payment`, `GET /public/proposal/:token`, `POST /public/proposal/:token/accept|decline`, `GET /public/report/:token`, `GET /public/calendar/:slug/:token.ics` |
+| Webhooks | `POST /hooks/twilio/voice`, `/voice-status`, `/voicemail`, `/messages`, `/status`, `POST /hooks/stripe`, `POST /hooks/stripe/:orgId`, `POST /hooks/inbound/:token` |
 
 ---
 

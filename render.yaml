@@ -1,0 +1,27 @@
+# One-click deploy on Render (render.com → New → Blueprint → pick this repo).
+# Gives you an https address with a persistent disk for the database.
+# After the first deploy, set PUBLIC_URL to the address Render gives you
+# (or your own domain), then follow docs/GO-LIVE.md.
+services:
+  - type: web
+    name: cm-automations
+    runtime: docker
+    plan: starter            # a disk needs a paid plan
+    healthCheckPath: /api/health
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: PUBLIC_URL
+        sync: false          # e.g. https://cm-automations.onrender.com or https://app.yourdomain.co.uk
+      - key: APP_SECRET
+        generateValue: true  # encrypts the keys each business connects – keep a copy safe
+      - key: REQUIRE_PASSWORDS
+        value: "true"
+      - key: SEED_DEMO
+        value: "false"       # start with no demo businesses
+      - key: DATABASE_PATH
+        value: /data/cm-automations.db
+      - key: ANTHROPIC_API_KEY
+        sync: false          # optional: AI ideas in Content Studio and the assistant

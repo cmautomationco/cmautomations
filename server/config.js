@@ -35,6 +35,9 @@ export const config = {
   // on a live server (any long random text) and keep it safe; if it changes,
   // businesses have to reconnect. Without it, one is created in the data folder.
   appSecret: process.env.APP_SECRET || '',
+  // Adds the demo businesses the first time the server starts with an empty
+  // database. Set SEED_DEMO=false on a live server so it starts empty.
+  seedDemo: process.env.SEED_DEMO !== 'false',
   // Test builds only: lets "pay by card" be simulated without Stripe. Never set this on a live system.
   demoMode: process.env.DEMO_MODE === 'true',
 };

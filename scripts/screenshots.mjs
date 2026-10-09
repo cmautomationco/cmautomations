@@ -78,6 +78,8 @@ await shot('17-assistant', '#/', { before: async () => {
   }
   await page.waitForTimeout(400);
 } });
+// Close the assistant again so it doesn't cover the screens below.
+await page.evaluate(() => { if (!document.querySelector('.as-panel').hidden) document.querySelector('.as-fab').click(); });
 
 // The plumbing business (phone & WhatsApp linked in), the agency and customer pages.
 const switchTo = async (name) => {
@@ -91,6 +93,13 @@ await shot('21-bookings-diary', '#/bookings', { full: true });
 await shot('22-bookings-today', '#/bookings/today', { full: true });
 await shot('23-quotes-invoices', '#/invoices');
 await shot('24-phone-whatsapp-settings', '#/settings/phone', { full: true });
+// A customer booking a job by WhatsApp with the booking assistant, up to the "Reply YES" step.
+const say = async (body) => api('/api/messages/simulate/inbound', { method: 'POST', headers: auth, body: JSON.stringify({ channel: 'whatsapp', from: '07700 900777', name: 'Grace Hall', body }) });
+const chat = await say('Hi, can I book a boiler service please?');
+for (const reply of ['1', '2', '1', '22 Redland Road, BS6 6AG', 'Boiler losing pressure']) await say(reply);
+await shot('30-whatsapp-booking-assistant', `#/messages/${chat.contact.id}`);
+await shot('31-whatsapp-settings', '#/settings/whatsapp', { full: true });
+await shot('32-connections', '#/settings/connections', { full: true });
 const tok = (sql) => db.get(sql).public_token;
 await shot('25-customer-booking-page', '#/book/swift-plumbing-and-heating', { before: async () => { await page.click('.pub-option >> nth=0'); await page.waitForTimeout(400); } });
 await shot('26-customer-invoice', `#/doc/${tok(`SELECT public_token FROM invoices WHERE status = 'overdue'`)}`);

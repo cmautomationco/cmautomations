@@ -15,7 +15,9 @@ These were the top suggestions and are now part of the system:
 - **Invoicing, quotes and payments** – quote → invoice, card payments through Stripe, automatic chasing (friendly → firmer → a call task).
 - **Online bookings and reminders** – booking page, deposits, day-before and 2-hour reminders, C/R replies, job sheet, calendar feed.
 - **Real email, texts and WhatsApp** – automations send messages themselves; replies land on the contact's timeline.
-- **Phone line for trades** – call forwarding, missed-call text-back, voicemail, emergency alerts.
+- **Phone line for trades** – call forwarding, missed-call text-back, voicemail, emergency alerts and instant replies.
+- **WhatsApp booking assistant** – customers book, move (R) or cancel (CANCEL) a job by replying with numbers on WhatsApp or by text.
+- **Each business's own accounts** – Twilio, Stripe and email connected per business in Settings → Connections, with live checks, one-click number and payment-notification set-up, WhatsApp template approval and `npm run check:live`.
 - **Lead capture forms.**
 - **Agency control centre, audit & proposal builder, white-label branding and monthly client reports.**
 
@@ -26,6 +28,8 @@ Still to do from those areas:
 - Inbound email directly into Messages without Zapier (an email parsing service pointed at `/api/hooks/inbound/<token>` works today).
 - A spreadsheet upload screen for existing contact lists (the API exists: `POST /api/crm/contacts/import`).
 - Recording calls and transcribing voicemails.
+- Twilio sub-accounts created for each client by the agency, so a client doesn't need their own Twilio account.
+- Submitting WhatsApp templates for approval straight from Settings → WhatsApp (today they're pasted into Twilio's Content Template Builder).
 
 ## Priority 1: next up
 
