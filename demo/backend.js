@@ -17,6 +17,7 @@ import { bookingRoutes } from '../server/modules/bookings/routes.js';
 import { billingRoutes } from '../server/modules/billing/routes.js';
 import { agencyRoutes } from '../server/modules/agency/routes.js';
 import { publicRoutes } from '../server/modules/public/routes.js';
+import { integrationRoutes } from '../server/modules/integrations/routes.js';
 
 export function createBackend(db, { onWrite = () => {} } = {}) {
   const engine = createEngine(db);
@@ -38,6 +39,7 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
     ['/api/invoices', billingRoutes(ctx)],
     ['/api/agency', agencyRoutes(ctx)],
     ['/api/public', publicRoutes(ctx)],
+    ['/api/integrations', integrationRoutes(ctx)],
   ];
 
   async function request(method, url, headers = {}, rawBody) {

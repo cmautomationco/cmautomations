@@ -31,6 +31,10 @@ export const config = {
   // Sign-in needs a password. Setting REQUIRE_PASSWORDS=false in .env switches
   // to email-only sign-in (useful for short test sessions only).
   requirePasswords: process.env.REQUIRE_PASSWORDS !== 'false',
+  // Encrypts the keys each business connects in Settings → Connections. Set this
+  // on a live server (any long random text) and keep it safe; if it changes,
+  // businesses have to reconnect. Without it, one is created in the data folder.
+  appSecret: process.env.APP_SECRET || '',
   // Test builds only: lets "pay by card" be simulated without Stripe. Never set this on a live system.
   demoMode: process.env.DEMO_MODE === 'true',
 };

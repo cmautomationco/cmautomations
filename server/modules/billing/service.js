@@ -9,7 +9,8 @@ import { notifyUsers } from '../core/notifications.js';
 import { getContactRow, logActivity, moveDealStage } from '../crm/service.js';
 import { alertStaff, businessName, queueMessage, deliverMessage } from '../messaging/service.js';
 import { createTask } from '../tasks/service.js';
-import { createCheckoutSession, stripeReady } from './stripe.js';
+import { createCheckoutSession, retrieveCheckoutSession, stripeReady } from './stripe.js';
+import { getCredentials } from '../integrations/service.js';
 
 /**
  * Quotes, invoices and payments. Money is held in pence. A won deal or a
@@ -150,7 +151,7 @@ export async function sendDocument(ctx, orgId, docId, { actorId = null, channel 
   }
   const queued = queueMessage(ctx, orgId, { contactId: doc.contact_id, channel, template, vars, actorId, related: { type: doc.kind, id: doc.id }, force: true });
   if (!queued.message) throw badRequest(queued.skipped);
-  const message = await deliverMessage(ctx, queued.message, queued.settings, queued.extra);
+  const message = await deliverMessage(ctx, queued.message, queued.settings, queued.extra, queued.creds);
   if (message.status === 'blocked') throw badRequest(message.error);
   const ts = now();
   db.update('invoices', doc.id, { status: doc.status === 'draft' ? 'sent' : doc.status, sent_at: doc.sent_at || ts, updated_at: ts });
@@ -246,7 +247,7 @@ export async function recordPayment(ctx, orgId, docId, { amount_pence, method = 
   if (full) {
     if (doc.contact_id) {
       const queued = queueMessage(ctx, orgId, { contactId: doc.contact_id, template: 'invoice_paid_thanks', vars: { ...documentVars(doc, org), amount: formatMoney(doc.total_pence) }, related: { type: 'invoice', id: doc.id }, force: true });
-      if (queued.message) await deliverMessage(ctx, queued.message, queued.settings, queued.extra);
+      if (queued.message) await deliverMessage(ctx, queued.message, queued.settings, queued.extra, queued.creds);
     }
     // A paid deposit confirms the booking it was for.
     if (doc.purpose === 'deposit' && doc.booking_id) {
@@ -258,15 +259,35 @@ export async function recordPayment(ctx, orgId, docId, { amount_pence, method = 
   return { doc: updated, automations };
 }
 
-/** Starts an online card payment for what's still owed. */
+/** Starts an online card payment for what's still owed, into the business's own Stripe account. */
 export async function startCardPayment(ctx, doc, returnUrl) {
   const settings = getBillingSettings(ctx.db, doc.org_id);
   if (!settings.card_payments) return { error: 'This business takes payment by bank transfer.' };
-  if (!stripeReady()) return config.demoMode ? { demo: true } : { error: 'Card payments aren’t set up yet – please pay by bank transfer.' };
+  const creds = getCredentials(ctx.db, doc.org_id);
+  if (!stripeReady(creds)) return config.demoMode ? { demo: true } : { error: 'Card payments aren’t set up yet – please pay by bank transfer.' };
   const org = ctx.db.get('SELECT * FROM organizations WHERE id = ?', doc.org_id);
-  const session = await createCheckoutSession({ doc, orgName: businessName(org), amountPence: doc.balance_pence, returnUrl });
+  const session = await createCheckoutSession({ secretKey: creds.stripe.secretKey, doc, orgName: businessName(org), amountPence: doc.balance_pence, returnUrl });
   if (session.id) ctx.db.update('invoices', doc.id, { checkout_session: session.id });
   return session;
+}
+
+/**
+ * When the customer comes back from Stripe, check the payment with Stripe
+ * directly and record it – so it shows as paid at once, even before (or
+ * without) the webhook. Safe to run alongside the webhook: each payment is
+ * recorded only once.
+ */
+export async function confirmCardPayment(ctx, doc, sessionId) {
+  const creds = getCredentials(ctx.db, doc.org_id);
+  if (!stripeReady(creds)) return { status: doc.status };
+  const r = await retrieveCheckoutSession(creds.stripe.secretKey, sessionId);
+  if (r.error) return { status: doc.status, error: r.error };
+  const session = r.data;
+  if (session.metadata?.invoice_id !== doc.id || session.metadata?.org_id !== doc.org_id) return { status: doc.status, error: 'That payment is for a different invoice' };
+  if (session.payment_status !== 'paid') return { status: doc.status, pending: true };
+  const result = await recordPayment(ctx, doc.org_id, doc.id, { amount_pence: Math.min(session.amount_total, doc.balance_pence) || doc.balance_pence, method: 'card', provider_id: session.payment_intent || session.id, reference: 'Paid online by card' })
+    .catch((err) => ({ doc: getDocument(ctx.db, doc.org_id, doc.id), error: err.message }));
+  return { status: result.doc.status };
 }
 
 /** Money owed, overdue and collected, for the Invoices page and agency reports. */
@@ -339,7 +360,7 @@ export async function runBillingChase(ctx, at = new Date()) {
     const org = db.get('SELECT * FROM organizations WHERE id = ?', doc.org_id);
     if (step < 2 && doc.contact_id) {
       const queued = queueMessage(ctx, doc.org_id, { contactId: doc.contact_id, template: step === 0 ? 'invoice_reminder_1' : 'invoice_reminder_2', vars: { ...documentVars(full, org), days_overdue: String(daysOverdue) }, related: { type: 'invoice', id: doc.id } });
-      if (queued.message) await deliverMessage(ctx, queued.message, queued.settings, queued.extra);
+      if (queued.message) await deliverMessage(ctx, queued.message, queued.settings, queued.extra, queued.creds);
       logActivity(db, doc.org_id, doc.contact_id, `${step === 0 ? 'Friendly' : 'Firmer'} payment reminder sent for ${doc.number} (${daysOverdue} days overdue)`);
       engine.logSystemRun(doc.org_id, 'Invoice chaser', 'invoice.overdue', `${step === 0 ? 'Friendly' : 'Firmer'} reminder for ${doc.number} (${formatMoney(full.balance_pence)})`, 8);
       summary.reminders++;

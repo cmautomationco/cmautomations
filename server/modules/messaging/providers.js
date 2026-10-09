@@ -1,3 +1,4 @@
+import { serverBase } from '../../lib/links.js';
 import { config } from '../../config.js';
 
 /**
@@ -6,20 +7,22 @@ import { config } from '../../config.js';
  *
  *   demo    – nothing leaves the system; the message is shown as “Demo – not sent”
  *   webhook – posts the message to the business's Zapier / Make / custom URL
- *   twilio  – real texts and WhatsApp messages (needs TWILIO_* settings)
- *   resend  – real email (needs RESEND_API_KEY and EMAIL_FROM)
+ *   twilio  – real texts and WhatsApp messages (the business's or the server's Twilio account)
+ *   resend  – real email (the business's or the server's Resend account)
+ *
+ * creds comes from integrations/service.js getCredentials().
  */
 
-export const twilioReady = () => Boolean(config.twilioAccountSid && config.twilioAuthToken);
-export const emailReady = () => Boolean(config.resendApiKey && config.emailFrom);
+export const twilioReady = (creds) => Boolean(creds?.twilio);
+export const emailReady = (creds) => Boolean(creds?.email);
 
-/** Which adapter delivers a channel for a business, given its settings. */
-export function providerFor(channel, settings) {
+/** Which adapter delivers a channel for a business, given its settings and connections. */
+export function providerFor(channel, settings, creds) {
   if (channel === 'email') {
-    if (emailReady()) return 'resend';
-  } else if (twilioReady()) {
+    if (emailReady(creds)) return 'resend';
+  } else if (twilioReady(creds)) {
     if (channel === 'sms' && settings.business_number) return 'twilio';
-    if (channel === 'whatsapp' && settings.whatsapp_number) return 'twilio';
+    if (channel === 'whatsapp' && (settings.whatsapp_number || settings.business_number)) return 'twilio';
   }
   if (settings.webhook_url) return 'webhook';
   return 'demo';
@@ -39,7 +42,20 @@ async function viaWebhook(msg, settings) {
   }
 }
 
-async function viaTwilio(msg, extra = {}) {
+/** Twilio's most common error codes, in plain English. */
+const TWILIO_ERRORS = {
+  21211: 'That isn’t a valid mobile number',
+  21408: 'Your Twilio account isn’t allowed to text this country (Twilio → Messaging → Geo permissions)',
+  21606: 'The “from” number can’t send texts – check the business number in Settings',
+  21608: 'Twilio trial accounts can only text numbers verified in Twilio',
+  21610: 'This person replied STOP to your number, so Twilio won’t deliver texts to them',
+  21614: 'That number can’t receive texts (it may be a landline)',
+  63007: 'Your WhatsApp number isn’t set up as a WhatsApp sender in Twilio yet',
+  63016: 'WhatsApp only allows free-text messages within 24 hours of the customer’s last message – add an approved template for this message',
+  63024: 'This person can’t be reached on WhatsApp',
+};
+
+async function viaTwilio(msg, twilio, extra = {}) {
   const prefix = msg.channel === 'whatsapp' ? 'whatsapp:' : '';
   const form = new URLSearchParams({ To: `${prefix}${msg.to_addr}`, From: `${prefix}${msg.from_addr}` });
   if (extra.contentSid) {
@@ -48,29 +64,29 @@ async function viaTwilio(msg, extra = {}) {
   } else {
     form.set('Body', msg.body);
   }
-  form.set('StatusCallback', `${config.publicUrl}/api/hooks/twilio/status`);
+  if (/^https:\/\//.test(config.publicUrl)) form.set('StatusCallback', `${serverBase()}/api/hooks/twilio/status`);
   try {
-    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${config.twilioAccountSid}/Messages.json`, {
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilio.accountSid}/Messages.json`, {
       method: 'POST',
-      headers: { authorization: `Basic ${btoa(`${config.twilioAccountSid}:${config.twilioAuthToken}`)}`, 'content-type': 'application/x-www-form-urlencoded' },
+      headers: { authorization: `Basic ${btoa(`${twilio.accountSid}:${twilio.authToken}`)}`, 'content-type': 'application/x-www-form-urlencoded' },
       body: form.toString(),
       signal: AbortSignal.timeout(15_000),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) return { status: 'failed', error: data.message || `Twilio responded ${res.status}` };
+    if (!res.ok) return { status: 'failed', error: TWILIO_ERRORS[data.code] || data.message || `Twilio responded ${res.status}` };
     return { status: 'sent', provider_id: data.sid || null };
   } catch (err) {
     return { status: 'failed', error: `Twilio unreachable: ${err.message}` };
   }
 }
 
-async function viaResend(msg, settings) {
+async function viaResend(msg, settings, email) {
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { authorization: `Bearer ${config.resendApiKey}`, 'content-type': 'application/json' },
+      headers: { authorization: `Bearer ${email.apiKey}`, 'content-type': 'application/json' },
       body: JSON.stringify({
-        from: `${settings.email_from_name || 'Notifications'} <${config.emailFrom}>`,
+        from: `${(settings.email_from_name || 'Notifications').replace(/[<>"]/g, '')} <${email.from}>`,
         to: [msg.to_addr],
         subject: msg.subject || '(no subject)',
         text: msg.body,
@@ -86,10 +102,10 @@ async function viaResend(msg, settings) {
   }
 }
 
-export async function deliver(provider, msg, settings, extra) {
+export async function deliver(provider, msg, settings, extra, creds) {
   switch (provider) {
-    case 'twilio': return viaTwilio(msg, extra);
-    case 'resend': return viaResend(msg, settings);
+    case 'twilio': return creds?.twilio ? viaTwilio(msg, creds.twilio, extra) : { status: 'failed', error: 'Twilio isn’t connected' };
+    case 'resend': return creds?.email ? viaResend(msg, settings, creds.email) : { status: 'failed', error: 'Email isn’t connected' };
     case 'webhook': return viaWebhook(msg, settings);
     default: return { status: 'demo', provider_id: null };
   }

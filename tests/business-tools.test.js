@@ -236,7 +236,11 @@ describe('messages, calls and WhatsApp', () => {
   });
 
   test('Twilio webhooks are only accepted with a valid signature', async () => {
+    config.twilioAccountSid = 'AC_hook';
     config.twilioAuthToken = 'hook-secret';
+    // Replies the system sends go to Twilio's API – answer those like Twilio would.
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async (url, init) => (String(url).startsWith('https://api.twilio.com') ? new Response(JSON.stringify({ sid: 'SMreply' }), { status: 201 }) : realFetch(url, init));
     try {
       const params = { From: 'whatsapp:+447700900616', To: 'whatsapp:+447700900999', Body: 'No hot water since this morning', ProfileName: 'Ravi', MessageSid: 'SMhook1', NumMedia: '1', MediaUrl0: 'https://api.twilio.com/media/1', MediaContentType0: 'image/jpeg' };
       const url = `${base}/api/hooks/twilio/messages`;
@@ -265,6 +269,8 @@ describe('messages, calls and WhatsApp', () => {
       const calls = (await call('GET', '/messages/calls', null, biz.token)).body;
       assert.ok(calls.some((c) => c.from_number === '+447700900617' && c.texted_back === 1));
     } finally {
+      globalThis.fetch = realFetch;
+      config.twilioAccountSid = '';
       config.twilioAuthToken = '';
     }
   });

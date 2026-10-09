@@ -1,3 +1,4 @@
+import { serverBase } from '../../lib/links.js';
 import crypto from 'node:crypto';
 import { Router } from 'express';
 import { config } from '../../config.js';
@@ -6,6 +7,7 @@ import { HttpError, now } from '../../lib/util.js';
 import { recordPayment } from '../billing/service.js';
 import { businessName, getMessagingSettings, handleInbound, handleMissedCall } from '../messaging/service.js';
 import { notifyUsers } from '../core/notifications.js';
+import { getCredentials } from '../integrations/service.js';
 
 /**
  * Webhooks from Twilio (calls, texts, WhatsApp, delivery receipts), Stripe
@@ -15,7 +17,7 @@ import { notifyUsers } from '../core/notifications.js';
 
 const xml = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const twiml = (res, body = '') => res.type('text/xml').send(`<?xml version="1.0" encoding="UTF-8"?><Response>${body}</Response>`);
-const apiBase = () => config.publicUrl.replace(/\/[^/]*\.[a-z0-9]+$/i, '');
+const apiBase = () => serverBase();
 
 /** Twilio signs each request: HMAC-SHA1 of the full URL plus the sorted form fields. */
 export function twilioSignature(authToken, url, params = {}) {
@@ -29,9 +31,11 @@ const safeEqual = (a, b) => {
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 };
 
-function verifyTwilio(req) {
-  if (!config.twilioAuthToken) throw new HttpError(503, 'Twilio is not configured');
-  const expected = twilioSignature(config.twilioAuthToken, `${apiBase()}${req.originalUrl}`, req.body || {});
+/** Checks the request really came from Twilio, using the business's Auth Token (or the server's). */
+function verifyTwilio(db, req, org) {
+  const token = getCredentials(db, org?.id).twilio?.authToken;
+  if (!token) throw new HttpError(503, 'Twilio is not connected for this number');
+  const expected = twilioSignature(token, `${apiBase()}${req.originalUrl}`, req.body || {});
   if (!safeEqual(expected, req.get('x-twilio-signature'))) throw new HttpError(403, 'Invalid signature');
 }
 
@@ -64,8 +68,8 @@ export function hookRoutes(ctx) {
 
   // ── Calls: ring the team's mobile, and if nobody answers, text the caller back ──
   r.post('/twilio/voice', (req, res) => {
-    verifyTwilio(req);
     const org = orgByNumber(db, req.body.To);
+    verifyTwilio(db, req, org);
     if (!org) return twiml(res, '<Say voice="Polly.Amy">Sorry, this number is not in service.</Say><Hangup/>');
     const s = getMessagingSettings(db, org.id);
     if (s.forward_to) {
@@ -81,8 +85,8 @@ export function hookRoutes(ctx) {
   }
 
   r.post('/twilio/voice-status', async (req, res) => {
-    verifyTwilio(req);
     const org = orgByNumber(db, req.body.To);
+    verifyTwilio(db, req, org);
     if (!org) return twiml(res);
     if (req.body.DialCallStatus === 'completed') {
       await handleMissedCall(ctx, org.id, { from: req.body.From, to: req.body.To, providerId: req.body.CallSid, status: 'answered', duration: Number(req.body.DialCallDuration) || null });
@@ -92,8 +96,8 @@ export function hookRoutes(ctx) {
   });
 
   r.post('/twilio/voicemail', (req, res) => {
-    verifyTwilio(req);
     const org = orgByNumber(db, req.body.To);
+    verifyTwilio(db, req, org);
     if (org && req.body.RecordingUrl) {
       const call = db.get(`SELECT * FROM calls WHERE org_id = ? AND (provider_id = ? OR from_number = ?) ORDER BY created_at DESC LIMIT 1`, org.id, req.body.CallSid || '', toE164(req.body.From) || '');
       if (call) {
@@ -107,9 +111,9 @@ export function hookRoutes(ctx) {
 
   // ── Texts and WhatsApp messages from customers ──
   r.post('/twilio/messages', async (req, res) => {
-    verifyTwilio(req);
     const whatsapp = String(req.body.From || '').startsWith('whatsapp:');
     const org = orgByNumber(db, req.body.To);
+    verifyTwilio(db, req, org);
     if (!org) return twiml(res);
     let body = String(req.body.Body || '');
     // Customers often send a photo of the problem (a leak, a fuse box) – keep the links with the message.
@@ -122,7 +126,8 @@ export function hookRoutes(ctx) {
 
   // ── Delivery receipts ──
   r.post('/twilio/status', (req, res) => {
-    verifyTwilio(req);
+    // Delivery receipts: the sending number is the business's (From for outgoing messages).
+    verifyTwilio(db, req, orgByNumber(db, req.body.From) || orgByNumber(db, req.body.To));
     const map = { sent: 'sent', delivered: 'delivered', read: 'delivered', undelivered: 'failed', failed: 'failed' };
     const status = map[req.body.MessageStatus];
     if (status && req.body.MessageSid) {
@@ -132,21 +137,29 @@ export function hookRoutes(ctx) {
   });
 
   // ── Card payments (Stripe Checkout) ──
-  r.post('/stripe', async (req, res) => {
-    if (!config.stripeWebhookSecret) throw new HttpError(503, 'Stripe webhooks are not configured');
-    if (!verifyStripe(req.rawBody || '', req.get('stripe-signature'), config.stripeWebhookSecret)) throw new HttpError(400, 'Invalid signature');
+  // /api/hooks/stripe/:orgId for a business's own Stripe account; /api/hooks/stripe for the server's.
+  async function stripeEvent(req, res, orgId) {
+    const secret = orgId ? getCredentials(db, orgId).stripe?.webhookSecret : config.stripeWebhookSecret;
+    if (!secret) throw new HttpError(503, 'Stripe payment notifications are not set up');
+    if (!verifyStripe(req.rawBody || '', req.get('stripe-signature'), secret)) throw new HttpError(400, 'Invalid signature');
     const event = req.body;
     if (['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type)) {
       const session = event.data?.object || {};
       const invoiceId = session.metadata?.invoice_id;
-      const orgId = session.metadata?.org_id;
-      if (session.payment_status === 'paid' && invoiceId && orgId && db.get('SELECT 1 FROM invoices WHERE id = ? AND org_id = ?', invoiceId, orgId)) {
-        await recordPayment(ctx, orgId, invoiceId, {
+      const invoiceOrg = session.metadata?.org_id;
+      if (orgId && invoiceOrg !== orgId) return res.json({ received: true, ignored: 'different business' });
+      if (session.payment_status === 'paid' && invoiceId && invoiceOrg && db.get('SELECT 1 FROM invoices WHERE id = ? AND org_id = ?', invoiceId, invoiceOrg)) {
+        await recordPayment(ctx, invoiceOrg, invoiceId, {
           amount_pence: session.amount_total, method: 'card', provider_id: session.payment_intent || session.id, reference: `Card payment ${now().slice(0, 10)}`,
         }).catch((err) => console.error('[stripe]', err.message));
       }
     }
     res.json({ received: true });
+  }
+  r.post('/stripe', (req, res) => stripeEvent(req, res, null));
+  r.post('/stripe/:orgId', (req, res) => {
+    if (!db.get('SELECT 1 FROM organizations WHERE id = ?', req.params.orgId)) throw new HttpError(404, 'Not found');
+    return stripeEvent(req, res, req.params.orgId);
   });
 
   // ── Generic inbound messages (Zapier, Make, email parsers) ──

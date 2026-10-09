@@ -83,7 +83,7 @@ export async function submitForm(ctx, form, raw = {}) {
 
   if (form.send_thank_you) {
     const queued = queueMessage(ctx, form.org_id, { contactId: contact.id, template: 'form_thank_you', related: { type: 'form', id: form.id }, force: true });
-    if (queued.message) await deliverMessage(ctx, queued.message, queued.settings, queued.extra);
+    if (queued.message) await deliverMessage(ctx, queued.message, queued.settings, queued.extra, queued.creds);
   }
   engine.logSystemRun(form.org_id, 'Lead form', 'form.submitted', `“${form.name}” → ${created ? 'new' : 'existing'} contact ${contact.first_name}${form.send_thank_you ? ', thank-you sent' : ''}`, 5);
   engine.emit(form.org_id, 'form.submitted', { form: { id: form.id, name: form.name }, contact: getContactRow(db, contact.id), created, data, summary });

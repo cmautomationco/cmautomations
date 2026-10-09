@@ -6,7 +6,7 @@ import { rateLimit } from '../../lib/rateLimit.js';
 import { formatClock, formatDay } from '../../lib/time.js';
 import { HttpError, badRequest, notFound, pick } from '../../lib/util.js';
 import { parseBrand, getAudit, acceptProposal } from '../agency/service.js';
-import { acceptQuote, declineQuote, getBillingSettings, getDocument, recordPayment, startCardPayment } from '../billing/service.js';
+import { acceptQuote, confirmCardPayment, declineQuote, getBillingSettings, getDocument, recordPayment, startCardPayment } from '../billing/service.js';
 import { ACTIVE, availableDays, createBooking, customerAction, getBooking, getBookingSettings, icsFeed, listServices, slotsFor } from '../bookings/service.js';
 import { getForm, submitForm } from '../forms/service.js';
 import { businessName, getMessagingSettings } from '../messaging/service.js';
@@ -190,6 +190,12 @@ export function publicRoutes(ctx) {
     if (doc.kind !== 'invoice' || doc.balance_pence <= 0 || ['void', 'draft'].includes(doc.status)) throw badRequest('There’s nothing to pay on this one');
     const returnUrl = String(req.body?.return_url || doc.link);
     res.json(await startCardPayment(ctx, doc, /^https?:\/\//.test(returnUrl) ? returnUrl : doc.link));
+  });
+  /** The customer is back from Stripe: check the payment with Stripe and record it straight away. */
+  r.post('/doc/:token/confirm-payment', async (req, res) => {
+    limited(req, 'pay', 20);
+    const { doc } = docByToken(req.params.token);
+    res.json(await confirmCardPayment(ctx, doc, String(req.body?.session_id || '')));
   });
   /** Test builds only: completes a pretend card payment so the whole flow can be tried. */
   r.post('/doc/:token/demo-pay', async (req, res) => {

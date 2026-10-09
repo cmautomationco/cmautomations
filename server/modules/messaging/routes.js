@@ -2,18 +2,17 @@ import { Router } from 'express';
 import { config } from '../../config.js';
 import { parseJson } from '../../db/index.js';
 import { requireAuth, requireRole } from '../../lib/auth.js';
-import { publicLink } from '../../lib/links.js';
+import { publicLink, serverBase } from '../../lib/links.js';
 import { displayPhone, toE164 } from '../../lib/phone.js';
 import { setSetting } from '../../lib/settings.js';
 import { badRequest, notFound, now, pick, publicToken } from '../../lib/util.js';
 import { getContactRow } from '../crm/service.js';
-import { emailReady, twilioReady } from './providers.js';
-import { stripeReady } from '../billing/stripe.js';
+import { connectionStatus } from '../integrations/service.js';
 import { MESSAGING_DEFAULTS, closeReplyTasks, getMessagingSettings, getTemplate, handleInbound, handleMissedCall, pickChannel, sendMessage, threadFor, whatsappAllowed } from './service.js';
 import { TEMPLATES, TEMPLATE_KEYS } from './templates.js';
 
 /** Where the business's own system is reachable, for webhook addresses to paste into Twilio/Stripe. */
-const apiBase = () => config.publicUrl.replace(/\/[^/]*\.[a-z0-9]+$/i, '');
+const apiBase = () => serverBase();
 
 /** Ensures the business has a secret for its inbound-message webhook (Zapier / Make / email parsers). */
 function inboundToken(db, orgId, settings) {
@@ -136,10 +135,11 @@ export function messagingRoutes(ctx) {
     const wa = (settings.whatsapp_number || settings.business_number || '').replace('+', '');
     res.json({
       settings: { ...settings, inbound_token: undefined },
-      status: {
-        twilio: twilioReady(), email: emailReady(), stripe: stripeReady(), demo: !twilioReady() && !emailReady(),
-        mode: twilioReady() || emailReady() ? 'live' : settings.webhook_url ? 'webhook' : 'demo',
-      },
+      status: (() => {
+        const c = connectionStatus(db, req.org.id);
+        const live = c.twilio.connected || c.email.connected;
+        return { twilio: c.twilio.connected, email: c.email.connected, stripe: c.stripe.connected, demo: !live, mode: live ? 'live' : settings.webhook_url ? 'webhook' : 'demo' };
+      })(),
       setup: {
         voice_url: `${base}/api/hooks/twilio/voice`,
         messaging_url: `${base}/api/hooks/twilio/messages`,

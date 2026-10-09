@@ -217,7 +217,7 @@ export function bookingRoutes(ctx) {
     const service = db.get('SELECT * FROM services WHERE id = ?', booking.service_id);
     const queued = queueMessage(ctx, req.org.id, { contactId: booking.contact_id, template: 'booking_reminder_24h', vars: bookingVars(booking, service, req.org.timezone), related: { type: 'booking', id: booking.id }, actorId: req.user.id, force: true });
     if (!queued.message) throw badRequest(queued.skipped);
-    const message = await deliverMessage(ctx, queued.message, queued.settings, queued.extra);
+    const message = await deliverMessage(ctx, queued.message, queued.settings, queued.extra, queued.creds);
     if (message.status === 'blocked') throw badRequest(message.error);
     res.json(message);
   });

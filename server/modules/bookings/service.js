@@ -1,5 +1,5 @@
 import { config } from '../../config.js';
-import { publicLink } from '../../lib/links.js';
+import { publicLink, serverBase } from '../../lib/links.js';
 import { formatMoney } from '../../lib/money.js';
 import { getSetting, setSetting } from '../../lib/settings.js';
 import { addLocalDays, formatClock, formatDay, inQuietHours, localDate, localTime, weekdayOf, zonedToUtc } from '../../lib/time.js';
@@ -65,7 +65,7 @@ export function getBookingSettings(db, org) {
   return settings;
 }
 
-export const calendarFeedUrl = (org, settings) => `${config.publicUrl.replace(/\/[^/]*\.[a-z0-9]+$/i, '')}/api/public/calendar/${org.slug}/${settings.calendar_token}.ics`;
+export const calendarFeedUrl = (org, settings) => `${serverBase()}/api/public/calendar/${org.slug}/${settings.calendar_token}.ics`;
 
 export function getBooking(db, orgId, bookingId) {
   const b = db.get(`SELECT b.*, s.name AS service_name, s.kind AS service_kind, s.duration_min, c.first_name, c.last_name, c.phone_e164 AS contact_phone, c.email AS contact_email,
@@ -138,7 +138,7 @@ async function sendBookingMessage(ctx, orgId, booking, template, extraVars = {},
   const vars = { ...bookingVars(booking, service, org.timezone), ...extraVars };
   const queued = queueMessage(ctx, orgId, { contactId: booking.contact_id, template, vars, related: { type: 'booking', id: booking.id }, ...opts });
   if (!queued.message) return null;
-  return deliverMessage(ctx, queued.message, queued.settings, queued.extra);
+  return deliverMessage(ctx, queued.message, queued.settings, queued.extra, queued.creds);
 }
 
 /**

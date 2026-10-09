@@ -9,6 +9,8 @@ import { notifyUsers } from '../core/notifications.js';
 import { createContact, findContactByEmail, findContactByPhone, getContactRow } from '../crm/service.js';
 import { createTask } from '../tasks/service.js';
 import { deliver, providerFor } from './providers.js';
+import { getCredentials } from '../integrations/service.js';
+import { contentVariables } from './whatsapp.js';
 import { TEMPLATES } from './templates.js';
 
 /**
@@ -87,6 +89,7 @@ export function bookingVars(booking, service, tz) {
     date: formatDay(booking.starts_at, tz),
     time: formatClock(booking.starts_at, tz),
     address_line: address ? ` at ${address}` : '',
+    address,
     manage_link: publicLink(`booking/${booking.public_token}`),
     urgent_line: booking.urgency === 'emergency' ? ' 🚨 EMERGENCY' : '',
   };
@@ -128,8 +131,8 @@ function addressFor(channel, contact) {
   return channel === 'email' ? contact.email : contact.phone_e164;
 }
 
-function fromFor(channel, settings) {
-  if (channel === 'email') return config.emailFrom || settings.email_reply_to || 'notifications';
+function fromFor(channel, settings, creds) {
+  if (channel === 'email') return creds?.email?.from || config.emailFrom || settings.email_reply_to || 'notifications';
   if (channel === 'whatsapp') return settings.whatsapp_number || settings.business_number || 'business';
   return settings.business_number || 'business';
 }
@@ -137,13 +140,15 @@ function fromFor(channel, settings) {
 /**
  * Prepares and stores a message (synchronously), ready to deliver.
  * opts: { contact | contactId, to, channel ('auto'), template, vars, subject, body,
- *         related: { type, id }, actorId, audience, force (ignore quiet hours), sendAfter }
+ *         related: { type, id }, actorId, audience, force (ignore quiet hours), sendAfter,
+ *         strict (send on exactly this channel – no switching to a text) }
  * Returns { message, skipped? }.
  */
 export function queueMessage(ctx, orgId, opts) {
   const { db } = ctx;
   const org = db.get('SELECT * FROM organizations WHERE id = ?', orgId);
   const settings = opts.settings || getMessagingSettings(db, orgId);
+  const creds = getCredentials(db, orgId);
   const contact = opts.contact ? getContactRow(db, opts.contact.id) || opts.contact : opts.contactId ? getContactRow(db, opts.contactId) : null;
   const tpl = opts.template ? getTemplate(db, orgId, opts.template) : null;
   const audience = opts.audience || tpl?.audience || 'customer';
@@ -165,16 +170,16 @@ export function queueMessage(ctx, orgId, opts) {
   if (!to) { status = 'blocked'; error = channel === 'email' ? 'No email address' : 'No valid mobile number'; }
   if (status === 'queued' && !settings[`${channel}_enabled`]) { status = 'blocked'; error = `${channel === 'sms' ? 'Text messages are' : channel === 'whatsapp' ? 'WhatsApp is' : 'Email is'} switched off in Settings`; }
 
-  let provider = providerFor(channel, settings);
+  let provider = providerFor(channel, settings, creds);
   const extra = {};
   // WhatsApp only allows free-form messages within 24 hours of the customer's last message.
   // Outside that window a pre-approved template is needed; otherwise fall back to a text.
-  if (channel === 'whatsapp' && provider === 'twilio' && status === 'queued' && !within24h(lastInbound(db, contact?.id, 'whatsapp'))) {
+  if (channel === 'whatsapp' && provider === 'twilio' && status === 'queued' && !opts.strict && !within24h(lastInbound(db, contact?.id, 'whatsapp'))) {
     const sid = tpl && settings.whatsapp_content_sids?.[tpl.key];
     if (sid) extra.contentSid = sid;
     else if (settings.sms_enabled && settings.business_number && !(audience === 'customer' && contact?.sms_opt_out)) {
       channel = 'sms';
-      provider = providerFor('sms', settings);
+      provider = providerFor('sms', settings, creds);
     } else { status = 'blocked'; error = 'WhatsApp needs an approved template outside the 24-hour window'; }
   }
 
@@ -182,11 +187,8 @@ export function queueMessage(ctx, orgId, opts) {
   const body = tidy(render(opts.body ?? tpl?.body ?? '', vars));
   const subject = channel === 'email' ? tidy(render(opts.subject ?? tpl?.subject ?? `A message from ${vars.business}`, vars)) : null;
   if (!body) return { message: null, skipped: 'Empty message' };
-  if (extra.contentSid) {
-    // Approved templates number their placeholders in the order they appear in the wording.
-    const names = [...(tpl.body.matchAll(/\{\{\s*([\w.]+)\s*\}\}/g))].map((m) => m[1]);
-    extra.contentVariables = Object.fromEntries([...new Set(names)].map((n, i) => [String(i + 1), String(vars[n] ?? '')]));
-  }
+  // Approved WhatsApp templates number their placeholders in the order they appear in the wording.
+  if (extra.contentSid) extra.contentVariables = contentVariables(tpl.body, vars);
 
   // Customer messages wait until quiet hours end (no texts at 11pm). Emails can go any time.
   let sendAfter = opts.sendAfter || null;
@@ -198,20 +200,20 @@ export function queueMessage(ctx, orgId, opts) {
 
   const message = {
     id: id('msg'), org_id: orgId, contact_id: contact?.id || null, channel, direction: 'out',
-    to_addr: to, from_addr: fromFor(channel, settings), subject, body, status, provider: status === 'blocked' ? null : provider,
+    to_addr: to, from_addr: fromFor(channel, settings, creds), subject, body, status, provider: status === 'blocked' ? null : provider,
     provider_id: null, error, template_key: tpl?.key || null, related_type: opts.related?.type || null, related_id: opts.related?.id || null,
     send_after: sendAfter, read: 1, created_by: opts.actorId || null, created_at: now(), sent_at: null,
   };
   db.insert('messages', message);
   if (contact && status !== 'blocked' && audience !== 'staff') db.update('contacts', contact.id, { last_contacted_at: now(), updated_at: now() });
-  return { message, extra, settings };
+  return { message, extra, settings, creds };
 }
 
 /** Hands a queued message to its provider and records the result. */
-export async function deliverMessage(ctx, message, settings, extra = {}) {
+export async function deliverMessage(ctx, message, settings, extra = {}, creds = null) {
   if (!message || message.status !== 'queued') return message;
   if (message.send_after && new Date(message.send_after) > new Date()) return message;
-  const result = await deliver(message.provider, message, settings || getMessagingSettings(ctx.db, message.org_id), extra);
+  const result = await deliver(message.provider, message, settings || getMessagingSettings(ctx.db, message.org_id), extra, creds || getCredentials(ctx.db, message.org_id));
   const patch = { status: result.status, provider_id: result.provider_id || null, error: result.error || null, sent_at: result.status === 'failed' ? null : now() };
   ctx.db.update('messages', message.id, patch);
   return { ...message, ...patch };
@@ -221,14 +223,14 @@ export async function deliverMessage(ctx, message, settings, extra = {}) {
 export async function sendMessage(ctx, orgId, opts) {
   const queued = queueMessage(ctx, orgId, opts);
   if (!queued.message) return queued;
-  const message = await deliverMessage(ctx, queued.message, queued.settings, queued.extra);
+  const message = await deliverMessage(ctx, queued.message, queued.settings, queued.extra, queued.creds);
   return { message };
 }
 
 /** Queues now, delivers in the background (for automations, which run synchronously). */
 export function sendInBackground(ctx, orgId, opts) {
   const queued = queueMessage(ctx, orgId, opts);
-  if (queued.message) deliverMessage(ctx, queued.message, queued.settings, queued.extra).catch((err) => console.error('[messages]', err));
+  if (queued.message) deliverMessage(ctx, queued.message, queued.settings, queued.extra, queued.creds).catch((err) => console.error('[messages]', err));
   return queued;
 }
 

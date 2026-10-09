@@ -7,6 +7,7 @@ import {
   recordPayment, sendDocument, startCardPayment, updateDocument, voidDocument,
 } from './service.js';
 import { stripeReady } from './stripe.js';
+import { getCredentials } from '../integrations/service.js';
 
 const docSchema = {
   kind: { enum: ['quote', 'invoice'] }, contact_id: {}, deal_id: {}, booking_id: {}, title: { max: 160 }, line_items: { type: 'array' },
@@ -28,7 +29,7 @@ export function billingRoutes(ctx) {
         c.first_name, c.last_name, c.company FROM invoices i LEFT JOIN contacts c ON c.id = i.contact_id WHERE ${where.join(' AND ')} ORDER BY i.created_at DESC LIMIT 500`, ...params));
   });
 
-  r.get('/summary', (req, res) => res.json({ ...billingSummary(db, req.org.id), card_payments_live: stripeReady() }));
+  r.get('/summary', (req, res) => res.json({ ...billingSummary(db, req.org.id), card_payments_live: stripeReady(getCredentials(db, req.org.id)) }));
 
   r.get('/settings', (req, res) => res.json(getBillingSettings(db, req.org.id)));
   r.put('/settings', requireRole('owner', 'admin'), (req, res) => {

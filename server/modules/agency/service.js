@@ -159,7 +159,7 @@ export async function sendProposal(ctx, agency, auditId, { actorId, channel = 'a
     vars: { doc_link: audit.link, first_name_spaced: first ? ` ${first}` : '', first_name: first }, related: { type: 'audit', id: audit.id },
   });
   if (!queued.message) throw badRequest(queued.skipped);
-  const message = await deliverMessage(ctx, queued.message, queued.settings, queued.extra);
+  const message = await deliverMessage(ctx, queued.message, queued.settings, queued.extra, queued.creds);
   db.update('audits', audit.id, { status: audit.status === 'draft' ? 'proposal_sent' : audit.status, sent_at: audit.sent_at || now(), updated_at: now() });
   return { audit: getAudit(db, agency.id, audit.id), message };
 }
@@ -328,7 +328,7 @@ export async function sendReport(ctx, reportId, { actorId = null } = {}) {
     vars: { month: report.data.label, hours: String(report.data.hours_saved), doc_link: report.link, first_name_spaced: first ? ` ${first}` : '', first_name: first },
   });
   if (!queued.message) throw badRequest(queued.skipped);
-  const message = await deliverMessage(ctx, queued.message, queued.settings, queued.extra);
+  const message = await deliverMessage(ctx, queued.message, queued.settings, queued.extra, queued.creds);
   db.update('reports', report.id, { status: 'sent', sent_at: now() });
   return { report: getReport(db, report.id), message };
 }
