@@ -39,21 +39,23 @@ function modeBanner(info) {
   const s = info.settings;
   if (info.status.mode === 'live') {
     return h('div', { class: 'why small', style: { marginBottom: '16px' } },
-      h('b', 'Live. '), s.business_number ? `Calls to ${ukPhone(s.business_number)} ring ${ukPhone(s.forward_to) || 'nobody yet'}; ` : 'Add your business number in Settings → Phone & WhatsApp. ',
+      h('b', 'Live. '), s.business_number ? `Calls to ${ukPhone(s.business_number)} ring ${ukPhone(s.forward_to) || 'nobody yet'}; ` : 'Add your business number in Settings → Phone & alerts. ',
       s.missed_call_text_back ? 'missed calls are texted back automatically.' : 'missed-call text-back is off.');
   }
   return h('div', { class: 'why small', style: { marginBottom: '16px' } },
     h('b', info.status.mode === 'webhook' ? 'Sending through your webhook. ' : 'Demo mode. '),
     info.status.mode === 'webhook' ? 'Messages are passed to your Zapier/Make webhook to send. ' : 'Messages are saved and shown exactly as customers would get them, but nothing leaves the system yet. ',
-    'To go live, connect a Twilio number (texts, WhatsApp and calls) and an email service – ', h('a', { href: '#/settings/phone' }, 'Settings → Phone & WhatsApp'), '.');
+    'To go live, connect your Twilio account (texts, WhatsApp and calls) and an email service – ', h('a', { href: '#/settings/connections' }, 'Settings → Connections'), '.');
 }
 
 // ───────────────────────── Inbox ─────────────────────────
 
 async function renderInbox(el, route, contactId) {
   const filter = route.query.filter || '';
+  const channelFilter = route.query.channel || '';
   const q = route.query.q || '';
-  const threads = await get(`/messages/threads?${new URLSearchParams({ ...(filter ? { filter } : {}), ...(q ? { q } : {}) })}`);
+  const threads = await get(`/messages/threads?${new URLSearchParams({ ...(filter ? { filter } : {}), ...(channelFilter ? { channel: channelFilter } : {}), ...(q ? { q } : {}) })}`);
+  const link = (patch) => { const qs = new URLSearchParams({ ...(filter ? { filter } : {}), ...(channelFilter ? { channel: channelFilter } : {}), ...patch }); [...qs.keys()].forEach((k) => { if (!qs.get(k)) qs.delete(k); }); return `#/messages${qs.toString() ? `?${qs}` : ''}`; };
   const selected = contactId || (window.innerWidth > 900 ? threads[0]?.id : null);
   const search = h('input', { placeholder: 'Search name or number…', value: q, onkeydown: (e) => { if (e.key === 'Enter') location.hash = `#/messages?q=${encodeURIComponent(e.target.value)}`; } });
   const pane = h('div', { class: 'card msg-pane' });
@@ -61,7 +63,8 @@ async function renderInbox(el, route, contactId) {
     h('div', { class: `msg-layout ${contactId ? 'has-open' : ''}` },
       h('div', { class: 'card msg-list' },
         h('div', { class: 'msg-list-head' },
-          h('div', { class: 'row', style: { gap: '6px' } }, [['', 'All'], ['unread', 'Unread'], ['urgent', '🚨 Urgent']].map(([k, l]) => h('a', { class: `chip ${filter === k ? 'active' : ''}`, href: `#/messages${k ? `?filter=${k}` : ''}` }, l))),
+          h('div', { class: 'row', style: { gap: '6px' } }, [['', 'All'], ['unread', 'Unread'], ['urgent', '🚨 Urgent']].map(([k, l]) => h('a', { class: `chip ${filter === k ? 'active' : ''}`, href: link({ filter: k }) }, l))),
+          h('div', { class: 'row', style: { gap: '6px' } }, [['', 'Every channel'], ['whatsapp', 'WhatsApp'], ['sms', 'Texts'], ['email', 'Email']].map(([k, l]) => h('a', { class: `chip ${channelFilter === k ? 'active' : ''} ${k === 'whatsapp' ? 'wa' : ''}`, href: link({ channel: k }) }, k === 'whatsapp' ? [icon('whatsapp'), l] : l))),
           search),
         threads.length ? threads.map((t) => h('a', { href: `#/messages/${t.id}`, class: `thread ${t.id === selected ? 'selected' : ''} ${t.unread ? 'unread' : ''}` },
           avatar(contactName(t)),
@@ -73,7 +76,7 @@ async function renderInbox(el, route, contactId) {
               h('span', { class: 'ch-ico' }, channelIcon(t.last_channel)),
               h('span', { class: 'truncate' }, `${t.last_direction === 'out' ? 'You: ' : ''}${t.last_body}`))),
           t.unread ? h('span', { class: 'count-pill' }, t.unread) : null))
-          : h('div', { class: 'empty' }, filter || q ? 'Nothing matches.' : 'No messages yet. When customers text, WhatsApp or email, or you miss a call, it shows up here.')),
+          : h('div', { class: 'empty' }, filter || q || channelFilter ? 'Nothing matches.' : 'No messages yet. When customers text, WhatsApp or email, or you miss a call, it shows up here.')),
       pane));
   if (selected) renderThread(pane, selected, () => renderInbox(el, route, contactId));
   else mount(pane, h('div', { class: 'empty' }, 'Pick a conversation.'));
@@ -114,7 +117,7 @@ async function renderThread(el, contactId, reloadList) {
   const list = h('div', { class: 'bubbles' }, messages.map((m) => h('div', { class: `bubble ${m.direction}` },
     m.subject ? h('div', { class: 'small', style: { fontWeight: 700 } }, m.subject) : null,
     h('div', { class: 'bubble-text' }, linkify(m.body)),
-    h('div', { class: 'bubble-meta' }, channelIcon(m.channel), ` ${CHANNEL_LABELS[m.channel]} · ${dateTime(m.created_at)}`, m.author ? ` · ${m.author}` : m.direction === 'out' ? ' · automatic' : '',
+    h('div', { class: 'bubble-meta' }, channelIcon(m.channel), ` ${CHANNEL_LABELS[m.channel]} · ${dateTime(m.created_at)}`, m.author ? ` · ${m.author}` : m.direction === 'out' ? (m.related_type === 'assistant' || String(m.template_key || '').startsWith('chat_') ? ' · booking assistant' : ' · automatic') : '',
       m.direction === 'out' ? h('span', { class: `st ${m.status}` }, ` · ${messageStatus(m)}`) : null))));
   mount(el,
     h('div', { class: 'msg-head' },
@@ -135,8 +138,26 @@ async function renderThread(el, contactId, reloadList) {
     h('div', { class: 'composer' },
       h('div', { class: 'row', style: { gap: '8px' } }, h('div', { style: { flex: '1 1 180px' } }, channel), h('div', { style: { flex: '2 1 220px' } }, subject)),
       text, note,
-      h('div', { class: 'row', style: { justifyContent: 'space-between' } }, h('span', { class: 'small muted' }, 'Ctrl + Enter to send · replying completes the “Reply to…” task'), sendBtn)));
+      h('div', { class: 'row', style: { justifyContent: 'space-between' } }, h('span', { class: 'small muted' }, 'Ctrl + Enter to send · replying completes the “Reply to…” task'), sendBtn)),
+    state.me.role !== 'member' && c.phone_e164 ? customerTester(c, () => { renderThread(el, contactId, reloadList); }) : null);
   list.scrollTop = list.scrollHeight;
+}
+
+/**
+ * Test box: type as if you were this customer (e.g. BOOK, 1, YES) to see
+ * exactly what they'd get back – the same code a real WhatsApp runs.
+ */
+function customerTester(c, after) {
+  const input = h('input', { placeholder: `Type as ${c.first_name || 'the customer'} – e.g. BOOK, then reply with numbers` });
+  const channel = select('channel', [['whatsapp', 'WhatsApp'], ['sms', 'Text']], c.whatsapp_opt_in ? 'whatsapp' : 'sms');
+  const go = async () => {
+    if (!input.value.trim()) return;
+    try { await post('/messages/simulate/inbound', { channel: channel.value, from: c.phone_e164, body: input.value }); input.value = ''; after(); } catch (err) { showError(err); }
+  };
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+  return h('div', { class: 'tester' },
+    h('div', { class: 'small' }, h('b', 'Test: reply as the customer'), h('span', { class: 'muted' }, ' – runs exactly what a real message does (nothing is sent to them).')),
+    h('div', { class: 'row', style: { gap: '6px', flexWrap: 'nowrap' } }, h('div', { style: { width: '120px', flex: 'none' } }, channel), input, h('button', { class: 'btn sm', onclick: go }, 'Send in')));
 }
 
 /** Turns links in a message into clickable links (e.g. photos customers send). */
@@ -170,7 +191,7 @@ async function renderAlerts(el, info) {
   mount(el,
     h('div', { class: 'why small', style: { marginBottom: '14px' } }, to
       ? `New messages, missed calls, new bookings and the morning job sheet are sent to ${to} by ${info.settings.alert_channel === 'sms' ? 'text' : 'WhatsApp'}, so nothing is missed while you’re on a job.`
-      : h('span', 'Add the mobile that should get alerts (new messages, missed calls, bookings and the morning job sheet) in ', h('a', { href: '#/settings/phone' }, 'Settings → Phone & WhatsApp'), '. Until then alerts appear in the app only.')),
+      : h('span', 'Add the mobile that should get alerts (new messages, missed calls, bookings and the morning job sheet) in ', h('a', { href: '#/settings/phone' }, 'Settings → Phone & alerts'), '. Until then alerts appear in the app only.')),
     h('div', { class: 'card card-pad' }, alerts.length ? alerts.map((m) => h('div', { class: 'run-item' },
       h('div', { class: 'ico' }, channelIcon(m.channel)),
       h('div', { class: 'grow' }, h('div', { class: 'small muted' }, `${CHANNEL_LABELS[m.channel]} to ${ukPhone(m.to_addr)} · ${dateTime(m.created_at)} · ${messageStatus(m)}`), h('div', { style: { whiteSpace: 'pre-wrap' } }, m.body))))
@@ -184,6 +205,7 @@ const randomMobile = () => `07700 900${String(Math.floor(Math.random() * 900) + 
 function simulateMessage(reload) {
   const text = h('textarea', { name: 'body', value: 'Hi, water is leaking through my kitchen ceiling – can someone come today?' });
   const presets = [
+    ['📅 BOOK', 'BOOK'],
     ['🚨 Leak', 'Hi, water is leaking through my kitchen ceiling – can someone come today?'],
     ['Quote request', 'Hi, could I get a quote for a new bathroom radiator? Postcode BS7 8AB.'],
     ['C – confirm booking', 'C'],
@@ -198,7 +220,11 @@ function simulateMessage(reload) {
     field('Message', text));
   modal('Test an incoming message', body, { actions: [{ label: 'Cancel' }, { label: 'Send it in', primary: true, onClick: async () => {
     const res = await post('/messages/simulate/inbound', formData(body));
-    const what = { opted_out: 'They’ve been opted out of texts and WhatsApp.', opted_in: 'They’re opted back in.', booking_confirmed: 'Their next booking is marked as confirmed by the customer.', booking_reschedule: 'Their booking is flagged to rearrange and the team has a task.' }[res.handled];
+    const what = {
+      opted_out: 'They’ve been opted out of texts and WhatsApp.', opted_in: 'They’re opted back in.', booking_confirmed: 'Their next booking is marked as confirmed by the customer.',
+      booking_reschedule: 'Their booking is flagged to rearrange and the team has a task.', chat_started: '📅 The booking assistant replied – carry on as the customer in the test box under the conversation.',
+      chat_cancel_asked: 'The assistant asked them to confirm the cancellation – reply YES or NO in the test box.',
+    }[res.handled];
     toast(what || (res.urgent ? '🚨 Flagged as an emergency – urgent task created and the team alerted' : 'Message received – reply task created and the team alerted'));
     announce(res.automations);
     location.hash = `#/messages/${res.contact.id}`;

@@ -535,3 +535,18 @@ CREATE TABLE IF NOT EXISTS reports (
   sent_at      TEXT,
   UNIQUE (org_id, period)
 );
+
+-- WhatsApp / text booking assistant: where each customer is in a booking conversation.
+CREATE TABLE IF NOT EXISTS conversations (
+  id         TEXT PRIMARY KEY,
+  org_id     TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  contact_id TEXT NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  channel    TEXT NOT NULL,
+  flow       TEXT NOT NULL CHECK (flow IN ('book','reschedule','cancel')),
+  step       TEXT NOT NULL,
+  data       TEXT NOT NULL DEFAULT '{}',
+  misses     INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE (org_id, contact_id)
+);

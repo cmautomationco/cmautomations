@@ -139,6 +139,7 @@ export function bookingRoutes(ctx) {
       max_days_ahead: { type: 'number' }, capacity: { type: 'number' }, auto_confirm: { type: 'boolean' }, require_address: { type: 'boolean' },
       reminder_24h: { type: 'boolean' }, reminder_time: {}, reminder_2h: { type: 'boolean' }, review_request: { type: 'boolean' }, review_delay_hours: { type: 'number' },
       job_sheet: { type: 'boolean' }, job_sheet_time: {}, emergency_callouts: { type: 'boolean' }, emergency_note: { max: 500 }, cancel_notice_hours: { type: 'number' },
+      chat_booking: { type: 'boolean' },
     }, { partial: true });
     const time = /^\d{2}:\d{2}$/;
     if (body.hours) {

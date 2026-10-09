@@ -53,6 +53,7 @@ async function bookPage(shell, slug) {
   mount(shell, header(b), h('main', { class: 'pub-main' },
     h('h1', 'Book with ', h('span', { class: 'blue' }, b.name)),
     page.intro ? h('p', { class: 'muted' }, page.intro) : null,
+    b.whatsapp_book_link ? h('a', { class: 'pub-wa', href: b.whatsapp_book_link, target: '_blank', rel: 'noopener' }, icon('whatsapp'), h('span', h('b', 'Prefer WhatsApp? '), 'Book in a few taps – message us BOOK')) : null,
     page.emergency_note ? h('div', { class: 'pub-emergency' }, icon('alert'), h('div', page.emergency_note, h('div', { class: 'row', style: { marginTop: '8px', gap: '6px' } },
       b.phone_link ? h('a', { class: 'btn sm primary', href: b.phone_link }, icon('phone'), `Call ${b.phone}`) : null,
       b.whatsapp_link ? h('a', { class: 'btn sm', href: b.whatsapp_link, target: '_blank', rel: 'noopener' }, icon('whatsapp'), 'WhatsApp us') : null))) : null,

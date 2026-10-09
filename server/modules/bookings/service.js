@@ -52,6 +52,8 @@ export function bookingDefaults(niche) {
     emergency_callouts: trade,
     emergency_note: trade ? 'Emergency? (leak, no heating, no power) Don’t book online – call or WhatsApp us now and we’ll get to you as fast as we can.' : '',
     cancel_notice_hours: 24,
+    // Customers can book, move and cancel by WhatsApp or text (reply BOOK).
+    chat_booking: true,
     calendar_token: '',
   };
 }
@@ -146,7 +148,8 @@ async function sendBookingMessage(ctx, orgId, booking, template, extraVars = {},
  * staff_id, address, postcode, notes, urgency, price_pence, notify (default true).
  * source: 'online' | 'phone' | 'whatsapp' | 'manual'.
  */
-export async function createBooking(ctx, orgId, data, { actorId = null, source = 'manual' } = {}) {
+export async function createBooking(ctx, orgId, data, { actorId = null, source = 'manual', selfBooked = source === 'online' } = {}) {
+  // Self-booked = the customer chose the time themselves (online, or with the WhatsApp/text assistant).
   const { db, engine } = ctx;
   const org = db.get('SELECT * FROM organizations WHERE id = ?', orgId);
   const settings = getBookingSettings(db, org);
@@ -157,7 +160,7 @@ export async function createBooking(ctx, orgId, data, { actorId = null, source =
   const startsAt = start.toISOString();
   const endsAt = plusMinutes(startsAt, service.duration_min || 60);
 
-  if (source === 'online') {
+  if (selfBooked) {
     const free = slotsFor(db, org, service, localDate(startsAt, org.timezone), settings).some((s) => s.starts_at === startsAt);
     if (!free) throw badRequest('Sorry, that time has just been taken – please pick another');
   }
@@ -178,16 +181,16 @@ export async function createBooking(ctx, orgId, data, { actorId = null, source =
     contact = res.contact;
     contactCreated = res.created;
   }
-  if (settings.require_address && source === 'online' && !data.address) throw badRequest('Add the address for the visit');
+  if (settings.require_address && selfBooked && !(data.address || contact.address)) throw badRequest('Add the address for the visit');
 
-  const deposit = source === 'online' ? service.deposit_pence || 0 : 0;
-  const status = data.status || (deposit > 0 || (source === 'online' && !settings.auto_confirm) ? 'requested' : 'confirmed');
+  const deposit = selfBooked ? service.deposit_pence || 0 : 0;
+  const status = data.status || (deposit > 0 || (selfBooked && !settings.auto_confirm) ? 'requested' : 'confirmed');
   const ts = now();
   const booking = {
     id: id('bkg'), org_id: orgId, service_id: service.id, contact_id: contact.id, staff_id: data.staff_id || null,
     starts_at: startsAt, ends_at: endsAt, status, urgency: data.urgency === 'emergency' ? 'emergency' : 'normal', source,
     address: data.address || contact.address || null, postcode: (data.postcode || contact.postcode || '').toUpperCase() || null, notes: data.notes || null,
-    customer_confirmed_at: source === 'online' ? ts : null, reschedule_requested: 0, deposit_pence: deposit,
+    customer_confirmed_at: selfBooked ? ts : null, reschedule_requested: 0, deposit_pence: deposit,
     price_pence: data.price_pence ?? service.price_pence ?? 0, public_token: publicToken(), created_by: actorId, created_at: ts, updated_at: ts,
   };
   db.insert('bookings', booking);
@@ -207,11 +210,11 @@ export async function createBooking(ctx, orgId, data, { actorId = null, source =
     }
   }
   // The team is told about bookings customers make themselves, and about emergencies.
-  if (source === 'online' || booking.urgency === 'emergency') {
+  if (selfBooked || booking.urgency === 'emergency') {
     const vars = bookingVars(booking, service, tz);
     alertStaff(ctx, orgId, 'staff_new_booking', { ...vars, name: baseVars(org, contact).name }, { title: `${booking.urgency === 'emergency' ? '🚨 ' : '📅 '}New booking: ${service.name} – ${vars.date} ${vars.time}`, link: `#/bookings/${booking.id}` });
   }
-  engine.logSystemRun(orgId, 'Booking', 'booking.created', `${service.name} booked ${source === 'online' ? 'online' : `(${source})`} – contact ${contactCreated ? 'created' : 'updated'}, confirmation sent`, source === 'online' ? 10 : 4);
+  engine.logSystemRun(orgId, 'Booking', 'booking.created', `${service.name} booked ${source === 'online' ? 'online' : selfBooked ? `by the customer (${source === 'whatsapp' ? 'WhatsApp' : 'text'})` : `(${source})`} – contact ${contactCreated ? 'created' : 'updated'}, confirmation sent`, selfBooked ? 10 : 4);
   const full = getBooking(db, orgId, booking.id);
   const automations = engine.emit(orgId, 'booking.created', { booking: full, contact: getContactRow(db, contact.id), service }, { actorId });
   return { booking: full, contact: getContactRow(db, contact.id), message, depositInvoice, clash, automations };

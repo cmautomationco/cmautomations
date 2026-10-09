@@ -10,6 +10,7 @@ import { getContactRow } from '../crm/service.js';
 import { connectionStatus } from '../integrations/service.js';
 import { MESSAGING_DEFAULTS, closeReplyTasks, getMessagingSettings, getTemplate, handleInbound, handleMissedCall, pickChannel, sendMessage, threadFor, whatsappAllowed } from './service.js';
 import { TEMPLATES, TEMPLATE_KEYS } from './templates.js';
+import { TEMPLATE_NEEDED, whatsappTemplate } from './whatsapp.js';
 
 /** Where the business's own system is reachable, for webhook addresses to paste into Twilio/Stripe. */
 const apiBase = () => serverBase();
@@ -41,6 +42,10 @@ export function messagingRoutes(ctx) {
   r.get('/threads', (req, res) => {
     const where = ['c.org_id = ?'];
     const params = [req.org.id];
+    if (['whatsapp', 'sms', 'email'].includes(req.query.channel)) {
+      where.push('EXISTS (SELECT 1 FROM messages x WHERE x.contact_id = c.id AND x.channel = ?)');
+      params.push(req.query.channel);
+    }
     if (req.query.q) {
       where.push(`(c.first_name || ' ' || COALESCE(c.last_name,'') || ' ' || COALESCE(c.phone,'') || ' ' || COALESCE(c.email,'')) LIKE ?`);
       params.push(`%${req.query.q}%`);
@@ -113,7 +118,24 @@ export function messagingRoutes(ctx) {
 
   // ── Templates (the wording of every automatic message) ──
   r.get('/templates', (req, res) => {
-    res.json(TEMPLATE_KEYS.map((key) => getTemplate(db, req.org.id, key)));
+    const sids = getMessagingSettings(db, req.org.id).whatsapp_content_sids || {};
+    res.json(TEMPLATE_KEYS.map((key) => {
+      const t = getTemplate(db, req.org.id, key);
+      const wa = TEMPLATE_NEEDED.includes(key) ? whatsappTemplate(t.body) : null;
+      return { ...t, whatsapp: wa ? { needed: true, text: wa.text, variables: wa.variables, content_sid: sids[key] || '' } : null };
+    }));
+  });
+
+  /** Saves the Twilio Content SID of an approved WhatsApp template. */
+  r.put('/templates/:key/whatsapp', requireRole('owner', 'admin'), (req, res) => {
+    if (!TEMPLATE_NEEDED.includes(req.params.key)) throw notFound('Template');
+    const sid = String(req.body?.content_sid || '').trim();
+    if (sid && !/^HX[0-9a-f]{32}$/i.test(sid)) throw badRequest('The Content SID starts with HX and is 34 characters (Twilio → Messaging → Content Template Builder)');
+    const current = getMessagingSettings(db, req.org.id);
+    const sids = { ...(current.whatsapp_content_sids || {}) };
+    if (sid) sids[req.params.key] = sid; else delete sids[req.params.key];
+    setSetting(db, req.org.id, 'messaging', { ...current, whatsapp_content_sids: sids });
+    res.json({ key: req.params.key, content_sid: sid });
   });
   r.put('/templates/:key', requireRole('owner', 'admin'), (req, res) => {
     if (!TEMPLATES[req.params.key]) throw notFound('Template');
@@ -147,6 +169,7 @@ export function messagingRoutes(ctx) {
         stripe_webhook_url: `${base}/api/hooks/stripe`,
         inbound_url: `${base}/api/hooks/inbound/${token}`,
         whatsapp_link: wa ? `https://wa.me/${wa}?text=${encodeURIComponent(`Hi ${req.org.name}, I’d like to ask about…`)}` : null,
+        whatsapp_book_link: wa ? `https://wa.me/${wa}?text=BOOK` : null,
         booking_link: publicLink(`book/${req.org.slug}`),
       },
     });
@@ -161,6 +184,7 @@ export function messagingRoutes(ctx) {
       missed_call_text_back: { type: 'boolean' }, ring_seconds: { type: 'number' }, voicemail: { type: 'boolean' },
       emergency_keywords: { max: 1000 }, quiet_hours: { type: 'object' }, webhook_url: { max: 500 }, review_link: { max: 500 },
       whatsapp_content_sids: { type: 'object' },
+      auto_reply: { type: 'boolean' }, emergency_auto_reply: { type: 'boolean' },
     }, { partial: true });
     for (const key of ['business_number', 'whatsapp_number', 'forward_to', 'alert_number']) {
       if (body[key] === undefined) continue;

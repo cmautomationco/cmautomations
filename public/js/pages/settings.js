@@ -3,7 +3,7 @@ import { refresh, state } from '../app.js';
 import { applyBrandColor, avatar, confirmDialog, copyText, field, formData, h, icon, modal, mount, select, showError, titleCase, toast, ukPhone, PLATFORM_LABELS } from '../ui.js';
 import { readLogo } from './agency.js';
 
-const TABS = [['business', 'Business & team'], ['branding', 'Branding'], ['phone', 'Phone & WhatsApp'], ['wording', 'Message wording']];
+const TABS = [['business', 'Business & team'], ['branding', 'Branding'], ['phone', 'Phone & alerts'], ['whatsapp', 'WhatsApp'], ['connections', 'Connections'], ['wording', 'Message wording']];
 
 export async function render(el, route) {
   const tab = TABS.some(([k]) => k === route?.parts?.[1]) ? route.parts[1] : 'business';
@@ -19,6 +19,8 @@ export async function render(el, route) {
     body);
   if (tab === 'branding') return renderBranding(body);
   if (tab === 'phone') return renderPhone(body);
+  if (tab === 'whatsapp') return renderWhatsapp(body);
+  if (tab === 'connections') return renderConnections(body);
   if (tab === 'wording') return renderWording(body);
   return renderBusiness(body);
 }
@@ -160,7 +162,7 @@ async function renderPhone(el) {
       h('div', { class: 'row', style: { justifyContent: 'space-between' } }, h('h3', 'Never miss a ', h('span', { class: 'blue' }, 'call or message')),
         h('div', { class: 'row', style: { gap: '6px' } }, statusBadge(info.status.twilio, 'Texts, WhatsApp & calls (Twilio)'), statusBadge(info.status.email, 'Email'), statusBadge(info.status.stripe, 'Card payments'))),
       h('p', { class: 'small muted' }, 'Built for trades like plumbers and electricians who are on the tools all day. Calls to your business number ring your mobile; if you can’t answer, the caller is texted straight back with your booking link, you get an alert, and a call-back task is made. WhatsApp and text messages land in Messages and on the customer’s record. Words like “leak” or “no power” flag an emergency.'),
-      info.status.mode === 'demo' ? h('div', { class: 'why small' }, h('b', 'Demo mode: '), 'everything works and is saved, but texts, WhatsApp messages and emails aren’t actually sent until Twilio and an email service are connected on the server (see the set-up steps below). Use the Test buttons in Messages to try it.') : null),
+      info.status.mode === 'demo' ? h('div', { class: 'why small' }, h('b', 'Not connected yet: '), 'everything works and is saved, but texts, WhatsApp messages and emails aren’t actually sent until your Twilio and email accounts are connected – ', h('a', { href: '#/settings/connections' }, 'Settings → Connections'), '. Until then, use the Test buttons in Messages to try it.') : null),
     h('div', { class: 'card card-pad stack' },
       h('h3', 'Your ', h('span', { class: 'blue' }, 'numbers')),
       field('Business phone number (customers call and text this)', input('business_number', ukPhone(s.business_number), { placeholder: 'e.g. 0117 496 0000' }), { help: 'A Twilio number. Put it on your van, website and Google profile.' }),
@@ -180,6 +182,8 @@ async function renderPhone(el) {
       check('quiet_enabled', s.quiet_hours.enabled, 'Quiet hours – hold automatic texts and WhatsApps to customers overnight'),
       h('div', { class: 'grid g2' }, field('From', h('input', { type: 'time', name: 'quiet_start', value: s.quiet_hours.start, disabled: !canEdit })), field('Until', h('input', { type: 'time', name: 'quiet_end', value: s.quiet_hours.end, disabled: !canEdit }))),
       h('p', { class: 'small muted' }, 'Replies to customers and missed-call texts always go straight away. Anyone who replies STOP is never texted again (START opts them back in).'),
+      check('auto_reply', s.auto_reply, 'Reply straight away to new messages (“we’re on a job – reply BOOK to book”), once every 12 hours per customer'),
+      check('emergency_auto_reply', s.emergency_auto_reply, 'Reply straight away to emergencies (“we’ve flagged this as urgent”)'),
       h('div', { class: 'grid g2' }, field('Emails come from (name)', input('email_from_name', s.email_from_name, { placeholder: state.me.org.name })), field('Replies go to (email)', input('email_reply_to', s.email_reply_to, { type: 'email' })))),
     h('div', { class: 'card card-pad stack' },
       h('h3', 'Links'),
@@ -187,15 +191,9 @@ async function renderPhone(el) {
       field('Zapier / Make webhook (optional)', input('webhook_url', s.webhook_url, { placeholder: 'https://hooks.zapier.com/…' }), { help: 'If set and Twilio isn’t, messages are handed to this webhook to send.' }),
       info.setup.whatsapp_link ? h('div', { class: 'stack', style: { gap: '6px' } }, h('b', { class: 'small' }, '“Message us on WhatsApp” link for your website'), h('div', { class: 'copy-row' }, h('input', { value: info.setup.whatsapp_link, readOnly: true }), h('button', { class: 'btn sm', onclick: () => copyText(info.setup.whatsapp_link) }, icon('copy'), 'Copy'))) : null),
     h('div', { class: 'card card-pad stack span2' },
-      h('h3', 'Going ', h('span', { class: 'blue' }, 'live'), ' (one-off set-up)'),
-      h('ol', { class: 'small', style: { margin: 0, paddingLeft: '18px', display: 'grid', gap: '6px' } },
-        h('li', 'Create a Twilio account, buy a UK number and put your TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN in the server’s .env file.'),
-        h('li', 'In Twilio, set the number’s “A call comes in” webhook to:', setupLine(info.setup.voice_url)),
-        h('li', 'Set “A message comes in” (and the WhatsApp sender’s incoming webhook) to:', setupLine(info.setup.messaging_url)),
-        h('li', 'For WhatsApp, register your number as a WhatsApp sender in Twilio (Meta approval takes a few days). To send reminders more than 24 hours after a customer last messaged, approve templates in Twilio with the same wording as Message wording.'),
-        h('li', 'For email, add RESEND_API_KEY and EMAIL_FROM (on a domain verified with Resend).'),
-        h('li', 'For card payments, add STRIPE_SECRET_KEY and a webhook in Stripe pointing to:', setupLine(info.setup.stripe_webhook_url), ' (event: checkout.session.completed), then STRIPE_WEBHOOK_SECRET.'),
-        h('li', 'Optional – forward emails or other apps’ messages into Messages by posting { from, name, text } to:', setupLine(info.setup.inbound_url)))));
+      h('h3', 'Going ', h('span', { class: 'blue' }, 'live')),
+      h('p', { class: 'small' }, 'Connect your Twilio (phone & WhatsApp), Stripe (card payments) and email accounts in ', h('a', { href: '#/settings/connections' }, 'Settings → Connections'), ' – each one has a Test button, and one click points your number at this system. WhatsApp set-up and approved message templates are in ', h('a', { href: '#/settings/whatsapp' }, 'Settings → WhatsApp'), '.'),
+      h('p', { class: 'small muted' }, 'Optional – forward emails or other apps’ messages into Messages by posting { from, name, text } to:'), setupLine(info.setup.inbound_url)));
   mount(el, form, canEdit ? h('div', { class: 'row', style: { marginTop: '16px', justifyContent: 'flex-end' } }, h('button', { class: 'btn primary', onclick: async () => {
     const f = formData(form);
     const payload = { ...f, ring_seconds: Number(f.ring_seconds), quiet_hours: { enabled: f.quiet_enabled, start: f.quiet_start, end: f.quiet_end } };
@@ -229,4 +227,137 @@ function editTemplate(t, done) {
   if (t.customised) actions.push({ label: 'Reset to default', onClick: async () => { await del(`/messages/templates/${t.key}`); toast('Back to the default wording'); done(); } });
   actions.push({ label: 'Save', primary: true, onClick: async () => { await put(`/messages/templates/${t.key}`, formData(body)); toast('Saved'); done(); } });
   modal(t.label, body, { wide: true, actions });
+}
+
+// ───────────────────────── Connections (Twilio, Stripe, email) ─────────────────────────
+
+async function renderConnections(el) {
+  const info = await get('/integrations');
+  const st = info.status;
+  const canEdit = state.me.role !== 'member';
+  const reload = () => renderConnections(el);
+  const result = (box, r) => mount(box, h('div', { class: `conn-result ${r.ok ? 'ok' : 'bad'}` },
+    h('b', r.ok ? '✓ Working' : '✗ Not working yet'), r.account ? ` – ${r.account}` : '', r.message ? h('div', r.message) : null, r.warning ? h('div', { class: 'small', style: { color: 'var(--amber)' } }, r.warning) : null,
+    r.numbers?.length ? h('ul', { class: 'small' }, r.numbers.map((n) => h('li', `${ukPhone(n.number)}: ${n.found ? (n.voice && n.sms ? 'calls and texts come here ✓' : 'found – press “Point my numbers here”') : (n.message || 'not in this Twilio account')}`))) : null));
+  const run = async (btn, box, fn) => { btn.disabled = true; mount(box, h('div', { class: 'small muted' }, 'Checking…')); try { result(box, await fn()); } catch (err) { result(box, { ok: false, message: err.message }); } finally { btn.disabled = false; } };
+  const badge = (c) => (c.connected ? h('span', { class: 'badge green' }, c.source === 'server' ? '✓ Connected (server account)' : '✓ Connected') : h('span', { class: 'badge' }, 'Not connected'));
+  const disabled = !canEdit || info.demo;
+
+  const card = (title, sub, c, fields, extra, kind) => {
+    const box = h('div');
+    const form = h('div', { class: 'stack' }, fields);
+    const checkBtn = h('button', { class: 'btn sm', disabled: disabled || !c.connected, onclick: (e) => run(e.currentTarget, box, () => post(`/integrations/${kind}/check`)) }, 'Test connection');
+    return h('div', { class: 'card card-pad stack' },
+      h('div', { class: 'row', style: { justifyContent: 'space-between' } }, h('h3', title), badge(c)),
+      h('p', { class: 'small muted' }, sub),
+      c.broken ? h('div', { class: 'small', style: { color: 'var(--red)' } }, 'The saved keys can’t be read (the server’s APP_SECRET changed) – please enter them again.') : null,
+      form,
+      h('div', { class: 'row' },
+        h('button', { class: 'btn sm primary', disabled, onclick: async () => {
+          try { await put(`/integrations/${kind}`, formData(form)); toast('Saved – keys are stored encrypted'); reload(); } catch (err) { showError(err); }
+        } }, c.connected && c.source === 'business' ? 'Update' : 'Connect'),
+        checkBtn, ...(extra ? extra(box) : []),
+        c.connected && c.source === 'business' ? h('button', { class: 'btn sm ghost danger', disabled, onclick: async () => { if (await confirmDialog('Disconnect this account? Messages or payments that use it will stop.', 'Disconnect')) { await del(`/integrations/${kind}`); reload(); } } }, 'Disconnect') : null),
+      box);
+  };
+  const secret = (name, label, placeholder, help) => field(label, h('input', { name, type: 'password', autocomplete: 'off', placeholder, disabled }), { help });
+
+  mount(el,
+    info.demo ? h('div', { class: 'why small', style: { marginBottom: '14px' } }, h('b', 'This is the test build. '), 'It runs entirely in your browser, so it can’t hold real keys or reach Twilio, Stripe or email. On your live server this page connects your real accounts – see the go-live guide (docs/GO-LIVE.md).') : null,
+    !info.setup.https && !info.demo ? h('div', { class: 'why small', style: { marginBottom: '14px', borderColor: 'var(--amber)' } }, h('b', 'PUBLIC_URL isn’t an https address yet. '), `Twilio and Stripe need to reach this system at a public https address (currently ${info.setup.public_url}). Set PUBLIC_URL on the server.`) : null,
+    h('div', { class: 'grid g2', style: { alignItems: 'start' } },
+      card('Twilio – phone, texts & WhatsApp',
+        'Your business number: calls ring your mobile, missed callers are texted back, and texts and WhatsApp messages come in and go out. Find these in the Twilio console under Account info.',
+        st.twilio, [
+          field('Account SID', h('input', { name: 'accountSid', placeholder: st.twilio.connected ? st.twilio.account : 'AC…', autocomplete: 'off', disabled })),
+          secret('authToken', 'Auth Token', st.twilio.connected ? 'Saved – leave blank to keep' : '32 letters and numbers'),
+        ],
+        (box) => [h('button', { class: 'btn sm soft', disabled: disabled || !st.twilio.connected, onclick: (e) => run(e.currentTarget, box, () => post('/integrations/twilio/connect-numbers')) }, 'Point my numbers here')], 'twilio'),
+      card('Stripe – card payments',
+        `Customers pay invoices and deposits by card. The money goes straight into ${info.is_client ? 'this business’s' : 'your'} own Stripe account. Find the secret key in Stripe → Developers → API keys.`,
+        st.stripe, [
+          secret('secretKey', 'Secret key', st.stripe.connected ? `Saved (${st.stripe.key}) – leave blank to keep` : 'sk_live_…'),
+          st.stripe.connected && st.stripe.source === 'business' ? h('div', { class: 'small' }, st.stripe.webhook ? '✓ Payment notifications are set up' : 'Payment notifications aren’t set up yet – press “Set up payment notifications”.') : null,
+        ],
+        (box) => [h('button', { class: 'btn sm soft', disabled: disabled || st.stripe.source !== 'business', onclick: (e) => run(e.currentTarget, box, () => post('/integrations/stripe/webhook')) }, 'Set up payment notifications')], 'stripe'),
+      card('Email – Resend',
+        'Booking confirmations, quotes, invoices and reports by email, from your own address. Add your domain in Resend first (it gives you DNS records to add), then paste an API key here.',
+        st.email, [
+          secret('apiKey', 'API key', st.email.connected ? `Saved (${st.email.key}) – leave blank to keep` : 're_…'),
+          field('Send emails from', h('input', { name: 'from', type: 'email', value: st.email.from || '', placeholder: 'bookings@yourbusiness.co.uk', disabled }), { help: 'Must be on a domain verified in Resend.' }),
+        ], null, 'email'),
+      h('div', { class: 'card card-pad stack' },
+        h('h3', 'Send a ', h('span', { class: 'blue' }, 'real test message')),
+        h('p', { class: 'small muted' }, 'Sends a real message to your own phone or inbox through the connected account, and shows exactly what came back.'),
+        (() => {
+          const box = h('div');
+          const form = h('div', { class: 'grid g2' }, field('By', select('channel', [['whatsapp', 'WhatsApp'], ['sms', 'Text message'], ['email', 'Email']])), field('To', h('input', { name: 'to', placeholder: '07700 900123 or you@example.com', disabled })));
+          return h('div', { class: 'stack' }, form, h('button', { class: 'btn sm primary', disabled, onclick: async (e) => {
+            e.currentTarget.disabled = true;
+            try {
+              const r = await post('/integrations/test-message', formData(form));
+              result(box, { ok: r.status === 'sent', account: r.status === 'sent' ? `sent (${r.provider_id || r.provider})` : '', message: r.error });
+            } catch (err) { showError(err); } finally { e.currentTarget.disabled = disabled; }
+          } }, icon('send'), 'Send test'), box,
+          h('p', { class: 'small muted' }, 'WhatsApp tip: a business can only send free-text WhatsApp messages to someone who has messaged it in the last 24 hours. Send your business’s WhatsApp number a “hi” first, then test.'));
+        })())),
+    h('div', { class: 'card card-pad stack', style: { marginTop: '16px' } },
+      h('h3', 'Where Twilio and Stripe send things'),
+      h('p', { class: 'small muted' }, '“Point my numbers here” and “Set up payment notifications” fill these in for you. For a WhatsApp sender, paste the messages address into Twilio → Messaging → Senders → WhatsApp senders → your number.'),
+      field('Calls (“A call comes in”)', setupLine(info.setup.voice_url)),
+      field('Texts and WhatsApp (“A message comes in”)', setupLine(info.setup.messaging_url)),
+      field('Delivery receipts', setupLine(info.setup.status_url)),
+      field('Stripe payment notifications', setupLine(info.setup.stripe_webhook_url))));
+}
+
+// ───────────────────────── WhatsApp ─────────────────────────
+
+async function renderWhatsapp(el) {
+  const [info, booking, templates] = await Promise.all([get('/messages/settings'), get('/bookings/settings'), get('/messages/templates')]);
+  const canEdit = state.me.role !== 'member';
+  const s = info.settings;
+  const needed = templates.filter((t) => t.whatsapp?.needed);
+  const done = needed.filter((t) => t.whatsapp.content_sid).length;
+  const toggle = (checked, label, onChange) => {
+    const box = h('input', { type: 'checkbox', checked, disabled: !canEdit, style: { width: 'auto' } });
+    box.onchange = () => onChange(box.checked).catch(showError);
+    return h('label', { class: 'row small', style: { gap: '8px', fontWeight: 600 } }, box, label);
+  };
+  mount(el,
+    h('div', { class: 'grid g2', style: { alignItems: 'start' } },
+      h('div', { class: 'card card-pad stack' },
+        h('h3', 'Book, move and cancel ', h('span', { class: 'blue' }, 'on WhatsApp')),
+        h('p', { class: 'small' }, 'Customers message BOOK and pick a service, a day and a time by replying with numbers. The assistant asks for their name and address if needed, books it, sends the confirmation and tells your team. Reminders say “reply C to confirm or R to rearrange” – R offers new times right there, and CANCEL cancels (inside your notice period it asks the team to call instead).'),
+        toggle(booking.settings.chat_booking, 'Customers can book, move and cancel by WhatsApp or text', async (on) => { await put('/bookings/settings', { chat_booking: on }); toast(on ? 'The booking assistant is on' : 'The booking assistant is off – BOOK and R messages go to the team'); }),
+        toggle(s.auto_reply, 'Reply straight away to new messages, inviting them to book', async (on) => { await put('/messages/settings', { auto_reply: on }); toast('Saved'); }),
+        info.setup.whatsapp_book_link ? h('div', { class: 'stack', style: { gap: '6px' } },
+          h('b', { class: 'small' }, '“Book on WhatsApp” link – for your website, Google profile, Facebook and van'),
+          h('div', { class: 'copy-row' }, h('input', { value: info.setup.whatsapp_book_link, readOnly: true }), h('button', { class: 'btn sm', onclick: () => copyText(info.setup.whatsapp_book_link) }, icon('copy'), 'Copy')),
+          h('div', { class: 'copy-row' }, h('input', { value: `<a href="${info.setup.whatsapp_book_link}">Book on WhatsApp</a>`, readOnly: true }), h('button', { class: 'btn sm', onclick: () => copyText(`<a href="${info.setup.whatsapp_book_link}" style="background:#25D366;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700">Book on WhatsApp</a>`, 'Website button copied') }, icon('copy'), 'Website button')))
+          : h('p', { class: 'small', style: { color: 'var(--amber)' } }, 'Add your WhatsApp number in Settings → Phone & alerts to get your “Book on WhatsApp” link.'),
+        h('a', { class: 'btn sm soft', href: '#/messages' }, icon('whatsapp'), 'Try it: Messages → Test an incoming WhatsApp → “BOOK”')),
+      h('div', { class: 'card card-pad stack' },
+        h('h3', 'Setting up ', h('span', { class: 'blue' }, 'WhatsApp')),
+        h('ol', { class: 'small', style: { margin: 0, paddingLeft: '18px', display: 'grid', gap: '6px' } },
+          h('li', 'Connect Twilio in ', h('a', { href: '#/settings/connections' }, 'Settings → Connections'), '.'),
+          h('li', 'In Twilio, go to Messaging → Senders → WhatsApp senders and register your business number. You’ll link it to your Meta (Facebook) Business account; approval usually takes a few days. To test before that, Twilio’s WhatsApp Sandbox works with the same settings.'),
+          h('li', 'Set the sender’s “Webhook URL for incoming messages” to the messages address shown in Settings → Connections.'),
+          h('li', 'Put the number in Settings → Phone & alerts as your WhatsApp number.'),
+          h('li', 'Approve the message templates below, so reminders and invoices can reach customers who haven’t messaged you in the last 24 hours. Until a template is approved, that message goes as a normal text instead – nothing is lost.')),
+        h('div', { class: 'small' }, h('b', `${done} of ${needed.length}`), ' message templates approved.'))),
+    h('div', { class: 'card', style: { marginTop: '16px' } },
+      h('div', { class: 'card-head' }, h('h3', 'WhatsApp message ', h('span', { class: 'blue' }, 'templates'))),
+      h('div', { class: 'card-body stack' },
+        h('p', { class: 'small muted' }, 'WhatsApp only delivers business-started messages that Meta has approved. For each message: open Twilio → Messaging → Content Template Builder → Create new, choose WhatsApp (Utility), paste the text exactly as shown (with {{1}}, {{2}}…), submit it, and when approved paste its Content SID (HX…) here. The system fills in the numbers when sending.'),
+        needed.map((t) => {
+          const sidInput = h('input', { value: t.whatsapp.content_sid, placeholder: 'HX… (after approval)', disabled: !canEdit });
+          return h('div', { class: 'wa-template' },
+            h('div', { class: 'row', style: { justifyContent: 'space-between' } }, h('b', t.label), t.whatsapp.content_sid ? h('span', { class: 'badge green' }, '✓ Approved') : h('span', { class: 'badge' }, 'Goes as a text until approved')),
+            h('div', { class: 'pre small' }, t.whatsapp.text),
+            h('div', { class: 'small muted' }, `Template name suggestion: ${t.key} · Placeholders: ${t.whatsapp.variables.map((v, i) => `{{${i + 1}}} = ${v.replace(/_/g, ' ')}`).join(', ')}`),
+            h('div', { class: 'copy-row' },
+              h('button', { class: 'btn sm', onclick: () => copyText(t.whatsapp.text, 'Template text copied') }, icon('copy'), 'Copy text'),
+              sidInput,
+              canEdit ? h('button', { class: 'btn sm soft', onclick: async () => { try { await put(`/messages/templates/${t.key}/whatsapp`, { content_sid: sidInput.value }); toast(sidInput.value ? 'Saved – this message now goes on WhatsApp' : 'Removed'); renderWhatsapp(el); } catch (err) { showError(err); } } }, 'Save') : null));
+        }))));
 }

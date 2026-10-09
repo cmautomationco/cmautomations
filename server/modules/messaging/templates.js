@@ -31,6 +31,81 @@ export const TEMPLATES = {
     body: 'Thanks – you’ll receive updates from {{business}} again. Reply STOP at any time to opt out.',
   },
 
+  auto_reply: {
+    group: 'Calls & enquiries', label: 'Automatic reply to a new message', audience: 'system',
+    body: 'Thanks for your message{{first_name_comma}} – we’re probably on a job right now and will reply as soon as we can.{{book_line}} – {{business}}',
+  },
+  emergency_ack: {
+    group: 'Calls & enquiries', label: 'Emergency received', audience: 'system',
+    body: 'Thanks{{first_name_spaced}} – we’ve flagged this as urgent and the team has been alerted. We’ll call you back as soon as we can. If you smell gas, call the National Gas Emergency line on 0800 111 999. If anyone is in danger, call 999. – {{business}}',
+  },
+
+  // ── WhatsApp & text booking assistant ──
+  chat_start: {
+    group: 'WhatsApp booking assistant', label: 'Start: choose a service', audience: 'system',
+    body: 'Hi{{first_name_spaced}} 👋 Let’s get you booked in with {{business}}. What do you need? Reply with a number:\n{{options}}\n\nReply 0 at any time to stop.',
+  },
+  chat_pick_day: {
+    group: 'WhatsApp booking assistant', label: 'Choose a day', audience: 'system',
+    body: '{{service}} – which day suits you? Reply with a number:\n{{options}}',
+  },
+  chat_pick_time: {
+    group: 'WhatsApp booking assistant', label: 'Choose a time', audience: 'system',
+    body: 'Times on {{date}} – reply with a number:\n{{options}}\n\nOr reply 9 for a different day.',
+  },
+  chat_ask_name: {
+    group: 'WhatsApp booking assistant', label: 'Ask their name', audience: 'system',
+    body: 'Lovely – and what’s your name?',
+  },
+  chat_ask_address: {
+    group: 'WhatsApp booking assistant', label: 'Ask for the address', audience: 'system',
+    body: 'What’s the address for the visit, including the postcode?',
+  },
+  chat_ask_notes: {
+    group: 'WhatsApp booking assistant', label: 'Ask about the problem', audience: 'system',
+    body: 'In a few words, what’s the problem? It helps us bring the right parts. (Or reply SKIP.)',
+  },
+  chat_confirm: {
+    group: 'WhatsApp booking assistant', label: 'Check before booking', audience: 'system',
+    body: 'Please check:\n{{service}}\n{{date}} at {{time}}{{address_line}}\n\nReply YES to book it, or NO to pick another time.',
+  },
+  chat_confirm_move: {
+    group: 'WhatsApp booking assistant', label: 'Check before moving a booking', audience: 'system',
+    body: 'Move your {{service}} to {{date}} at {{time}}? Reply YES to move it, or NO to pick another time.',
+  },
+  chat_taken: {
+    group: 'WhatsApp booking assistant', label: 'Time just taken', audience: 'system',
+    body: 'Sorry, that time has just been taken. Here’s what’s free on {{date}}:\n{{options}}\n\nOr reply 9 for a different day.',
+  },
+  chat_full: {
+    group: 'WhatsApp booking assistant', label: 'Fully booked', audience: 'system',
+    body: 'Sorry, there’s nothing free online in the next couple of weeks. Someone from {{business}} will message you shortly to find a time.',
+  },
+  chat_not_understood: {
+    group: 'WhatsApp booking assistant', label: 'Didn’t understand the reply', audience: 'system',
+    body: 'Sorry, I didn’t catch that – please reply with one of the numbers above (or 0 to stop).',
+  },
+  chat_handoff: {
+    group: 'WhatsApp booking assistant', label: 'Passing to a person', audience: 'system',
+    body: 'No problem – someone from {{business}} will message you shortly.',
+  },
+  chat_stopped: {
+    group: 'WhatsApp booking assistant', label: 'Stopped booking', audience: 'system',
+    body: 'No problem{{first_name_spaced}}. Reply BOOK any time to book.',
+  },
+  chat_cancel_confirm: {
+    group: 'WhatsApp booking assistant', label: 'Check before cancelling', audience: 'system',
+    body: 'Do you want to cancel your {{service}} on {{date}} at {{time}}? Reply YES to cancel it, or NO to keep it.',
+  },
+  chat_cancel_too_late: {
+    group: 'WhatsApp booking assistant', label: 'Too late to cancel online', audience: 'system',
+    body: 'It’s less than {{hours}} hours until your booking, so we’ve asked the team to call you about it.',
+  },
+  chat_kept: {
+    group: 'WhatsApp booking assistant', label: 'Booking kept', audience: 'system',
+    body: 'Great – your booking stays as it is. See you then!',
+  },
+
   // ── Bookings ──
   booking_confirmation: {
     group: 'Bookings', label: 'Booking confirmed', audience: 'customer',

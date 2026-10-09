@@ -40,6 +40,9 @@ export const MESSAGING_DEFAULTS = {
   // Messages containing these words are flagged as emergencies.
   emergency_keywords: 'emergency, urgent, leak, leaking, flood, flooding, burst, pouring, overflowing, water through, no water, no heating, no hot water, gas smell, smell gas, smell of gas, sparking, burning smell, smoke, no power, power cut, tripping, shock',
   quiet_hours: { enabled: true, start: '20:00', end: '08:00' },
+  // Reply straight away to new messages (once every 12 hours per customer), and acknowledge emergencies.
+  auto_reply: true,
+  emergency_auto_reply: true,
   webhook_url: '',
   review_link: '',
   // Approved WhatsApp templates (Twilio Content SIDs) by message key, for messages sent outside the 24-hour window.
@@ -305,7 +308,7 @@ function contactFor(ctx, orgId, { phone, email, name, source, whatsapp }) {
 }
 
 /** One open "reply to"/"call back" task per contact, so repeat messages don't pile up tasks. */
-function ensureTask(ctx, orgId, contact, { title, description, priority }) {
+export function ensureTask(ctx, orgId, contact, { title, description, priority }) {
   const open = ctx.db.get(`SELECT * FROM tasks WHERE org_id = ? AND source_ref = ? AND status != 'done' AND (title LIKE 'Reply to%' OR title LIKE 'Call back%' OR title LIKE '🚨%')`, orgId, contact.id);
   if (open) {
     if (priority === 'urgent' && open.priority !== 'urgent') ctx.db.update('tasks', open.id, { priority: 'urgent', title, updated_at: now() });
@@ -370,9 +373,33 @@ export async function handleInbound(ctx, orgId, { channel, from, to, body, provi
     return result;
   }
 
-  // "C" confirms and "R" asks to rearrange their next booking.
   const booking = channel !== 'email' ? nextBooking(db, orgId, contact.id) : null;
-  if (booking && (CONFIRM_WORDS.test(text) || RESCHEDULE_WORDS.test(text))) {
+  // Describing the job while booking ("old radiator leaking") isn't an emergency call for help.
+  const describing = db.get(`SELECT 1 FROM conversations WHERE org_id = ? AND contact_id = ? AND step IN ('name','address','notes')`, orgId, contact.id);
+  const urgent = !describing && isEmergency(`${subject || ''} ${text}`, settings);
+  result.urgent = urgent;
+
+  // The WhatsApp / text booking assistant: BOOK, picking options, R to move, CANCEL.
+  // Emergencies always go straight to a person.
+  let handoff = false;
+  if (!urgent && channel !== 'email') {
+    const { createChat } = await import('../bookings/chat.js');
+    const chat = await createChat(ctx).handle({ org, contact, channel, text, nextBooking: booking });
+    if (chat?.handled) {
+      db.update('messages', message.id, { read: 1, related_type: chat.booking ? 'booking' : 'assistant', related_id: chat.booking?.id || contact.id });
+      if (chat.handled === 'chat_started' && booking && RESCHEDULE_WORDS.test(text)) {
+        db.update('bookings', booking.id, { reschedule_requested: 1, updated_at: now() });
+        result.automations = engine.emit(orgId, 'booking.reschedule_requested', { booking, contact });
+      }
+      result.handled = chat.handled;
+      result.booking = chat.booking || null;
+      if (!chat.handoff) return result;
+      handoff = true;
+    }
+  }
+
+  // "C" confirms and "R" asks to rearrange their next booking.
+  if (!handoff && booking && (CONFIRM_WORDS.test(text) || RESCHEDULE_WORDS.test(text))) {
     const tz = org.timezone || 'Europe/London';
     const service = { name: booking.service_name };
     const vars = bookingVars(booking, service, tz);
@@ -398,9 +425,8 @@ export async function handleInbound(ctx, orgId, { channel, from, to, body, provi
   }
 
   // Anything else needs a person: flag emergencies, alert the team and make a reply task.
-  const urgent = isEmergency(`${subject || ''} ${text}`, settings);
-  result.urgent = urgent;
   const label = { whatsapp: 'WhatsApp', sms: 'text', email: 'email' }[channel];
+  contact = getContactRow(db, contact.id);
   const who = baseVars(org, contact).name;
   ensureTask(ctx, orgId, contact, {
     title: urgent ? `🚨 Emergency: reply to ${who} now` : `Reply to ${who} (${label})`,
@@ -410,8 +436,33 @@ export async function handleInbound(ctx, orgId, { channel, from, to, body, provi
   alertStaff(ctx, orgId, 'staff_new_message', {
     urgent_prefix: urgent ? '🚨 EMERGENCY – ' : '', channel: label, name: who, phone: baseVars(org, contact).phone, message: text.slice(0, 300),
   }, { title: `${urgent ? '🚨 ' : ''}New ${label} from ${who}`, link: `#/messages/${contact.id}` });
+
+  // Let the customer know straight away that they've been heard.
+  if (channel !== 'email' && !handoff) {
+    if (urgent && settings.emergency_auto_reply && !sentRecently(db, contact.id, 2, 'emergency_ack')) {
+      await sendMessage(ctx, orgId, { contact, channel, template: 'emergency_ack', audience: 'system', force: true, strict: true });
+    } else if (!urgent && settings.auto_reply && !sentRecently(db, contact.id, 12)) {
+      await sendMessage(ctx, orgId, { contact, channel, template: 'auto_reply', vars: { book_line: bookLine(db, org) }, audience: 'system', force: true, strict: true });
+    }
+  }
   result.automations = engine.emit(orgId, 'message.received', { message, contact, urgent, channel });
   return result;
+}
+
+/** Has anything (or a given message) gone to this contact in the last few hours? */
+function sentRecently(db, contactId, hours, templateKey = null) {
+  const since = new Date(Date.now() - hours * 3600_000).toISOString();
+  return Boolean(db.get(`SELECT 1 FROM messages WHERE contact_id = ? AND direction = 'out' AND created_at > ? ${templateKey ? 'AND template_key = ?' : ''} LIMIT 1`, ...[contactId, since, ...(templateKey ? [templateKey] : [])]));
+}
+
+/** " Want to book a visit? Reply BOOK…" – only when the booking assistant can take bookings. */
+function bookLine(db, org) {
+  const row = db.get(`SELECT value FROM org_meta WHERE org_id = ? AND key = 'setting:bookings'`, org.id);
+  let bookings = {};
+  try { bookings = JSON.parse(row?.value || '{}'); } catch { /* defaults */ }
+  if (bookings.enabled === false || bookings.chat_booking === false) return '';
+  if (!db.get('SELECT 1 FROM services WHERE org_id = ? AND active = 1 AND online = 1 LIMIT 1', org.id)) return '';
+  return ` Want to book ${org.niche === 'local_services' ? 'a visit' : 'an appointment'}? Reply BOOK and pick a time right here.`;
 }
 
 /**

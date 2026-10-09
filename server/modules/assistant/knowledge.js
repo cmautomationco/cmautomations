@@ -37,7 +37,9 @@ export const PLACES = {
   invoice_settings: { hash: '#/invoices/settings', label: 'Invoice settings', words: ['invoice settings', 'bank details', 'vat settings'] },
   forms: { hash: '#/crm/forms', label: 'Lead forms', words: ['lead forms', 'forms', 'website form', 'contact form'] },
   branding: { hash: '#/settings/branding', label: 'Branding', words: ['branding', 'logo', 'brand colour', 'colours', 'colors'] },
-  phone: { hash: '#/settings/phone', label: 'Phone & WhatsApp settings', words: ['phone settings', 'whatsapp settings', 'business number', 'twilio', 'call forwarding'] },
+  phone: { hash: '#/settings/phone', label: 'Phone & alerts settings', words: ['phone settings', 'business number', 'call forwarding', 'alert settings'] },
+  whatsapp_settings: { hash: '#/settings/whatsapp', label: 'WhatsApp settings', words: ['whatsapp settings', 'booking assistant', 'whatsapp templates', 'book on whatsapp'] },
+  connections: { hash: '#/settings/connections', label: 'Connections', words: ['connections', 'twilio', 'stripe', 'resend', 'api keys', 'connect accounts'] },
   wording: { hash: '#/settings/wording', label: 'Message wording', words: ['message wording', 'templates', 'message templates', 'saved replies'] },
   agency: { hash: '#/agency', label: 'Agency control centre', words: ['control centre', 'control center', 'agency', 'all clients', 'client overview'] },
   audits: { hash: '#/agency/audits', label: 'Audits & proposals', words: ['audits', 'proposals', 'audit', 'proposal'] },
@@ -350,13 +352,25 @@ export const TOPICS = [
   {
     key: 'phone_setup', title: 'Link my phone number and WhatsApp',
     keywords: ['link my phone', 'phone number', 'link whatsapp', 'connect whatsapp', 'whatsapp business', 'business number', 'forward calls', 'call forwarding', 'twilio', 'never miss a call', 'missed call text'],
-    answer: 'Go to Settings → Phone & WhatsApp. Add your business number and WhatsApp number, the mobile calls should ring, and where alerts go. Missed callers are texted straight back with your booking link, every WhatsApp and text lands in Messages, and emergencies alert you straight away. The page lists the one-off Twilio steps to go live.',
+    answer: 'Go to Settings → Phone & alerts. Add your business number and WhatsApp number, the mobile calls should ring, and where alerts go. Missed callers are texted straight back with your booking link, every WhatsApp and text lands in Messages, and emergencies alert you straight away. Then connect your Twilio account in Settings → Connections and press “Point my numbers here” – real calls, texts and WhatsApp messages then arrive in Messages.',
     go: { place: 'phone' }, admin: true,
+  },
+  {
+    key: 'whatsapp_booking', title: 'Let customers book on WhatsApp',
+    keywords: ['book on whatsapp', 'book by whatsapp', 'whatsapp booking', 'booking assistant', 'book by text', 'customers book themselves', 'reply book'],
+    answer: 'Customers message BOOK (or just ask to book) on WhatsApp or by text. The booking assistant replies with your services, free days and times as numbered lists, asks for their name, address and a note about the job, then books it straight into your diary and sends the confirmation and reminders. They can reply R to move it or CANCEL to cancel. Anything it can’t follow, or an emergency, goes to a person. Switch it on and get your “Book on WhatsApp” link in Settings → WhatsApp.',
+    go: { place: 'whatsapp_settings' }, admin: true,
+  },
+  {
+    key: 'connections', title: 'Go live: connect Twilio, Stripe and email',
+    keywords: ['go live with messages', 'go live with real', 'go live with texts', 'go live with whatsapp', 'connect twilio', 'connect stripe', 'connect resend', 'real texts', 'real whatsapp', 'send for real', 'api key', 'not actually sent', 'demo not sent'],
+    answer: 'Go to Settings → Connections. Paste your Twilio Account SID and Auth Token (calls, texts and WhatsApp), your Stripe secret key (card payments) and your Resend API key (email). Each card has a Test button that checks it against the real service and explains any problem in plain English, plus “Send a test message” to your own phone. Keys are stored encrypted and each business uses its own accounts.',
+    go: { place: 'connections' }, admin: true,
   },
   {
     key: 'emergency', title: 'Emergency call-outs',
     keywords: ['emergency', 'urgent job', 'emergency call out', 'call-out', 'callout', 'leak', 'burst pipe', 'no heating', 'no power'],
-    answer: 'Messages mentioning words like “leak”, “burst” or “no power” are flagged 🚨: everyone is alerted and an urgent reply task is made. To book one in, press New booking in Bookings and set Urgency to Emergency. You can change the emergency words in Settings → Phone & WhatsApp.',
+    answer: 'Messages mentioning words like “leak”, “burst” or “no power” are flagged 🚨: everyone is alerted and an urgent reply task is made. To book one in, press New booking in Bookings and set Urgency to Emergency. You can change the emergency words in Settings → Phone & alerts.',
     go: { place: 'bookings', highlight: 'New booking' },
   },
   {
@@ -459,7 +473,7 @@ export const TOPICS = [
   {
     key: 'card_payments', title: 'Take card payments',
     keywords: ['card payment', 'pay by card', 'stripe', 'payment link', 'take payment', 'bank details'],
-    answer: 'Customers pay by card from the invoice link once Stripe is connected on the server. Until then (and as well) they see your bank details – add them in Quotes & invoices → Settings. Payments by bank or cash are recorded with “Record a payment”.',
+    answer: 'Connect your own Stripe account in Settings → Connections and press “Set up payment notifications”. Customers then pay by card from the invoice link, the money goes straight to your Stripe account and the invoice is marked paid on its own. They also see your bank details – add them in Quotes & invoices → Settings. Payments by bank or cash are recorded with “Record a payment”.',
     go: { place: 'invoice_settings' }, admin: true,
   },
 
@@ -505,7 +519,7 @@ export const PAGE_HELP = {
   '/tasks': 'Tasks is the team’s to-do board. Many tasks are created automatically by the funnel, CRM and automations.',
   '/automations': 'Automations do the routine admin: WHEN something happens, IF it matches, THEN the system does the work.',
   '/helpdesk': 'The Help Desk tracks problems until they’re sorted, with a response target for each priority and alerts when one is overdue.',
-  '/settings': 'Settings is where you manage the business profile, team, branding, phone & WhatsApp, the wording of automatic messages and extra businesses.',
+  '/settings': 'Settings is where you manage the business profile, team, branding, phone & alerts, WhatsApp, connected accounts (Twilio, Stripe, email), the wording of automatic messages and extra businesses.',
   '/messages': 'Messages is one inbox for WhatsApp, texts, emails and calls. Missed calls are texted back automatically and emergencies are flagged.',
   '/bookings': 'Bookings is your diary: online bookings, reminders, today’s jobs with “On my way” and Done buttons, services and opening hours.',
   '/invoices': 'Quotes & invoices: send quotes customers accept online, invoices they pay by card, and let the system chase anything overdue.',

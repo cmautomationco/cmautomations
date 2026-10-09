@@ -59,7 +59,7 @@ export function integrationRoutes(ctx) {
     live();
     const creds = getCredentials(db, req.org.id);
     if (!creds.twilio) throw badRequest('Connect Twilio first');
-    if (!numbers(req.org.id).length) throw badRequest('Add your business number in Settings → Phone & WhatsApp first');
+    if (!numbers(req.org.id).length) throw badRequest('Add your business number in Settings → Phone & alerts first');
     res.json(await configureTwilioNumbers(creds.twilio, numbers(req.org.id)));
   });
 

@@ -148,7 +148,8 @@ describe('messages, calls and WhatsApp', () => {
     const thread = (await call('GET', '/messages/threads', null, biz.token)).body.find((t) => t.first_name === 'Hannah');
     const open = await call('GET', `/messages/threads/${thread.id}`, null, biz.token);
     assert.equal(open.body.channels.best, 'whatsapp');
-    assert.equal(open.body.messages.length, 1);
+    assert.equal(open.body.messages[0].direction, 'in');
+    assert.equal(open.body.messages[1].template_key, 'emergency_ack', 'emergencies get an instant “we’ve got this” reply');
     const sent = await call('POST', `/messages/threads/${thread.id}/send`, { body: 'Turn the stopcock off under the sink – Dave is on his way now.' }, biz.token);
     assert.equal(sent.status, 201, JSON.stringify(sent.body));
     assert.equal(sent.body.channel, 'whatsapp');
@@ -252,7 +253,10 @@ describe('messages, calls and WhatsApp', () => {
       const thread = (await call('GET', '/messages/threads?q=Ravi', null, biz.token)).body[0];
       assert.ok(thread, 'message landed in the inbox');
       assert.equal(thread.urgent, 1, '“no hot water” is an emergency');
-      assert.match(thread.last_body, /📷 Photo: https:\/\/api\.twilio\.com\/media\/1/);
+      const conversation = (await call('GET', `/messages/threads/${thread.id}`, null, biz.token)).body.messages;
+      assert.match(conversation[0].body, /📷 Photo: https:\/\/api\.twilio\.com\/media\/1/);
+      assert.equal(conversation[1].template_key, 'emergency_ack');
+      assert.equal(conversation[1].status, 'sent', 'the reply went out through Twilio');
 
       // Calls ring the forwarding mobile first.
       const vparams = { From: '+447700900617', To: '+441174960000', CallSid: 'CA1' };
@@ -366,11 +370,26 @@ describe('bookings for a trade business', () => {
     assert.ok(alerts.some((a) => a.to_addr === '+447700900112' && a.body.startsWith('New booking: Fault finding call-out for Maya Shah')));
   });
 
-  test('customers reply C to confirm and R to rearrange', async () => {
-    const c = await call('POST', '/messages/simulate/inbound', { channel: 'whatsapp', from: '07700 900301', body: 'C' }, biz.token);
-    assert.equal(c.body.handled, 'booking_confirmed');
-    const r = await call('POST', '/messages/simulate/inbound', { channel: 'whatsapp', from: '07700 900301', body: 'r' }, biz.token);
-    assert.equal(r.body.handled, 'booking_reschedule');
+  test('customers reply C to confirm, and R to pick a new time right there in WhatsApp', async () => {
+    const say = async (body) => (await call('POST', '/messages/simulate/inbound', { channel: 'whatsapp', from: '07700 900301', body }, biz.token)).body;
+    assert.equal((await say('C')).handled, 'booking_confirmed');
+    const before = (await call('GET', '/bookings?from=2000-01-01&to=2100-01-01', null, biz.token)).body.find((b) => b.first_name === 'Maya');
+    assert.equal((await say('r')).handled, 'chat_started');
+    assert.equal((await call('GET', '/bookings/overview', null, biz.token)).body.counts.reschedule, 1);
+    assert.equal((await say('2')).handled, 'chat_continued');
+    assert.equal((await say('1')).handled, 'chat_continued');
+    const moved = await say('yes');
+    assert.equal(moved.handled, 'chat_moved');
+    const after = (await call('GET', `/bookings/${before.id}`, null, biz.token)).body;
+    assert.notEqual(after.starts_at, before.starts_at);
+    assert.equal(after.reschedule_requested, 0);
+    assert.ok(after.messages.some((m) => m.template_key === 'booking_moved'));
+    const alerts = (await call('GET', '/messages/alerts', null, biz.token)).body;
+    assert.ok(alerts.some((a) => a.body.startsWith('Maya Shah moved their booking by WhatsApp')));
+    // With the assistant switched off, R makes a task for a person instead.
+    await call('PUT', '/bookings/settings', { chat_booking: false }, biz.token);
+    assert.equal((await say('R')).handled, 'booking_reschedule');
+    await call('PUT', '/bookings/settings', { chat_booking: true }, biz.token);
     const tasks = (await call('GET', '/tasks', null, biz.token)).body;
     assert.ok(tasks.some((t) => t.title.startsWith('Reply to Maya Shah – wants to rearrange')));
     const overview = (await call('GET', '/bookings/overview', null, biz.token)).body;

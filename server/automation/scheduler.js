@@ -71,6 +71,7 @@ export function createScheduler(ctx, { intervalSeconds = 30, digestHourUtc = 7 }
       summary.bookings = await step('bookings', () => runBookingSchedule(ctx, at));
       summary.billing = await step('billing', () => runBillingChase(ctx, at));
       summary.reports = await step('reports', () => runMonthlyReports(ctx, at));
+      summary.unfinished = await step('unfinished bookings', async () => (await import('../modules/bookings/chat.js')).followUpAbandoned(ctx, at));
     } finally {
       running = false;
     }

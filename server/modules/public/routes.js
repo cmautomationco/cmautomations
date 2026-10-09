@@ -33,6 +33,7 @@ function businessCard(db, org) {
     phone: messaging.business_number ? displayPhone(messaging.business_number) : null,
     phone_link: messaging.business_number ? `tel:${messaging.business_number}` : null,
     whatsapp_link: wa && messaging.whatsapp_enabled ? `https://wa.me/${wa.replace('+', '')}` : null,
+    whatsapp_book_link: wa && messaging.whatsapp_enabled && getBookingSettings(db, org).chat_booking ? `https://wa.me/${wa.replace('+', '')}?text=BOOK` : null,
     // An agency's own pages (its proposals) don't need a "powered by" line.
     powered_by: brand.hide_powered_by || org.kind === 'agency' ? null : agency ? parseBrand(agency).display_name || agency.name : 'CM Automations',
   };
