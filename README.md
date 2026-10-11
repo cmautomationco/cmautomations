@@ -88,6 +88,15 @@ All screenshots come from the running app with the built-in demo business (`npm 
 |---|---|---|
 | ![Invoices](docs/screenshots/23-quotes-invoices.png) | ![Booking page](docs/screenshots/25-customer-booking-page.png) | ![Invoice](docs/screenshots/26-customer-invoice.png) |
 
+### API hub – every income stream in one place
+| All income streams side by side | One stream (Trading): wins, losses, fees, deposits kept apart |
+|---|---|
+| ![API hub](docs/screenshots/33-api-hub.png) | ![Trading stream](docs/screenshots/34-api-hub-trading.png) |
+
+| API keys, docs and a live “Try it” console | Activity: every API request and delivery |
+|---|---|
+| ![API docs](docs/screenshots/35-api-docs.png) | ![API activity](docs/screenshots/36-api-activity.png) |
+
 ### Agency
 | Control centre | Proposal the client accepts online | Client's monthly report |
 |---|---|---|
@@ -309,11 +318,42 @@ Step-by-step guide: **[docs/GO-LIVE.md](docs/GO-LIVE.md)**. Run `npm run check:l
 - **Audit & proposal builder**: client details → discovery call → time & task audit (pre-loaded with the tasks businesses in that niche do by hand) → the system scores each task, picks the quick wins, estimates hours saved and money recovered (with its assumptions spelled out) and writes a branded proposal. When the client accepts online, their system is created with the agency team on it and a kick-off checklist.
 - **Monthly reports** built automatically on the 1st for every client: hours saved and their value, leads followed up, missed calls texted back, bookings and no-shows, money collected and recovered by chasing, issues resolved and the hardest-working automations. Sent automatically or after review.
 
-### 10. Lead forms
+### 10. API hub – every income stream in one place
+
+For anyone with more than one income – TikTok, trading, digital products, YouTube, affiliate, an online shop, client work or property – so everything is in order without switching between apps.
+
+- **Each income stream has its own section.** It has its own money in and out, its own categories and figures (followers and views for TikTok, account balance for trading, customers for a shop), a monthly profit target, a tax set-aside % and a 12-month profit chart.
+- **The hub shows them side by side**, with the totals across all of them:
+  - this month, last month and the UK tax year (6 April – 5 April);
+  - how much to put aside for tax (a guide, not tax advice);
+  - where this month's money came from.
+  - Streams in another currency (say, a US-dollar trading account) are kept out of the £ totals rather than guessed at.
+- **Numbers that suit each kind of income:**
+  - **Trading:** win rate, average win and loss, profit factor, fees, best and losing markets. Deposits and withdrawals are kept apart from profit.
+  - **Digital products and online shops:** sales, average sale, refunds, refund rate and top sellers.
+- **Getting data in.** Each stream has its own private web address that understands:
+  - **Stripe** – a sale is never counted twice, and partial refunds count only what's new;
+  - **Shopify** – orders and refunds;
+  - **Gumroad** – the sale ping;
+  - **anything else**, such as Zapier, Make, a trading bot or TradingView alerts.
+
+  Stripe and Shopify deliveries can be signature-checked. **CSV import** reads broker statements and earnings or sales exports, finds the columns itself, previews before saving, and never imports the same rows twice. **Send a test** runs the real code path with a sample delivery.
+- **The API.** Keys hold only the permissions they need and can be **locked to one income stream**. They are shown once and stored as a hash, limited to 120 requests a minute, and revocable at once. The API covers:
+  - income streams, entries and figures;
+  - contacts (which run the new-lead automations) and tasks;
+  - bookings and invoices.
+
+  **API docs & try it** sends real requests, and **Activity** logs every request and delivery.
+- **Keeping things in check:**
+  - Early each month, any stream with nothing recorded for last month gets a task.
+  - Money coming in can trigger automations ("Money comes into an income stream").
+  - The Dashboard shows every stream's month at a glance.
+
+### 11. Lead forms
 
 Build a form in **CRM → Lead forms**, share the link or paste the embed code into a website. Submissions create or update the contact (tagged), send a thank-you, and run the new-lead automations. Spam is filtered with a hidden field and rate limits.
 
-### 11. Automation walkthrough presentation
+### 12. Automation walkthrough presentation
 
 Automations → **Watch the walkthrough** opens a 32-slide presentation for showing a client how an automation project works, from first conversation to results:
 
@@ -401,6 +441,8 @@ server/
     messaging/             templates, providers (Twilio, Resend, webhook, demo), WhatsApp templates, inbox, calls
     bookings/              services, availability, reminders, job sheet, calendar feed, WhatsApp booking assistant (chat.js)
     integrations/          each business's own Twilio, Stripe and email accounts (encrypted), checks and set-up
+    streams/               API hub income streams: types, entries, figures, totals, CSV import, web addresses
+    api/                   API keys, the key-protected /api/v1 and the activity log
     billing/               quotes, invoices, payments, chasing, Stripe Checkout
     agency/                audit scoring, proposals, control centre, monthly reports
     forms/                 lead forms
@@ -435,6 +477,8 @@ All endpoints are under `/api` and use `Authorization: Bearer <token>`, except t
 | Automations | `GET/POST /automations`, `PATCH/DELETE /automations/:id`, `POST /automations/:id/test`, `GET /automations/runs`, `GET /automations/impact`, `GET /automations/meta` |
 | Help Desk | `GET /helpdesk/meta`, `GET/POST /helpdesk/issues`, `GET/PATCH/DELETE /helpdesk/issues/:id`, `POST /helpdesk/issues/:id/comments`, `GET /helpdesk/stats` |
 | Assistant | `GET /assistant/meta`, `POST /assistant/chat`, `GET /assistant/insights` (owners/admins) |
+| API hub (signed in) | `GET /streams`, `GET /streams/types`, `POST /streams`, `GET/PATCH/DELETE /streams/:id`, `POST /streams/:id/entries`, `PATCH/DELETE /streams/:id/entries/:entryId`, `DELETE /streams/:id/test-entries`, `POST /streams/:id/metrics`, `POST /streams/:id/import`, `POST /streams/:id/hook/rotate`, `PUT /streams/:id/hook/secret`, `POST /streams/:id/hook/test`, `GET/POST /api-keys`, `DELETE /api-keys/:id`, `GET /api-keys/activity` |
+| API (key) | `GET /v1`, `GET /v1/summary`, `GET /v1/streams`, `GET /v1/streams/:id`, `GET/POST /v1/streams/:id/entries`, `DELETE /v1/streams/:id/entries/:entryId`, `POST /v1/streams/:id/metrics`, `GET/POST /v1/contacts`, `POST /v1/tasks`, `GET /v1/bookings`, `GET /v1/invoices` – send `Authorization: Bearer cmk_…` |
 | Connections | `GET /integrations`, `PUT/DELETE /integrations/:kind` (twilio, stripe, email), `POST /integrations/:kind/check`, `POST /integrations/twilio/connect-numbers`, `POST /integrations/stripe/webhook`, `POST /integrations/test-message` |
 | Messages | `GET /messages/summary`, `GET /messages/threads` (`?channel=whatsapp`), `GET /messages/threads/:contactId`, `POST /messages/threads/:contactId/send`, `GET /messages/calls`, `POST /messages/calls/:id/handled`, `GET /messages/alerts`, `GET/PUT/DELETE /messages/templates/:key`, `PUT /messages/templates/:key/whatsapp`, `GET/PUT /messages/settings`, `POST /messages/simulate/inbound`, `POST /messages/simulate/missed-call` |
 | Bookings | `GET/POST /bookings`, `GET /bookings/overview`, `GET /bookings/today`, `GET/PATCH /bookings/:id`, `POST /bookings/:id/status`, `/remind`, `/invoice`, `GET/POST/PATCH/DELETE /bookings/services`, `GET /bookings/slots`, `GET/PUT /bookings/settings`, `GET/POST/DELETE /bookings/time-off` |
@@ -443,7 +487,7 @@ All endpoints are under `/api` and use `Authorization: Bearer <token>`, except t
 | Agency | `GET /agency/hub`, `PUT /agency/settings`, `POST /agency/clients`, `GET/PATCH /agency/clients/:id`, `GET/POST /agency/audits`, `GET/PATCH/DELETE /agency/audits/:id`, `POST /agency/audits/:id/analyse`, `/send`, `GET/POST /agency/reports`, `POST /agency/reports/:id/send` |
 | Branding | `PATCH /org/brand` |
 | Public (no sign-in) | `GET/POST /public/book/:slug`, `/days`, `/slots`, `GET /public/booking/:token`, `POST /public/booking/:token/confirm|cancel|reschedule`, `GET/POST /public/form/:id`, `GET /public/doc/:token`, `POST /public/doc/:token/accept|decline|pay|confirm-payment`, `GET /public/proposal/:token`, `POST /public/proposal/:token/accept|decline`, `GET /public/report/:token`, `GET /public/calendar/:slug/:token.ics` |
-| Webhooks | `POST /hooks/twilio/voice`, `/voice-status`, `/voicemail`, `/messages`, `/status`, `POST /hooks/stripe`, `POST /hooks/stripe/:orgId`, `POST /hooks/inbound/:token` |
+| Webhooks | `POST /hooks/twilio/voice`, `/voice-status`, `/voicemail`, `/messages`, `/status`, `POST /hooks/stripe`, `POST /hooks/stripe/:orgId`, `POST /hooks/inbound/:token`, `POST /hooks/stream/:token` (an income stream's web address) |
 
 ---
 

@@ -3,7 +3,7 @@ import { state } from '../app.js';
 import { ago, avatar, dateTime, field, h, icon, isOverdue, modal, money, mount, pounds, relative, select, showError, toast, PLATFORM_LABELS } from '../ui.js';
 
 export async function render(el) {
-  const [d, kudos, team] = await Promise.all([get('/dashboard'), get('/kudos'), get('/team')]);
+  const [d, kudos, team, hub] = await Promise.all([get('/dashboard'), get('/kudos'), get('/team'), get('/streams').catch(() => null)]);
   const { kpis } = d;
   const first = state.me.user.name.split(' ')[0];
   const hour = new Date().getHours();
@@ -37,6 +37,7 @@ export async function render(el) {
       kpi('Open pipeline', money(kpis.pipeline_value), `${money(kpis.won_this_month)} won this month`, 'pound'),
       kpi('New leads (7 days)', kpis.new_leads_week, 'Follow-ups created automatically', 'users'),
       kpi('Tasks due today', kpis.tasks_due_today, `${kpis.posts_scheduled} posts scheduled · ${kpis.ideas_in_bank} ideas banked`, 'check')),
+    incomeStrip(hub),
     needsStrip(d.needs),
 
     h('div', { class: 'grid g3' },
@@ -109,4 +110,15 @@ function needsStrip(n) {
   ].filter(Boolean);
   if (!items.length) return null;
   return h('div', { class: 'needs-strip' }, h('b', { class: 'small' }, 'Needs you:'), items.map(([cls, ic, text, href]) => h('a', { class: `att ${cls}`, href }, icon(ic), text)));
+}
+
+/** Every income stream's month at a glance, one click from the API hub. */
+function incomeStrip(hub) {
+  if (!hub?.streams?.length) return null;
+  const gbp = (p, c = 'GBP') => new Intl.NumberFormat('en-GB', { style: 'currency', currency: c, maximumFractionDigits: 0 }).format(p / 100);
+  return h('div', { class: 'card', style: { marginBottom: '16px' } }, h('div', { class: 'card-body row', style: { justifyContent: 'space-between', gap: '14px' } },
+    h('div', h('div', { class: 'eyebrow' }, 'Income streams · this month'), h('div', { style: { fontSize: '22px', fontWeight: 800, marginTop: '4px' }, class: 'blue' }, gbp(hub.totals.month_net_pence)), h('div', { class: 'small muted' }, `profit across ${hub.streams.length} stream${hub.streams.length === 1 ? '' : 's'}`)),
+    h('div', { class: 'row', style: { gap: '18px', flex: 1, justifyContent: 'flex-end' } },
+      hub.streams.map((s) => h('a', { href: `#/api/streams/${s.id}`, style: { color: 'var(--ink)', textDecoration: 'none' } }, h('div', { class: 'small muted' }, s.name), h('b', { class: 'blue' }, gbp(s.summary.month.net_pence, s.currency)))),
+      h('a', { class: 'btn sm soft', href: '#/api' }, 'Open API hub →'))));
 }

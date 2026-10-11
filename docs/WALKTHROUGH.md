@@ -20,7 +20,21 @@ Today across the whole business: time saved, pipeline, leads, tasks, content and
 - [ ] Press “Give kudos” to thank a teammate. They get a notification.
 - [ ] Click a build under “Build Funnel progress” to jump straight into it.
 
-## 3. Build Funnel
+## 3. API hub: every income stream in one place
+
+Alex has four incomes besides the coaching business’s day-to-day: TikTok, a trading account, digital products and 1:1 coaching. Each has its own section with its own money in and out, figures and web address – kept separate, but all in one place.
+
+- [ ] Open the API hub. The top shows this month, last month, the tax year and what to put aside for tax across every stream. Each card is one income stream – click one to go into it.
+- [ ] Open Trading. Wins and losses, win rate, best and losing markets, fees, and deposits/withdrawals kept apart from profit. Hover the bars to see each month; a losing month shows in grey below the line.
+- [ ] Press Import CSV and paste a broker statement (the box shows an example) – press Check it to see how it was read, then Import. Import it again: nothing is doubled up.
+- [ ] Open Digital products, pick “Stripe sale” next to Send a test and press it. It runs the same code as a real Stripe webhook; the test sale appears marked “test”, and you can remove test entries in one click.
+- [ ] Open TikTok and press Update figures to add followers and views, or Add money in for a brand deal.
+- [ ] Press “Add an income stream” and pick YouTube, affiliate, an online shop, client work, property or something else. Each type comes with its own categories and figures.
+- [ ] API keys: create a key, lock it to one income stream, then press “Try it now” and send a real request from API docs & try it.
+- [ ] Activity lists every API request and every delivery to a stream’s web address, with what happened.
+- [ ] The Dashboard shows every stream’s month at a glance, with a link straight into the API hub.
+
+## 4. Build Funnel
 
 The guided journey from idea to fully built product or service.
 
@@ -31,7 +45,7 @@ The guided journey from idea to fully built product or service.
 - [ ] Press “Send to tasks” on any step to turn it into Task Manager tasks with a checklist.
 - [ ] Press “New build” to start your own product or service from scratch.
 
-## 4. Content Studio
+## 5. Content Studio
 
 Strategy, then ideas, then the brief. You create and finalise, then the system publishes.
 
@@ -42,7 +56,7 @@ Strategy, then ideas, then the brief. You create and finalise, then the system p
 - [ ] Calendar: click any post to Publish now, Reschedule or Cancel it. Due posts publish automatically while the page is open.
 - [ ] Creation Academy: short lessons on each content format.
 
-## 5. CRM
+## 6. CRM
 
 Leads, deals and follow-ups, with the admin automated.
 
@@ -52,7 +66,7 @@ Leads, deals and follow-ups, with the admin automated.
 - [ ] Click any deal to edit its value, stage, owner or close date. Use New deal to add one.
 - [ ] Type a name in the search bar at the top and press Enter to find a contact.
 
-## 6. Tasks
+## 7. Tasks
 
 The team’s day-to-day work. Many tasks are created by automations.
 
@@ -60,7 +74,7 @@ The team’s day-to-day work. Many tasks are created by automations.
 - [ ] Press New task. Add a checklist and set it to repeat weekly. Completing it creates the next one.
 - [ ] Open My day and tick tasks off. Use “Just me” to see only your tasks.
 
-## 7. Automations
+## 8. Automations
 
 WHEN something happens, IF it matches, THEN the system does the work.
 
@@ -70,7 +84,7 @@ WHEN something happens, IF it matches, THEN the system does the work.
 - [ ] Check the activity log and the time-saved chart to see everything it has done.
 - [ ] Press “Watch the walkthrough” for the client presentation: the onboarding journey, how it works and live examples. Use ← → to move, Notes for what to say, Present for full screen.
 
-## 8. Assistant (chat)
+## 9. Assistant (chat)
 
 The round chat button in the bottom-right corner, on every page. It finds the answer and takes you there.
 
@@ -83,7 +97,7 @@ The round chat button in the bottom-right corner, on every page. It finds the an
 - [ ] In Swift Plumbing & Heating ask “any missed calls?”, “who owes me money?”, “what jobs have I got today?” or “how do I link my WhatsApp?” – it answers from the real data and opens the right page.
 - [ ] Ask something it can’t answer – it offers to log it for the team so a person picks it up.
 
-## 9. Help Desk
+## 10. Help Desk
 
 Every problem tracked until it’s sorted, with response targets and automatic escalation.
 
@@ -93,7 +107,7 @@ Every problem tracked until it’s sorted, with response targets and automatic e
 - [ ] Write how it was fixed and press “Mark resolved” – whoever raised it gets a notification.
 - [ ] Check “What people ask the assistant” to see where your team or clients get stuck.
 
-## 10. Messages, calls & WhatsApp (trades)
+## 11. Messages, calls & WhatsApp (trades)
 
 Switch to Swift Plumbing & Heating first. Calls to the business number ring Dave’s mobile; missed callers are texted straight back; every WhatsApp and text lands here and on the customer’s record, so nothing is missed while he’s on the tools.
 
@@ -110,7 +124,7 @@ Switch to Swift Plumbing & Heating first. Calls to the business number ring Dave
 - [ ] Settings → Connections is where each business connects its own Twilio (calls, texts, WhatsApp), Stripe (card payments) and email accounts, with a Test button for each. In this test build it explains what to do on the live server.
 - [ ] Settings → Message wording lets you edit every automatic message (missed-call text, reminders, invoice chasers).
 
-## 11. Bookings & reminders
+## 12. Bookings & reminders
 
 The diary, online booking and automatic reminders that cut no-shows.
 
@@ -122,7 +136,7 @@ The diary, online booking and automatic reminders that cut no-shows.
 - [ ] Services: add what customers can book, the price and an optional deposit. Hours & reminders: opening hours, how many jobs at once, reminder times, the morning job sheet and time off.
 - [ ] The calendar link under “Sync to Google, Outlook or iPhone” puts every booking in your phone’s calendar (on the live system).
 
-## 12. Quotes, invoices & payments
+## 13. Quotes, invoices & payments
 
 Won deal or finished job → quote → invoice → paid, with automatic chasing.
 
@@ -132,7 +146,7 @@ Won deal or finished job → quote → invoice → paid, with automatic chasing.
 - [ ] Press “New quote” or “New invoice”, add lines and press Save & send. On a deal in the CRM pipeline you can also press Create quote or Create invoice.
 - [ ] Settings: VAT, bank details for bank transfers, numbering and the chasing schedule.
 
-## 13. Lead forms & branding
+## 14. Lead forms & branding
 
 Website enquiries straight into the CRM, and each business in its own colours.
 
@@ -140,7 +154,7 @@ Website enquiries straight into the CRM, and each business in its own colours.
 - [ ] Press “New form” to build your own, then “Copy embed code” to put it on a website.
 - [ ] Settings → Branding: change the logo, name and colour. The app and every customer page (booking page, quotes, invoices, forms, reports) use it.
 
-## 14. Agency control centre
+## 15. Agency control centre
 
 Your view across every client business, the audit → proposal → new client flow, and monthly reports.
 
@@ -150,7 +164,7 @@ Your view across every client business, the audit → proposal → new client fl
 - [ ] Press “New audit”: fill in the client, the discovery call and the time audit, then “Score it & write the proposal”. Send it, open the proposal link and accept it – the client’s branded system is created with a kick-off task.
 - [ ] Monthly reports: open Swift’s September report (hours saved, missed calls texted back, bookings, money collected), or build and send one for another client.
 
-## 15. Settings & notifications
+## 16. Settings & notifications
 
 Business details, team, channels and extra businesses.
 
@@ -159,7 +173,7 @@ Business details, team, channels and extra businesses.
 - [ ] Press “Add another business” to set up a new business in any niche. It comes ready with pillars, channels and automations.
 - [ ] Press the bell at the top to read notifications from automations and kudos.
 
-## 16. What this test build simulates
+## 17. What this test build simulates
 
 Everything works end to end, with these limits for now:
 
@@ -168,5 +182,6 @@ Everything works end to end, with these limits for now:
 - [ ] Emails, texts and WhatsApp messages are not actually sent (they show as “Demo – not actually sent”). On the live server, adding Twilio and email keys sends them for real, and calls to the business number are forwarded and texted back.
 - [ ] Card payments use a pretend card form. On the live server they go through Stripe and are marked paid automatically.
 - [ ] Calls and WhatsApp messages from customers are simulated with the Test buttons in Messages – a browser page can’t receive real calls.
+- [ ] API hub: each stream’s web address and the API work inside this page (try them with Send a test and API docs & try it), but outside apps like Stripe, Shopify or Zapier can only reach them on the live server.
 - [ ] Your data is saved in this browser only, so other people opening the link start with the demo data.
 - [ ] Timed automations (publishing, booking reminders, the morning job sheet, invoice chasing, follow-ups and monthly reports) run every 30 seconds while the page is open.

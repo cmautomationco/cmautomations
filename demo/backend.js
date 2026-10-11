@@ -18,6 +18,8 @@ import { billingRoutes } from '../server/modules/billing/routes.js';
 import { agencyRoutes } from '../server/modules/agency/routes.js';
 import { publicRoutes } from '../server/modules/public/routes.js';
 import { integrationRoutes } from '../server/modules/integrations/routes.js';
+import { streamHookRoutes, streamRoutes } from '../server/modules/streams/routes.js';
+import { apiKeyRoutes, publicApiRoutes } from '../server/modules/api/routes.js';
 
 export function createBackend(db, { onWrite = () => {} } = {}) {
   const engine = createEngine(db);
@@ -40,6 +42,11 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
     ['/api/agency', agencyRoutes(ctx)],
     ['/api/public', publicRoutes(ctx)],
     ['/api/integrations', integrationRoutes(ctx)],
+    ['/api/streams', streamRoutes(ctx)],
+    ['/api/api-keys', apiKeyRoutes(ctx)],
+    ['/api/v1', publicApiRoutes(ctx)],
+    // Each income stream's web address works in the browser too, so it can be tried out.
+    ['/api/hooks/stream', streamHookRoutes(ctx)],
   ];
 
   async function request(method, url, headers = {}, rawBody) {
@@ -51,6 +58,8 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
       query: Object.fromEntries(parsed.searchParams),
       params: {},
       body: rawBody ? JSON.parse(rawBody) : {},
+      rawBody: rawBody || '',
+      originalUrl: url,
       get: (name) => lowerHeaders[name.toLowerCase()],
       ip: 'browser',
     };

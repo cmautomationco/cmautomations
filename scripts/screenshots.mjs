@@ -68,6 +68,12 @@ await shot('14-automations', '#/automations', { full: true });
 await shot('15-content-academy', '#/content/academy', { full: true });
 await shot('16-help-desk', '#/helpdesk', { full: true });
 await shot('18-automation-presentation', '#/automations/presentation?s=12');
+// API hub: Alex's income streams (Bright Path Coaching, the business Alex signs in to).
+await shot('33-api-hub', '#/api', { full: true });
+const tradingId = db.get(`SELECT id FROM income_streams WHERE type = 'trading'`).id;
+await shot('34-api-hub-trading', `#/api/streams/${tradingId}`, { full: true });
+await shot('35-api-docs', '#/api/docs', { full: true });
+await shot('36-api-activity', '#/api/activity');
 await shot('17-assistant', '#/', { before: async () => {
   await page.click('.as-fab');
   for (const q of ['What do I need to do today?', 'Report a problem: the booking page won’t take payments']) {

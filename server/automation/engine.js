@@ -48,6 +48,7 @@ export const TRIGGERS = {
   'invoice.paid': 'An invoice is paid in full',
   'invoice.overdue': 'An invoice becomes overdue',
   'proposal.accepted': 'A client accepts an agency proposal',
+  'income.received': 'Money comes into an income stream (API hub)',
 };
 
 export const ACTIONS = {

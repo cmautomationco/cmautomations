@@ -69,4 +69,23 @@ export function timingSafeEqual(a, b) {
   return diff === 0;
 }
 
-export default { randomBytes, scryptSync, timingSafeEqual };
+/** createHash('sha256') – used to look up API keys by their hash. */
+export function createHash(algorithm) {
+  if (algorithm !== 'sha256') throw new Error(`${algorithm} isn’t available in the test build`);
+  const chunks = [];
+  const hash = {
+    update(data) { chunks.push(typeof data === 'string' ? new TextEncoder().encode(data) : data); return hash; },
+    digest(encoding) {
+      const all = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
+      let off = 0;
+      for (const c of chunks) { all.set(c, off); off += c.length; }
+      const out = sha256(all);
+      if (encoding === 'hex') return out.toString('hex');
+      if (encoding === 'base64') return btoa(String.fromCharCode(...out));
+      return out;
+    },
+  };
+  return hash;
+}
+
+export default { randomBytes, scryptSync, timingSafeEqual, createHash };

@@ -5,6 +5,7 @@ import { dispatchDue } from '../modules/messaging/service.js';
 import { runBookingSchedule } from '../modules/bookings/service.js';
 import { runBillingChase } from '../modules/billing/service.js';
 import { runMonthlyReports } from '../modules/agency/service.js';
+import { remindMissingMonths } from '../modules/streams/service.js';
 
 /**
  * The scheduler runs the time-based side of the system every tick:
@@ -17,6 +18,7 @@ import { runMonthlyReports } from '../modules/agency/service.js';
  *   7. booking reminders, the morning job sheet and "was the job done?" nudges
  *   8. marks invoices overdue and chases them; flags unanswered quotes
  *   9. builds last month's client reports on the 1st (agencies)
+ *  10. early each month, a task for any income stream with nothing recorded last month
  */
 export function createScheduler(ctx, { intervalSeconds = 30, digestHourUtc = 7 } = {}) {
   let timer = null;
@@ -71,6 +73,7 @@ export function createScheduler(ctx, { intervalSeconds = 30, digestHourUtc = 7 }
       summary.bookings = await step('bookings', () => runBookingSchedule(ctx, at));
       summary.billing = await step('billing', () => runBillingChase(ctx, at));
       summary.reports = await step('reports', () => runMonthlyReports(ctx, at));
+      summary.streams = await step('income streams', () => remindMissingMonths(ctx, at));
       summary.unfinished = await step('unfinished bookings', async () => (await import('../modules/bookings/chat.js')).followUpAbandoned(ctx, at));
     } finally {
       running = false;

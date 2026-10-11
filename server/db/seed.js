@@ -10,6 +10,7 @@ import { stepsFor } from '../modules/funnel/blueprint.js';
 import { createTask } from '../modules/tasks/service.js';
 import { openDatabase, parseJson } from './index.js';
 import { seedBusinessTools } from './seedBusinessTools.js';
+import { seedIncomeStreams } from './seedStreams.js';
 
 /**
  * Seeds a realistic demo business so every screen has something to show.
@@ -48,6 +49,8 @@ export async function seedDemo(db) {
   seedTasks(db, org, [owner, priya, jordan, sam]);
   seedHistory(db, org, [owner, priya, jordan, sam]);
   seedHelpdesk(db, org, [owner, priya, jordan, sam]);
+  // Alex's other incomes – TikTok, trading, digital products, 1:1 coaching – in the API hub.
+  seedIncomeStreams(db, org, owner);
   // The agency, its clients and a plumbing business on the phone and WhatsApp.
   const extra = await seedBusinessTools(db, engine, {
     owner, priya, user,
@@ -66,7 +69,12 @@ export async function seedDemo(db) {
  * bookings or invoices. Adds them alongside what's there, keeping any changes.
  */
 export async function upgradeDemo(db) {
-  if (db.get(`SELECT 1 FROM organizations WHERE kind = 'agency'`)) return false;
+  // Earlier test builds had no API hub: add Alex's income streams.
+  let added = false;
+  const alex = db.get('SELECT * FROM users WHERE email = ?', 'demo@cmautomations.com');
+  const brightPath = db.get('SELECT * FROM organizations WHERE name = ?', 'Bright Path Coaching');
+  if (alex && brightPath && !db.get('SELECT 1 FROM income_streams LIMIT 1')) added = seedIncomeStreams(db, brightPath, alex);
+  if (db.get(`SELECT 1 FROM organizations WHERE kind = 'agency'`)) return added;
   const owner = db.get('SELECT * FROM users WHERE email = ?', 'demo@cmautomations.com');
   const priya = db.get('SELECT * FROM users WHERE email = ?', 'priya@cmautomations.com');
   const bright = db.get('SELECT * FROM organizations WHERE name = ?', 'Bright Path Coaching');

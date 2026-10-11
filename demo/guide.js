@@ -21,6 +21,21 @@ export const GUIDE = [
     ],
   },
   {
+    title: 'API hub: every income stream in one place',
+    intro: 'Alex has four incomes besides the coaching business’s day-to-day: TikTok, a trading account, digital products and 1:1 coaching. Each has its own section with its own money in and out, figures and web address – kept separate, but all in one place.',
+    steps: [
+      ['Open the API hub. The top shows this month, last month, the tax year and what to put aside for tax across every stream. Each card is one income stream – click one to go into it.', '#/api'],
+      ['Open Trading. Wins and losses, win rate, best and losing markets, fees, and deposits/withdrawals kept apart from profit. Hover the bars to see each month; a losing month shows in grey below the line.', '#/api'],
+      ['Press Import CSV and paste a broker statement (the box shows an example) – press Check it to see how it was read, then Import. Import it again: nothing is doubled up.', '#/api'],
+      ['Open Digital products, pick “Stripe sale” next to Send a test and press it. It runs the same code as a real Stripe webhook; the test sale appears marked “test”, and you can remove test entries in one click.', '#/api'],
+      ['Open TikTok and press Update figures to add followers and views, or Add money in for a brand deal.', '#/api'],
+      ['Press “Add an income stream” and pick YouTube, affiliate, an online shop, client work, property or something else. Each type comes with its own categories and figures.', '#/api'],
+      ['API keys: create a key, lock it to one income stream, then press “Try it now” and send a real request from API docs & try it.', '#/api/keys'],
+      ['Activity lists every API request and every delivery to a stream’s web address, with what happened.', '#/api/activity'],
+      ['The Dashboard shows every stream’s month at a glance, with a link straight into the API hub.', '#/'],
+    ],
+  },
+  {
     title: 'Build Funnel',
     intro: 'The guided journey from idea to fully built product or service.',
     steps: [
@@ -181,6 +196,7 @@ export const GUIDE = [
       ['Emails, texts and WhatsApp messages are not actually sent (they show as “Demo – not actually sent”). On the live server, adding Twilio and email keys sends them for real, and calls to the business number are forwarded and texted back.', null],
       ['Card payments use a pretend card form. On the live server they go through Stripe and are marked paid automatically.', null],
       ['Calls and WhatsApp messages from customers are simulated with the Test buttons in Messages – a browser page can’t receive real calls.', null],
+      ['API hub: each stream’s web address and the API work inside this page (try them with Send a test and API docs & try it), but outside apps like Stripe, Shopify or Zapier can only reach them on the live server.', null],
       ['Your data is saved in this browser only, so other people opening the link start with the demo data.', null],
       ['Timed automations (publishing, booking reminders, the morning job sheet, invoice chasing, follow-ups and monthly reports) run every 30 seconds while the page is open.', null],
     ],

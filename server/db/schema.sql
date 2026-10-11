@@ -550,3 +550,88 @@ CREATE TABLE IF NOT EXISTS conversations (
   updated_at TEXT NOT NULL,
   UNIQUE (org_id, contact_id)
 );
+
+-- ───────────────────────── API hub: income streams ─────────────────────────
+-- Each income stream (TikTok, trading, digital products…) is kept separate,
+-- with its own money in/out, figures (followers, account balance…) and its
+-- own web address that other apps send data to.
+CREATE TABLE IF NOT EXISTS income_streams (
+  id                 TEXT PRIMARY KEY,
+  org_id             TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  type               TEXT NOT NULL,
+  name               TEXT NOT NULL,
+  handle             TEXT,
+  currency           TEXT NOT NULL DEFAULT 'GBP',
+  goal_monthly_pence INTEGER,
+  tax_set_aside_pct  REAL NOT NULL DEFAULT 20,
+  notes              TEXT,
+  hook_token         TEXT NOT NULL UNIQUE,
+  hook_secret        TEXT,
+  position           INTEGER NOT NULL DEFAULT 0,
+  archived           INTEGER NOT NULL DEFAULT 0,
+  created_by         TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at         TEXT NOT NULL,
+  updated_at         TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stream_entries (
+  id           TEXT PRIMARY KEY,
+  org_id       TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  stream_id    TEXT NOT NULL REFERENCES income_streams(id) ON DELETE CASCADE,
+  date         TEXT NOT NULL,
+  kind         TEXT NOT NULL CHECK (kind IN ('income','expense','transfer_in','transfer_out')),
+  amount_pence INTEGER NOT NULL CHECK (amount_pence >= 0),
+  currency     TEXT NOT NULL DEFAULT 'GBP',
+  category     TEXT,
+  description  TEXT,
+  reference    TEXT,
+  source       TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual','api','webhook','import')),
+  external_id  TEXT,
+  meta         TEXT NOT NULL DEFAULT '{}',
+  created_by   TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at   TEXT NOT NULL,
+  UNIQUE (stream_id, external_id)
+);
+CREATE INDEX IF NOT EXISTS idx_stream_entries ON stream_entries(stream_id, date);
+
+CREATE TABLE IF NOT EXISTS stream_metrics (
+  id         TEXT PRIMARY KEY,
+  org_id     TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  stream_id  TEXT NOT NULL REFERENCES income_streams(id) ON DELETE CASCADE,
+  key        TEXT NOT NULL,
+  date       TEXT NOT NULL,
+  value      REAL NOT NULL,
+  source     TEXT NOT NULL DEFAULT 'manual',
+  created_at TEXT NOT NULL,
+  UNIQUE (stream_id, key, date)
+);
+
+-- API keys: only a hash is stored; the key itself is shown once.
+CREATE TABLE IF NOT EXISTS api_keys (
+  id           TEXT PRIMARY KEY,
+  org_id       TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  name         TEXT NOT NULL,
+  prefix       TEXT NOT NULL,
+  key_hash     TEXT NOT NULL UNIQUE,
+  scopes       TEXT NOT NULL DEFAULT '[]',
+  stream_id    TEXT REFERENCES income_streams(id) ON DELETE CASCADE,
+  created_by   TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at   TEXT NOT NULL,
+  last_used_at TEXT,
+  revoked_at   TEXT
+);
+
+-- Every API request and stream webhook delivery, for the Activity log.
+CREATE TABLE IF NOT EXISTS api_log (
+  id         TEXT PRIMARY KEY,
+  org_id     TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  kind       TEXT NOT NULL CHECK (kind IN ('api','webhook')),
+  key_id     TEXT,
+  stream_id  TEXT,
+  method     TEXT NOT NULL,
+  path       TEXT NOT NULL,
+  status     INTEGER NOT NULL,
+  summary    TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_api_log ON api_log(org_id, created_at);

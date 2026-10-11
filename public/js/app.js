@@ -12,6 +12,7 @@ import * as messages from './pages/messages.js';
 import * as bookings from './pages/bookings.js';
 import * as invoices from './pages/invoices.js';
 import * as agency from './pages/agency.js';
+import * as apihub from './pages/apihub.js';
 import { PUBLIC_PAGES, renderPublic } from './public.js';
 import { setAssistantVisible } from './assistant.js';
 
@@ -22,6 +23,7 @@ const NAV = [
   { section: 'Overview' },
   { path: '/', label: 'Dashboard', icon: 'home', page: dashboard },
   { path: '/agency', label: 'Agency', icon: 'briefcase', page: agency, when: (me) => me.agency_access },
+  { path: '/api', label: 'API hub', icon: 'layers', page: apihub },
   { section: 'Build' },
   { path: '/funnel', label: 'Build Funnel', icon: 'rocket', page: funnel },
   { path: '/content', label: 'Content Studio', icon: 'sparkles', page: content },

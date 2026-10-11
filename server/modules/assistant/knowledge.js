@@ -39,6 +39,9 @@ export const PLACES = {
   branding: { hash: '#/settings/branding', label: 'Branding', words: ['branding', 'logo', 'brand colour', 'colours', 'colors'] },
   phone: { hash: '#/settings/phone', label: 'Phone & alerts settings', words: ['phone settings', 'business number', 'call forwarding', 'alert settings'] },
   whatsapp_settings: { hash: '#/settings/whatsapp', label: 'WhatsApp settings', words: ['whatsapp settings', 'booking assistant', 'whatsapp templates', 'book on whatsapp'] },
+  apihub: { hash: '#/api', label: 'API hub', words: ['api hub', 'income streams', 'my incomes', 'side hustles', 'all my income'] },
+  api_keys: { hash: '#/api/keys', label: 'API keys', words: ['api keys', 'api key'] },
+  api_docs: { hash: '#/api/docs', label: 'API docs', words: ['api docs', 'api documentation', 'try the api'] },
   connections: { hash: '#/settings/connections', label: 'Connections', words: ['connections', 'twilio', 'stripe', 'resend', 'api keys', 'connect accounts'] },
   wording: { hash: '#/settings/wording', label: 'Message wording', words: ['message wording', 'templates', 'message templates', 'saved replies'] },
   agency: { hash: '#/agency', label: 'Agency control centre', words: ['control centre', 'control center', 'agency', 'all clients', 'client overview'] },
@@ -368,6 +371,24 @@ export const TOPICS = [
     go: { place: 'connections' }, admin: true,
   },
   {
+    key: 'income_streams', title: 'Keep all my income streams in one place',
+    keywords: ['income streams', 'multiple incomes', 'side hustle', 'side hustles', 'tiktok earnings', 'tiktok income', 'trading', 'trading account', 'digital products', 'gumroad', 'all my income', 'api hub', 'how much did i make', 'how much have i made'],
+    answer: 'Open the API hub. Each income – TikTok, trading, digital products, YouTube, affiliate, client work, property – has its own section with its own money in and out, figures (followers, account balance…), stats and web address, kept separate. The top shows this month, the tax year and what to put aside for tax across all of them. Add one with “Add an income stream”.',
+    go: { place: 'apihub', highlight: 'Add an income stream' },
+  },
+  {
+    key: 'income_auto', title: 'Get income in automatically',
+    keywords: ['import csv', 'broker statement', 'trading statement', 'import my trading', 'import trades', 'earnings export', 'stripe sales', 'shopify orders', 'gumroad ping', 'webhook', 'web address', 'zapier', 'send data automatically'],
+    answer: 'Open the income stream and look at “Get data in automatically”. Each stream has its own web address: paste it into Stripe, Shopify or Gumroad (or a Zapier/Make step) and every sale and refund lands there by itself – a sale is never counted twice. Or press Import CSV for a broker statement or earnings export. Press “Send a test” to see it work.',
+    go: { place: 'apihub' },
+  },
+  {
+    key: 'api', title: 'Use the API',
+    keywords: ['api', 'api key', 'developer', 'integrate', 'integration', 'connect my app', 'trading bot', 'endpoint'],
+    answer: 'Go to API hub → API keys and create a key with only the permissions it needs – it can be locked to one income stream. Then API docs & try it lists every endpoint (income streams, contacts, tasks, bookings, invoices) and lets you send a real request. Every request shows in Activity.',
+    go: { place: 'api_keys', highlight: 'Create a key' }, admin: true,
+  },
+  {
     key: 'emergency', title: 'Emergency call-outs',
     keywords: ['emergency', 'urgent job', 'emergency call out', 'call-out', 'callout', 'leak', 'burst pipe', 'no heating', 'no power'],
     answer: 'Messages mentioning words like “leak”, “burst” or “no power” are flagged 🚨: everyone is alerted and an urgent reply task is made. To book one in, press New booking in Bookings and set Urgency to Emergency. You can change the emergency words in Settings → Phone & alerts.',
@@ -523,6 +544,7 @@ export const PAGE_HELP = {
   '/messages': 'Messages is one inbox for WhatsApp, texts, emails and calls. Missed calls are texted back automatically and emergencies are flagged.',
   '/bookings': 'Bookings is your diary: online bookings, reminders, today’s jobs with “On my way” and Done buttons, services and opening hours.',
   '/invoices': 'Quotes & invoices: send quotes customers accept online, invoices they pay by card, and let the system chase anything overdue.',
+  '/api': 'The API hub keeps each income stream (TikTok, trading, digital products…) in its own section with its own figures and web address, shows the totals and tax set-aside across them all, and holds the API keys and docs.',
   '/agency': 'The Agency area shows every client in one place, runs audits and proposals, and builds each client’s monthly report.',
 };
 
