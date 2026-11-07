@@ -31,11 +31,12 @@ Every section except Finance has its own ranked task manager:
 
 ## 🧠 ADHD hub (the core)
 
-It has seven tabs, kept separate:
+It has eight tabs, kept separate:
 
 | Tab | What it does |
 |---|---|
 | **How I'm doing** | A daily score from 1 (really rough) to 10 (flying), plus optional energy (1–5), sleep, tags and a note. It shows a daily line chart (7/14/30 days), weekly averages for the last 8 weeks, your check-in streak, and **Patterns** (how your score changes on days tagged "Slept well", "Exercised", "Overwhelmed" and so on). |
+| **Productivity** | Your daily score out of 100 and how it's made up, time saved today and this week, up or down compared with your usual and last week, and tips to boost today and this week. |
 | **Score & sort** | Score a task or idea *before* you add it. The formula is shown at the top. Four sliders (Impact, Urgency, Energy fit, Effort) show the sum (e.g. `4 × 3 × 4 ÷ 4`), a live score and a verdict: **Do it now**, **Schedule it** or **Park it**. Below it are the three buckets, where you can tick tasks off, move them or rescore them. |
 | **Task manager** | Every task from every area, ranked 5 → 1 with the importance bar. Filter by area. |
 | **Today's 3** | At least three tasks every day, with one always for your health. They're matched to today's check-in: on a low-energy day you get quick, gentle wins. If you haven't scored enough tasks, it suggests a simple health or admin task. |
@@ -58,6 +59,39 @@ Below 6      → Park it
 For example, 4 × 3 × 4 ÷ 4 = 12.0, which goes to **Schedule it**. Scores run from 0.2 (1 × 1 × 1 ÷ 5) to 125 (5 × 5 × 5 ÷ 1).
 
 In **Settings → Your scoring formula** you can change the cut-offs. You can also switch back to the older weighted score out of 100, which has its own weights, cut-offs and two overrides.
+
+### 📈 Productivity and time saved
+
+The **ADHD hub → Productivity** tab, with a short version on the Today page, tracks how productive each day and week is and how much time you saved.
+
+**The daily productivity score (out of 100)** is made of five parts. The tab shows each part, so you can always see why the score moved.
+
+| Part | Points | Full marks when |
+|---|---|---|
+| Today's 3 | 35 | all 3 are done that day (if a day had no Today's 3, any 3 tasks count) |
+| Deep focus | 25 | you reach your daily focus target (90 min by default, set in Settings) |
+| Tasks ticked off | 20 | 3 or more tasks done on top of Today's 3 |
+| Daily basics | 15 | every basic is ticked |
+| Checked in | 5 | you've done that day's check-in |
+
+**Up or down**
+- **Today:** compared with your usual, which is the average of the previous 7 days. It's labelled "so far today", because the day isn't over yet.
+- **This week:** the average daily score so far, compared with last week, in points and %.
+- **Week by week:** a table of the last 8 weeks with the change each week.
+
+**Time saved per day** is the ideas you parked that day plus a daily share (÷ 7) of what your systems save each week. Time saved per week is the same as in Weekly wins.
+
+**Tips**
+- **Boost today** looks at what's left today, such as overdue tasks, unfinished Today's 3, focus minutes, your check-in, daily basics, the brain dump and an overloaded Do it now list. Each tip shows the points it's worth and has a button to act on it.
+- **Boost this week** looks at:
+  - whether productivity is up or down;
+  - the part of your score dragging you down most;
+  - your strongest and weakest days over the last 4 weeks;
+  - the content job that still takes the most time;
+  - how many ideas you've parked;
+  - the check-in tag that lifts your mood most.
+
+![Productivity](screenshots/52-life-adhd-productivity.png)
 
 ### How the weekly numbers are worked out
 

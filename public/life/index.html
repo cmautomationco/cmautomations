@@ -449,6 +449,22 @@ input[type=range].prio:focus-visible { outline: 2px solid var(--sky); outline-of
 .prio-scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-weight: 600; }
 .tcard .prio-box { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
 
+/* ---------- productivity ---------- */
+.parts .part { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(0, 2fr) 64px; gap: 12px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line-soft); }
+.parts .part:first-child { border-top: 0; }
+.parts .part b { font-size: 13px; display: block; }
+.parts .part span.small { display: block; }
+.parts .pts { text-align: right; font-weight: 750; font-variant-numeric: tabular-nums; }
+.tip { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border: 1px solid var(--line); border-radius: 14px; margin-top: 10px; background: var(--surface); }
+.tip:first-of-type { margin-top: 0; }
+.tip .ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); flex: 0 0 auto; font-size: 17px; }
+.calm .tip .ico { background: var(--sky-soft); }
+.tip .grow b { display: block; }
+.tip .gain { flex: 0 0 auto; }
+.tip-side { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; flex: 0 0 auto; }
+.big-delta { font-size: 13px; font-weight: 700; }
+.big-delta.up { color: var(--good); } .big-delta.down { color: var(--bad); } .big-delta.flat { color: var(--muted); }
+
 /* ---------- content strategy ---------- */
 .strat-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .pillar-row { display: grid; grid-template-columns: minmax(0, 1.2fr) 90px minmax(0, 2fr) auto; gap: 8px; align-items: center; margin-top: 8px; }
@@ -484,6 +500,10 @@ input[type=range].prio:focus-visible { outline: 2px solid var(--sky); outline-of
   .fab { right: 16px; bottom: 16px; }
   .tm-add, .tm-add.no-area { grid-template-columns: 1fr; }
   .tm-row { flex-wrap: wrap; }
+  .tip { flex-wrap: wrap; }
+  .tip-side { flex-direction: row; width: 100%; padding-left: 46px; align-items: center; justify-content: space-between; }
+  .parts .part { grid-template-columns: minmax(0, 1fr) 64px; }
+  .parts .part .progress { grid-column: 1 / -1; grid-row: 2; }
   .sl-row { grid-template-columns: 110px minmax(0, 1fr) 24px; gap: 10px; }
   .sys-wrap { overflow-x: auto; }
   table.sys { min-width: 560px; }
@@ -568,7 +588,7 @@ var PLATFORMS = ['TikTok', 'Instagram', 'YouTube', 'Facebook', 'X', 'LinkedIn', 
 function blank() {
   return {
     v: 1, started: false,
-    settings: { name: '', theme: 'system', formula: 'multiply', mult: { now: 15, schedule: 6 }, weights: { impact: 40, urgency: 30, energy: 20, ease: 10 }, nowAt: 70, scheduleAt: 45, habits: DEFAULT_HABITS.slice(), postGoal: 5, distanceGoal: 20 },
+    settings: { name: '', theme: 'system', formula: 'multiply', mult: { now: 15, schedule: 6 }, weights: { impact: 40, urgency: 30, energy: 20, ease: 10 }, nowAt: 70, scheduleAt: 45, habits: DEFAULT_HABITS.slice(), postGoal: 5, distanceGoal: 20, focusTarget: 90 },
     checkins: {}, tasks: [], inbox: [], focus: [], activeFocus: null, today: {}, reviews: {},
     finance: { tx: [], budgets: BUDGET_CATS.map(function (c) { return { cat: c, limit: 0 }; }), goals: [], bills: [] },
     content: { pillars: DEFAULT_PILLARS.slice(), ideas: [], views: {}, systems: [], strategy: { who: '', audience: '', offer: '', voice: '', goal: '', rules: '', platforms: { TikTok: 5, Instagram: 3 }, rhythm: ['', '', '', '', '', '', ''], mix: {}, about: {} } },
@@ -745,6 +765,112 @@ function ensureToday(force) {
 function systemsMinutes(before) {
   return sum((S.content.systems || []).filter(function (x) { return !before || !x.created || toDate(x.created) < before; }), function (x) { return Math.max(0, (+x.before || 0) - (+x.after || 0)) * (+x.times || 0); });
 }
+/* ---------- Productivity: a 0–100 score for each day ----------
+   Today's 3 done  35 · deep focus vs target 25 · other tasks ticked off 20
+   daily basics 15 · checked in 5.  Time saved per day = ideas parked that
+   day + a daily share (÷7) of what your systems save each week. */
+var PARTS = [
+  { k: 'top3', name: 'Today\'s 3', max: 35 },
+  { k: 'focus', name: 'Deep focus', max: 25 },
+  { k: 'tasks', name: 'Tasks ticked off', max: 20 },
+  { k: 'habits', name: 'Daily basics', max: 15 },
+  { k: 'checkin', name: 'Checked in', max: 5 }
+];
+function dayStats(d) {
+  var from = startOfDay(d), to = addDays(from, 1), k = dkey(from);
+  var done = S.tasks.filter(function (t) { return t.done && inRange(t.doneAt, from, to); });
+  var picks = (S.today[k] || []).map(taskById).filter(Boolean);
+  var top3Done = picks.length ? picks.filter(function (t) { return t.done && inRange(t.doneAt, from, to); }).length : Math.min(done.length, 3);
+  var focusMin = sum(S.focus.filter(function (f) { return inRange(f.start, from, to); }), function (f) { return f.minutes; });
+  var hl = S.settings.habits, habitsDone = (S.health.habits[k] || []).filter(function (h) { return hl.indexOf(h) >= 0; }).length;
+  var checked = !!S.checkins[k];
+  var target = +S.settings.focusTarget || 90;
+  var parts = {
+    top3: top3Done / 3 * 35,
+    focus: Math.min(focusMin / target, 1) * 25,
+    tasks: Math.min(Math.max(done.length - top3Done, 0) / 3, 1) * 20,
+    habits: hl.length ? habitsDone / hl.length * 15 : 0,
+    checkin: checked ? 5 : 0
+  };
+  var parkedH = sum(S.tasks.filter(function (t) { return !t.done && t.bucket === 'park' && inRange(t.parkedAt, from, to); }), function (t) { return EFFORT_HOURS[t.effort] || 0; });
+  var sysH = systemsMinutes(to) / 7 / 60;
+  return { k: k, date: from, score: Math.round(sum(PARTS, function (p) { return parts[p.k]; })), parts: parts, done: done.length, top3Done: top3Done, hasPicks: picks.length > 0,
+    focusMin: focusMin, habitsDone: habitsDone, habitsTotal: hl.length, checked: checked, parkedH: parkedH, sysH: sysH, savedH: parkedH + sysH };
+}
+function weekProd(ws) {
+  var today = startOfDay(new Date()), days = range(0, 6).map(function (i) { return addDays(ws, i); }).filter(function (d) { return d <= today; });
+  var list = days.map(dayStats);
+  return { days: list, avg: list.length ? avg(list.map(function (x) { return x.score; })) : null, saved: sum(list, function (x) { return x.savedH; }) };
+}
+function usualScore() { // average of the 7 days before today
+  return avg(range(1, 7).map(function (i) { return dayStats(addDays(new Date(), -i)).score; }));
+}
+function dayTrendText(score, usual) {
+  if (usual == null) return { txt: 'No comparison yet', cls: 'flat' };
+  var d = score - usual;
+  if (Math.abs(d) < 0.5) return { txt: '● Level with your usual (' + Math.round(usual) + ')', cls: 'flat' };
+  return { txt: (d > 0 ? '▲ ' : '▼ ') + Math.round(Math.abs(d)) + (d > 0 ? ' above' : ' below') + ' your usual (' + Math.round(usual) + ') so far today', cls: d > 0 ? 'up' : 'down' };
+}
+function trendBits(cur, prev) {
+  if (cur == null || prev == null) return { txt: 'No comparison yet', cls: 'flat', pct: null };
+  var d = cur - prev, pct = prev ? Math.round(d / prev * 100) : null;
+  if (Math.abs(d) < 0.5) return { txt: '● Level with before', cls: 'flat', pct: 0 };
+  return { txt: (d > 0 ? '▲ Up ' : '▼ Down ') + num(Math.abs(d), 0) + ' points' + (pct != null ? ' (' + (d > 0 ? '+' : '−') + Math.abs(pct) + '%)' : ''), cls: d > 0 ? 'up' : 'down', pct: pct };
+}
+function tipHTML(t) {
+  return '<div class="tip"><div class="ico">' + t.ico + '</div><div class="grow"><b>' + esc(t.title) + '</b><span class="small muted">' + esc(t.text) + '</span></div>' +
+    '<div class="tip-side">' + (t.gain ? '<span class="pill ' + (t.sky ? 'sky' : 'now') + ' gain">' + esc(t.gain) + '</span>' : '') +
+    (t.act ? '<button class="btn sm" data-act="' + t.act + '"' + Object.keys(t.data || {}).map(function (k) { return ' data-' + k + '="' + esc(t.data[k]) + '"'; }).join('') + '>' + esc(t.btn || 'Go') + '</button>' : '') + '</div></div>';
+}
+function dailyTips() {
+  var tips = [], k = dkey(), ds = dayStats(new Date()), target = +S.settings.focusTarget || 90;
+  var overdue = S.tasks.filter(function (t) { return !t.done && t.due && t.due < k; }).sort(function (a, b) { return a.effort - b.effort; });
+  if (overdue.length) tips.push({ ico: '⚠️', title: 'Clear an overdue task first', text: overdue.length + ' overdue. The quickest is “' + overdue[0].title + '” — get it off your mind.', gain: '+7 pts', act: 'focus-task', data: { id: overdue[0].id }, btn: '🎯 Focus on it' });
+  var ids = ensureToday(), left = ids.map(taskById).filter(function (t) { return t && !t.done; });
+  if (left.length) tips.push({ ico: '✅', title: 'Finish Today\'s 3 (' + (3 - left.length) + ' of 3 done)', text: 'Next up: “' + left[0].title + '”. Each one is worth about 12 points.', gain: '+' + Math.round(left.length * 35 / 3) + ' pts', act: 'focus-task', data: { id: left[0].id }, btn: '🎯 Start it' });
+  if (ds.focusMin < target) { var need = target - ds.focusMin; tips.push({ ico: '🎯', title: 'Do a ' + (need >= 45 ? 45 : 25) + '-minute deep focus block', text: 'You\'re at ' + ds.focusMin + ' of ' + target + ' focus minutes today. Phone in another room, one tab open.', gain: '+' + Math.round(Math.min(need >= 45 ? 45 : 25, need) / target * 25) + ' pts', act: 'go', data: { page: 'adhd', tab: 'focus' }, btn: 'Open timer' }); }
+  if (!ds.checked) tips.push({ ico: '🙂', title: 'Check in (10 seconds)', text: 'It tunes Today\'s 3 to your energy and keeps your trend honest.', gain: '+5 pts', act: 'go', data: { page: 'adhd', tab: 'checkin' }, btn: 'Check in' });
+  if (ds.habitsTotal && ds.habitsDone < ds.habitsTotal) tips.push({ ico: '💚', title: 'Tick off your daily basics', text: (ds.habitsTotal - ds.habitsDone) + ' left today. Start with a 20-minute walk — it lifts focus for the afternoon.', gain: '+' + Math.round((ds.habitsTotal - ds.habitsDone) / ds.habitsTotal * 15) + ' pts', act: 'go', data: { page: 'health' }, btn: 'Open basics' });
+  if (S.inbox.length) tips.push({ ico: '💭', title: 'Empty the brain dump', text: S.inbox.length + ' thought' + (S.inbox.length === 1 ? '' : 's') + ' waiting. Score them or park them — every idea parked saves you chasing it.', gain: 'saves time', sky: true, act: 'go', data: { page: 'adhd', tab: 'dump' }, btn: 'Sort them' });
+  var nowCount = S.tasks.filter(function (t) { return !t.done && t.bucket === 'now'; }).length;
+  if (nowCount > 7) tips.push({ ico: '🅿️', title: 'Lighten “Do it now”', text: nowCount + ' tasks are in Do it now. Move 3 to Schedule or Park so today feels doable.', gain: 'less overwhelm', sky: true, act: 'go', data: { page: 'adhd', tab: 'score' }, btn: 'Sort tasks' });
+  var e = todayEnergy();
+  if (e != null && e <= 2) tips.unshift({ ico: '🔋', title: 'Low-energy day — shrink the target', text: 'Do one quick win and one 15-minute focus block. That still counts as a good day.', gain: 'protects tomorrow', sky: true });
+  if (!tips.length) tips.push({ ico: '🏆', title: 'You\'ve hit everything today', text: 'Rest is productive too. Anything else is a bonus — or plan tomorrow\'s first task now.', gain: '100% day', sky: true });
+  return tips.slice(0, 5);
+}
+function weeklyTips() {
+  var tips = [], ws = weekStart(), cur = weekProd(ws), last = weekProd(addDays(ws, -7)), tr = trendBits(cur.avg, last.avg);
+  if (tr.cls === 'down') tips.push({ ico: '📉', title: 'Productivity is ' + tr.txt.replace('▼ ', '').toLowerCase() + ' on last week', text: 'Make this week lighter: just Today\'s 3 each day, and park any new idea that scores under ' + num(thresholds().schedule) + '.', gain: 'reset', act: 'go', data: { page: 'adhd', tab: 'score' }, btn: 'Review tasks' });
+  else if (tr.cls === 'up') tips.push({ ico: '📈', title: 'Productivity is ' + tr.txt.replace('▲ ', '').toLowerCase() + ' — keep it going', text: 'Whatever you changed is working. Repeat the same morning routine and protect your focus blocks.', gain: 'keep it up', sky: true });
+  // weakest part this week
+  if (cur.days.length) {
+    var ratios = PARTS.map(function (p) { return { p: p, r: avg(cur.days.map(function (x) { return x.parts[p.k] / p.max; })) }; }).sort(function (a, b) { return a.r - b.r; });
+    var w = ratios[0], pct = Math.round(w.r * 100), lost = Math.round((1 - w.r) * w.p.max);
+    var map = {
+      top3: ['Finish Today\'s 3 before anything else', 'Today\'s 3 is at ' + pct + '% this week. Do #1 before opening email or socials.', 'adhd', 'today', 'Open Today\'s 3'],
+      focus: ['Book three focus blocks this week', 'Deep focus is at ' + pct + '% of your ' + S.settings.focusTarget + '-minute daily target. Put 45 minutes in the diary on 3 mornings.', 'adhd', 'focus', 'Open timer'],
+      tasks: ['Clear two quick wins a day', 'Other tasks are at ' + pct + '%. Pick tasks with effort 1 — they take 15 minutes and add up fast.', 'adhd', 'tasks', 'Open task manager'],
+      habits: ['Stack your daily basics', 'Basics are at ' + pct + '%. Tie them to something you already do: water and meds with breakfast, walk after lunch.', 'health', '', 'Open basics'],
+      checkin: ['Check in every morning', 'You\'ve checked in on ' + cur.days.filter(function (x) { return x.checked; }).length + ' of ' + cur.days.length + ' days. It takes 10 seconds and sharpens Today\'s 3.', 'adhd', 'checkin', 'Check in']
+    }[w.p.k];
+    tips.push({ ico: '🧩', title: map[0], text: map[1], gain: '+' + lost + ' pts a day', act: 'go', data: { page: map[2], tab: map[3] }, btn: map[4] });
+  }
+  // best weekday from the last 4 weeks
+  var byDow = range(0, 6).map(function (i) { return { d: i, s: avg(range(0, 3).map(function (wk) { var day = addDays(ws, i - 7 * (wk + 1)); return dayStats(day).score; })) }; }).sort(function (a, b) { return b.s - a.s; });
+  if (byDow[0].s > 0) tips.push({ ico: '🗓️', title: 'Use your strongest day: ' + WEEKDAYS[byDow[0].d], text: 'Over the last 4 weeks ' + WEEKDAYS[byDow[0].d] + ' averages ' + Math.round(byDow[0].s) + ' and ' + WEEKDAYS[byDow[6].d] + ' ' + Math.round(byDow[6].s) + '. Put your biggest task on ' + WEEKDAYS[byDow[0].d] + ' and keep ' + WEEKDAYS[byDow[6].d] + ' light.', gain: 'work with your rhythm', sky: true });
+  // biggest time-saving opportunity
+  var sys = (S.content.systems || []).slice().sort(function (a, b) { return b.after * b.times - a.after * a.times; });
+  if (sys.length && sys[0].after * sys[0].times >= 30) tips.push({ ico: '⏱️', title: '“' + sys[0].name + '” still takes ' + hrs(sys[0].after * sys[0].times / 60) + ' a week', text: 'Template it, batch it or automate one more step. Halving it wins back about ' + hrs(sys[0].after * sys[0].times / 2 / 60) + ' every week.', gain: '+' + hrs(sys[0].after * sys[0].times / 2 / 60) + '/week', sky: true, act: 'go', data: { page: 'content', tab: 'overview' }, btn: 'Open systems' });
+  else if (!sys.length) tips.push({ ico: '⏱️', title: 'Start counting the time your systems save', text: 'List the jobs you repeat every week (captions, clipping, replies) with before and after minutes.', gain: 'track time saved', sky: true, act: 'go', data: { page: 'content', tab: 'overview' }, btn: 'Add systems' });
+  var st = weekStats(ws);
+  if (st.parked < 2) tips.push({ ico: '🅿️', title: 'Score new ideas before you chase them', text: 'You\'ve parked ' + st.parked + ' idea' + (st.parked === 1 ? '' : 's') + ' this week. Each one parked saves 15 minutes to 8 hours you\'d have spent chasing it.', gain: 'up to 8h each', sky: true, act: 'go', data: { page: 'adhd', tab: 'dump' }, btn: 'Brain dump' });
+  // best check-in tag
+  var entries = Object.keys(S.checkins).map(function (k) { return S.checkins[k]; }).filter(function (x) { return x.score; }), overall = avg(entries.map(function (x) { return x.score; }));
+  var best = TAGS.map(function (t) { var wt = entries.filter(function (x) { return (x.tags || []).indexOf(t) >= 0; }); return { t: t, n: wt.length, d: wt.length >= 3 ? avg(wt.map(function (x) { return x.score; })) - overall : -9 }; }).sort(function (a, b) { return b.d - a.d; })[0];
+  if (best && best.d >= 0.5) tips.push({ ico: '✨', title: 'Do more of what lifts you: “' + best.t + '”', text: 'Days tagged “' + best.t + '” score ' + num(best.d, 1) + ' higher on your check-in. Plan for it on 3 days this week.', gain: '+' + num(best.d, 1) + ' mood', sky: true });
+  return tips.slice(0, 5);
+}
 function weekStats(ws) {
   var we = addDays(ws, 7);
   var solved = S.tasks.filter(function (t) { return t.done && inRange(t.doneAt, ws, we); });
@@ -920,6 +1046,7 @@ var NAV = [
 ];
 var ADHD_TABS = [
   { id: 'checkin', name: 'How I\'m doing' },
+  { id: 'progress', name: 'Productivity' },
   { id: 'score', name: 'Score & sort' },
   { id: 'tasks', name: 'Task manager' },
   { id: 'today', name: 'Today\'s 3' },
@@ -1017,6 +1144,7 @@ function viewHome() {
            : '<div class="scale compact">' + range(1, 10).map(function (n) { return '<button data-act="quick-score" data-v="' + n + '">' + n + '</button>'; }).join('') + '</div><p class="small muted mt">Today\'s 3 re-picks itself to match. Add energy, sleep and notes in the <a href="#/adhd/checkin">full check-in</a>.</p>') +
       '</div>' +
     '</div>' +
+    homeProductivity() +
     '<div class="section-label"><span>🎯</span>Top priorities</div>' + taskManager('home', { areas: null, def: 'personal', title: '🎯 Top priorities', blurb: 'Your most important open tasks, from every area.', limit: 6 }) +
     '<div class="section-label"><span>📊</span>This week so far</div>' + weekTiles(ws) +
     '<div class="grid g3 mt">' +
@@ -1031,6 +1159,14 @@ function viewHome() {
         '<div class="mt-s"><div class="progress"><span style="width:' + clamp(sum(acts, function (a) { return a.distance; }) / (S.settings.distanceGoal || 1) * 100, 0, 100) + '%"></span></div><div class="small muted mt-s">' + acts.length + ' activities · goal ' + S.settings.distanceGoal + ' km</div></div></div>' +
     '</div>' +
     (idea ? '<div class="card mt tint"><div class="row between"><div><span class="pill plain">💡 Content idea waiting · ' + esc(idea.platform) + '</span><h3 class="mt-s">' + esc(idea.title) + '</h3><p class="small muted">' + esc(idea.hook || '') + '</p></div><button class="btn sm" data-act="go" data-page="content">Open content ideas →</button></div></div>' : '');
+}
+function homeProductivity() {
+  var t = dayStats(new Date()), tr = dayTrendText(t.score, usualScore()), tips = dailyTips().slice(0, 2);
+  var ws = weekStart(), c = weekProd(ws), l = weekProd(addDays(ws, -7)), tw = trendBits(c.avg, l.avg);
+  return '<div class="section-label"><span>📈</span>Productivity & time saved</div>' +
+    '<div class="grid g3"><div class="stack"><div class="card stat t-peach"><span class="label">Productivity today</span><span class="value">' + t.score + '<span class="small muted"> / 100</span></span><span class="big-delta ' + tr.cls + '">' + tr.txt + '</span><span class="sub">This week ' + (c.avg == null ? '–' : Math.round(c.avg)) + ' · ' + tw.txt.replace('▲ ', '').replace('▼ ', '') + ' vs last week</span></div>' +
+    '<div class="card stat t-sky"><span class="label">Time saved</span><span class="value">' + hrs(t.savedH) + '<span class="small muted"> today</span></span><span class="sub">' + hrs(c.saved) + ' this week so far</span></div></div>' +
+    '<div class="card span2"><div class="card-head"><div><h2>🚀 Boost today</h2><p>The quickest ways to lift today\'s score</p></div><button class="btn sm ghost" data-act="go" data-page="adhd" data-tab="progress">All tips →</button></div>' + tips.map(tipHTML).join('') + '</div></div>';
 }
 function todayLine() {
   var e = todayEnergy();
@@ -1068,7 +1204,7 @@ function viewADHD() {
   var tab = ADHD_TABS.some(function (t) { return t.id === route.tab; }) ? route.tab : 'checkin';
   return '<div class="page-head"><div><h1>🧠 ADHD hub</h1><p>Every day is different. This is how you stay on top of the ones that matter.</p></div></div>' +
     tabsBar('adhd', ADHD_TABS, tab) +
-    ({ checkin: tabCheckin, score: tabScore, tasks: tabTasks, today: tabToday, focus: tabFocus, week: tabWeek, dump: tabDump })[tab]();
+    ({ checkin: tabCheckin, progress: tabProgress, score: tabScore, tasks: tabTasks, today: tabToday, focus: tabFocus, week: tabWeek, dump: tabDump })[tab]();
 }
 
 var draftCheckin = null;
@@ -1317,12 +1453,53 @@ setInterval(function () {
   document.title = S.activeFocus ? clockText(a) + ' · Focus' : 'Life Dashboard';
 }, 1000);
 
+/* ---------- Productivity & time saved ---------- */
+function tabProgress() {
+  var today = dayStats(new Date()), usual = usualScore(), trDay = dayTrendText(today.score, usual);
+  var ws = weekStart(), cur = weekProd(ws), last = weekProd(addDays(ws, -7)), trWeek = trendBits(cur.avg, last.avg);
+  var savedTr = deltaText(cur.saved, last.saved, '', hrs);
+  var days = range(0, 13).map(function (i) { return dayStats(addDays(new Date(), i - 13)); });
+  lineChart('ch-prod', days.map(function (x) { return { label: DOW[x.date.getDay()].slice(0, 2) + ' ' + x.date.getDate(), value: x.score, tip: fmtDay(x.date) + ' · ' + x.done + ' done · ' + x.focusMin + ' min focus' }; }), { min: 0, max: 100, ticks: [0, 50, 100], label: 'Productivity per day' });
+  columnChart('ch-saved-day', days.map(function (x) { return { label: DOW[x.date.getDay()].slice(0, 2) + ' ' + x.date.getDate(), value: +x.savedH.toFixed(2), tip: fmtDay(x.date) + ' · ' + hrs(x.parkedH) + ' parked + ' + hrs(x.sysH) + ' systems' }; }), { fmt: hrs, label: 'Time saved per day', base: css('--bar-mute'), cur: css('--accent') });
+  var weeks = range(0, 7).map(function (i) { var w = addDays(ws, (i - 7) * 7); return { ws: w, p: weekProd(w), st: weekStats(w) }; });
+  return '<div class="grid g4">' +
+      '<div class="card stat t-peach"><span class="label">Productivity today</span><span class="value">' + today.score + '<span class="small muted"> / 100</span></span><span class="big-delta ' + trDay.cls + '">' + trDay.txt + '</span></div>' +
+      '<div class="card stat t-sky"><span class="label">Time saved today</span><span class="value">' + hrs(today.savedH) + '</span><span class="sub">' + hrs(today.parkedH) + ' from parking · ' + hrs(today.sysH) + ' from systems</span></div>' +
+      '<div class="card stat t-peach"><span class="label">Productivity this week</span><span class="value">' + (cur.avg == null ? '–' : Math.round(cur.avg)) + '<span class="small muted"> avg</span></span><span class="big-delta ' + trWeek.cls + '">' + trWeek.txt + ' vs last week</span></div>' +
+      '<div class="card stat t-sky"><span class="label">Time saved this week</span><span class="value">' + hrs(cur.saved) + '</span><span class="delta ' + savedTr[1] + '">' + (savedTr[0] || 'so far') + '</span></div>' +
+    '</div>' +
+    '<div class="grid g2 mt">' +
+      '<div class="card"><div class="card-head"><div><h2>🚀 Boost today</h2><p>Personal to what you\'ve done so far today</p></div></div>' + dailyTips().map(tipHTML).join('') + '</div>' +
+      '<div class="card calm"><div class="card-head"><div><h2>📅 Boost this week</h2><p>From your trends, patterns and time-saving systems</p></div></div>' + weeklyTips().map(tipHTML).join('') + '</div>' +
+    '</div>' +
+    '<div class="grid g2 mt">' +
+      '<div class="card"><div class="card-head"><div><h2>How today\'s score is made</h2><p>Five parts that add up to 100 — so you always know why it moved</p></div><span class="pill now">' + today.score + ' / 100</span></div><div class="parts">' +
+        PARTS.map(function (pt) {
+          var v = today.parts[pt.k], detail = { top3: today.top3Done + ' of 3 done' + (today.hasPicks ? '' : ' (any 3 tasks)'), focus: today.focusMin + ' of ' + S.settings.focusTarget + ' min', tasks: Math.max(today.done - today.top3Done, 0) + ' extra done (3 = full marks)', habits: today.habitsDone + ' of ' + today.habitsTotal + ' ticked', checkin: today.checked ? 'Done' : 'Not yet' }[pt.k];
+          return '<div class="part"><div><b>' + pt.name + '</b><span class="small muted">' + detail + '</span></div><div class="progress' + (pt.k === 'top3' || pt.k === 'tasks' ? ' warm' : '') + '"><span style="width:' + (v / pt.max * 100) + '%"></span></div><span class="pts">' + Math.round(v) + ' / ' + pt.max + '</span></div>';
+        }).join('') + '</div></div>' +
+      '<div class="card calm"><div class="card-head"><div><h2>Productivity per day</h2><p>Last 14 days, out of 100</p></div></div>' + chartSlot('ch-prod', 200) +
+        tableView(['Day', 'Score', 'Done', 'Focus'], days.map(function (x) { return [fmtDay(x.date), x.score, x.done, x.focusMin + ' min']; })) + '</div>' +
+    '</div>' +
+    '<div class="grid g2 mt">' +
+      '<div class="card"><div class="card-head"><div><h2>Time saved per day</h2><p>Last 14 days · ideas parked that day + your systems\' daily share</p></div></div>' + chartSlot('ch-saved-day', 200) +
+        tableView(['Day', 'Saved', 'Parking', 'Systems'], days.map(function (x) { return [fmtDay(x.date), hrs(x.savedH), hrs(x.parkedH), hrs(x.sysH)]; })) + '</div>' +
+      '<div class="card calm"><div class="card-head"><div><h2>Week by week</h2><p>Is it going up or down?</p></div></div>' +
+        '<table class="data"><thead><tr><th>Week of</th><th class="num">Productivity</th><th class="num">Change</th><th class="num">Time saved</th><th class="num">Solved</th></tr></thead><tbody>' +
+        weeks.slice().reverse().map(function (w, i, arr) {
+          var prev = arr[i + 1], t = prev ? trendBits(w.p.avg, prev.p.avg) : { txt: '–', cls: 'flat' };
+          return '<tr><td>' + fmtShort(w.ws) + (i === 0 ? ' (this week)' : '') + '</td><td class="num">' + (w.p.avg == null ? '–' : Math.round(w.p.avg)) + '</td><td class="num"><span class="big-delta ' + t.cls + '">' + (t.pct != null && prev ? (t.cls === 'up' ? '▲ ' : t.cls === 'down' ? '▼ ' : '● ') + Math.abs(t.pct) + '%' : '–') + '</span></td><td class="num">' + hrs(w.st.timeSaved) + '</td><td class="num">' + w.st.solved + '</td></tr>';
+        }).join('') + '</tbody></table>' +
+        '<p class="small muted mt">Productivity is the average daily score for that week (this week counts the days so far).</p></div>' +
+    '</div>';
+}
+
 /* ---------- Weekly wins ---------- */
 function tabWeek() {
   var ws = weekStart(), st = weekStats(ws), wk = dkey(ws), rv = S.reviews[wk] || {};
   var hist = range(0, 7).map(function (i) { var w = addDays(ws, (i - 7) * 7); return { ws: w, st: weekStats(w) }; });
   columnChart('ch-saved', hist.map(function (h) { return { label: fmtShort(h.ws), value: +h.st.timeSaved.toFixed(2), tip: 'Week of ' + fmtShort(h.ws) }; }), { fmt: hrs, label: 'Time saved per week' });
-  return '<div class="card tint"><div class="row between"><div><h2>Week of ' + fmtShort(ws) + ' – ' + fmtShort(addDays(ws, 6)) + '</h2><p class="small muted mt-s">Here\'s what you got done — and what you didn\'t let steal your time.</p></div><span class="pill plain">Resets every Monday</span></div></div>' +
+  return '<div class="card tint"><div class="row between"><div><h2>Week of ' + fmtShort(ws) + ' – ' + fmtShort(addDays(ws, 6)) + '</h2><p class="small muted mt-s">Here\'s what you got done — and what you didn\'t let steal your time.</p></div><div class="row">' + (function () { var c = weekProd(ws), l = weekProd(addDays(ws, -7)), t = trendBits(c.avg, l.avg); return '<span class="pill now">Productivity ' + (c.avg == null ? '–' : Math.round(c.avg)) + '</span><span class="big-delta ' + t.cls + '">' + t.txt + '</span>'; })() + '<button class="btn sm" data-act="go" data-page="adhd" data-tab="progress">Full breakdown →</button></div></div></div>' +
     '<div class="mt">' + weekTiles(ws) + '</div>' +
     '<div class="grid g2 mt">' +
       '<div class="card"><div class="card-head"><div><h2>Time saved, week by week</h2><p>Hours you would have spent chasing ideas you parked instead</p></div></div>' + chartSlot('ch-saved', 190) +
@@ -1642,7 +1819,8 @@ function viewSettings() {
     '<div class="grid g2"><div class="card"><div class="card-head"><h2>You</h2></div><div class="form-row">' +
       '<label class="field">Your first name<input type="text" id="set-name" value="' + esc(s.name) + '"></label>' +
       '<label class="field">Theme<select id="set-theme">' + [['system', 'Match my device'], ['light', 'Light'], ['dark', 'Dark']].map(function (o) { return '<option value="' + o[0] + '"' + (s.theme === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label>' +
-      '<label class="field">Weekly distance goal (km)<input type="number" id="set-km" min="0" value="' + s.distanceGoal + '"></label></div>' +
+      '<label class="field">Weekly distance goal (km)<input type="number" id="set-km" min="0" value="' + s.distanceGoal + '"></label>' +
+      '<label class="field">Daily deep-focus target (min)<input type="number" id="set-focus" min="10" step="5" value="' + s.focusTarget + '"></label></div>' +
       '<label class="field mt">Daily basics (one per line)<textarea id="set-habits">' + esc(s.habits.join('\n')) + '</textarea></label>' +
       '<p class="small muted mt">Content pillars and your posting plan now live in Content hub → Strategy.</p>' +
       '<div class="row mt"><button class="btn primary" data-act="set-save">Save</button></div></div>' +
@@ -1837,7 +2015,7 @@ function act(a, d, el) {
       S.health.activities.push({ id: uid(), date: val('a-date') || dkey(), type: val('a-type'), name: val('a-name'), distance: dist, minutes: mins, source: 'manual' }); save(); render(); toast('Activity logged. 💪'); break;
     case 'act-del': S.health.activities = S.health.activities.filter(function (x) { return x.id !== d.id; }); save(); render(); break;
     case 'set-save':
-      S.settings.name = val('set-name'); S.settings.theme = val('set-theme'); S.settings.distanceGoal = parseFloat(val('set-km')) || 0;
+      S.settings.name = val('set-name'); S.settings.theme = val('set-theme'); S.settings.distanceGoal = parseFloat(val('set-km')) || 0; S.settings.focusTarget = parseInt(val('set-focus'), 10) || 90;
       S.settings.habits = val('set-habits').split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
       save(); render(); toast('Saved.'); break;
     case 'w-save':
@@ -1946,7 +2124,7 @@ function demoData() {
     var pace = type === 'Run' ? 5.6 : type === 'Walk' ? 12 : 2.6;
     s.health.activities.push({ id: uid(), extId: 'demo' + a, date: dkey(addDays(now, -a)), name: (type === 'Run' ? ['Morning run', 'Easy 5K', 'Lunch run', 'Long run'] : type === 'Walk' ? ['Lunch walk', 'Evening walk'] : ['Weekend ride'])[Math.floor(rnd() * (type === 'Run' ? 4 : type === 'Walk' ? 2 : 1))], type: type, distance: +dist.toFixed(1), minutes: Math.round(dist * pace), source: 'strava' });
   }
-  for (var h = 1; h <= 6; h++) { var hk = dkey(addDays(now, -h)); s.health.habits[hk] = s.settings.habits.filter(function () { return rnd() < .6; }); }
+  for (var h = 1; h <= 20; h++) { var hk = dkey(addDays(now, -h)), hp = h > 7 ? .45 : .62; s.health.habits[hk] = s.settings.habits.filter(function () { return rnd() < hp; }); }
   s.settings.postGoal = 8;
   var lw0 = addDays(ws, -7);
   [182, 205, 196, 240, 268, 255, 301, 342, 330, 388, 410, 468].forEach(function (v, i) { s.content.views[dkey(addDays(lw0, (i - 11) * 7))] = v * 1000; });
