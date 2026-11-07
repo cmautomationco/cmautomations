@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1e6a9e">
+<meta name="theme-color" content="#f4955c">
 <title>Life Dashboard</title>
 <style>
 /* Life Dashboard – personal side of everything.
    Self-contained: no build step, no server needed. Data stays in this browser
-   (export a backup from Settings). Same nautical blue as CM Automations. */
+   (export a backup from Settings).
+   Colour: warm peach-orange leads; calm nautical sky blue in smaller touches. */
 @font-face {
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
@@ -17,55 +18,68 @@
   src: url('../fonts/plus-jakarta-sans-latin.woff2') format('woff2');
 }
 :root {
-  --accent: #1e6a9e;
-  --accent-strong: #154b71;
-  --accent-soft: #e1edf6;
-  --accent-wash: #f2f7fb;
-  --ink: #0b1220;
-  --ink-2: #334155;
-  --muted: #64748b;
-  --line: #e2e8f0;
-  --line-soft: #f1f5f9;
-  --bg: #f6f8fb;
+  /* peach-orange (main) */
+  --accent: #ec7a3c;          /* lines, bars, rings, bars on headers */
+  --accent-fill: #f4955c;     /* buttons and selected states (dark text on top) */
+  --accent-fill-hover: #ef8445;
+  --on-accent: #3b1606;
+  --accent-strong: #a9481a;   /* peach text and big numbers */
+  --accent-soft: #fde3d2;
+  --accent-wash: #fff4ec;
+  /* nautical sky blue (calm touches) */
+  --sky: #1e6a9e;
+  --sky-strong: #154b71;
+  --sky-soft: #dcebf6;
+  --sky-wash: #f1f7fc;
+  --ink: #1b1f2a;
+  --ink-2: #3d4352;
+  --muted: #6d6a73;
+  --line: #f0e3d8;
+  --line-soft: #f8eee6;
+  --bg: #fcf6f1;
   --surface: #ffffff;
-  --now: #1e6a9e;
-  --now-bg: #e1edf6;
-  --sched: #6d4fc2;
-  --sched-bg: #ece7fb;
-  --park: #64748b;
-  --park-bg: #eef1f5;
+  --now: #a9481a;
+  --now-bg: #fde3d2;
+  --sched: #154b71;
+  --sched-bg: #dcebf6;
+  --park: #5d6675;
+  --park-bg: #eef0f3;
   --good: #15803d;
   --good-bg: #dcfce7;
-  --warn: #b45309;
+  --warn: #a16207;
   --warn-bg: #fef3c7;
   --bad: #dc2626;
   --bad-bg: #fee2e2;
-  --grid: #e8edf3;
-  --shadow: 0 1px 2px rgba(21, 75, 113, .06), 0 4px 16px rgba(21, 75, 113, .06);
-  --shadow-lg: 0 18px 50px rgba(11, 18, 32, .22);
-  --radius: 16px;
+  --grid: #f2e8e0;
+  --shadow: 0 1px 2px rgba(169, 72, 26, .05), 0 6px 20px rgba(169, 72, 26, .07);
+  --shadow-lg: 0 18px 50px rgba(40, 20, 10, .2);
+  --radius: 18px;
   --radius-sm: 10px;
   --font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --accent: #6aa9d8; --accent-strong: #9cc7e8; --accent-soft: #16324a; --accent-wash: #112536;
-    --ink: #e8eef5; --ink-2: #c3cfdc; --muted: #8a9bb0; --line: #24344a; --line-soft: #1b2a3c;
-    --bg: #0b1420; --surface: #111d2b;
-    --now: #6aa9d8; --now-bg: #16324a; --sched: #a993ec; --sched-bg: #2a2348; --park: #8a9bb0; --park-bg: #1d2a3a;
+    --accent: #f4a26b; --accent-fill: #f4a26b; --accent-fill-hover: #f7b484; --on-accent: #2b1206;
+    --accent-strong: #ffc59c; --accent-soft: #4a2a18; --accent-wash: #261a14;
+    --sky: #6aa9d8; --sky-strong: #a6cdec; --sky-soft: #173450; --sky-wash: #121f2d;
+    --ink: #f1ece8; --ink-2: #d2cbc5; --muted: #a39b94; --line: #33302f; --line-soft: #252322;
+    --bg: #12100f; --surface: #1b1918;
+    --now: #ffc59c; --now-bg: #4a2a18; --sched: #a6cdec; --sched-bg: #173450; --park: #b3b0ad; --park-bg: #2a2827;
     --good: #4ade80; --good-bg: #123322; --warn: #fbbf24; --warn-bg: #3a2c0c; --bad: #f87171; --bad-bg: #3d1717;
-    --grid: #1f2e41; --shadow: 0 1px 2px rgba(0,0,0,.3); --shadow-lg: 0 18px 50px rgba(0,0,0,.5);
+    --grid: #2b2827; --shadow: 0 1px 2px rgba(0,0,0,.35); --shadow-lg: 0 18px 50px rgba(0,0,0,.55);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --accent: #6aa9d8; --accent-strong: #9cc7e8; --accent-soft: #16324a; --accent-wash: #112536;
-  --ink: #e8eef5; --ink-2: #c3cfdc; --muted: #8a9bb0; --line: #24344a; --line-soft: #1b2a3c;
-  --bg: #0b1420; --surface: #111d2b;
-  --now: #6aa9d8; --now-bg: #16324a; --sched: #a993ec; --sched-bg: #2a2348; --park: #8a9bb0; --park-bg: #1d2a3a;
+  --accent: #f4a26b; --accent-fill: #f4a26b; --accent-fill-hover: #f7b484; --on-accent: #2b1206;
+  --accent-strong: #ffc59c; --accent-soft: #4a2a18; --accent-wash: #261a14;
+  --sky: #6aa9d8; --sky-strong: #a6cdec; --sky-soft: #173450; --sky-wash: #121f2d;
+  --ink: #f1ece8; --ink-2: #d2cbc5; --muted: #a39b94; --line: #33302f; --line-soft: #252322;
+  --bg: #12100f; --surface: #1b1918;
+  --now: #ffc59c; --now-bg: #4a2a18; --sched: #a6cdec; --sched-bg: #173450; --park: #b3b0ad; --park-bg: #2a2827;
   --good: #4ade80; --good-bg: #123322; --warn: #fbbf24; --warn-bg: #3a2c0c; --bad: #f87171; --bad-bg: #3d1717;
-  --grid: #1f2e41; --shadow: 0 1px 2px rgba(0,0,0,.3); --shadow-lg: 0 18px 50px rgba(0,0,0,.5);
+  --grid: #2b2827; --shadow: 0 1px 2px rgba(0,0,0,.35); --shadow-lg: 0 18px 50px rgba(0,0,0,.55);
   color-scheme: dark;
 }
 
@@ -79,39 +93,62 @@ body {
 button, input, select, textarea { font: inherit; color: inherit; }
 h1, h2, h3, h4 { margin: 0; line-height: 1.2; }
 h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
-h2 { font-size: 17px; font-weight: 750; letter-spacing: -.01em; }
+h2 { font-size: 16.5px; font-weight: 750; letter-spacing: -.01em; }
 h3 { font-size: 14px; font-weight: 700; }
 p { margin: 0; }
-a { color: var(--accent); }
+a { color: var(--sky); }
 
 /* ---------- layout ---------- */
-.app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
 .nav {
-  position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 22px 14px;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 16px 14px;
   background: var(--surface); border-right: 1px solid var(--line);
   display: flex; flex-direction: column; gap: 4px;
 }
-.brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 18px; }
-.brand-mark {
-  width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: #fff;
-  display: grid; place-items: center; font-weight: 800; font-size: 15px;
+.brand {
+  display: flex; align-items: center; gap: 10px; padding: 14px 12px; margin-bottom: 12px; border-radius: 16px;
+  background: linear-gradient(135deg, var(--accent-soft), var(--accent-wash) 70%, var(--sky-wash));
+  border: 1px solid var(--line);
 }
-:root[data-theme="dark"] .brand-mark { color: #0b1420; }
+.brand-mark {
+  width: 36px; height: 36px; border-radius: 11px; background: var(--accent-fill); color: var(--on-accent);
+  display: grid; place-items: center; font-weight: 800; font-size: 16px; flex: 0 0 auto;
+}
 .brand b { display: block; font-size: 15px; }
-.brand small { color: var(--muted); font-size: 12px; }
+.brand small { color: var(--sky-strong); font-size: 12px; font-weight: 600; }
+.nav-label { font-size: 11px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 10px 10px 4px; }
 .nav button {
-  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0;
-  background: none; border-radius: 10px; cursor: pointer; text-align: left; font-weight: 600; color: var(--ink-2);
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 1px solid transparent;
+  background: none; border-radius: 12px; cursor: pointer; text-align: left; font-weight: 600; color: var(--ink-2);
 }
 .nav button:hover { background: var(--line-soft); }
-.nav button.on { background: var(--accent-soft); color: var(--accent-strong); }
+.nav button.on { background: var(--accent-wash); border-color: var(--accent-soft); color: var(--accent-strong); box-shadow: inset 3px 0 0 var(--accent); }
 .nav .ico { width: 22px; text-align: center; font-size: 16px; }
-.nav .tag { margin-left: auto; font-size: 10px; font-weight: 800; background: var(--accent); color: var(--surface); border-radius: 999px; padding: 1px 7px; }
-.nav-foot { margin-top: auto; padding: 12px 8px 0; color: var(--muted); font-size: 12px; }
+.nav .tag { margin-left: auto; font-size: 10px; font-weight: 800; background: var(--sky); color: #fff; border-radius: 999px; padding: 1px 7px; }
+:root[data-theme="dark"] .nav .tag { color: #0b1420; }
+.nav-foot { margin-top: auto; padding: 12px; color: var(--sky-strong); font-size: 12px; background: var(--sky-wash); border: 1px solid var(--sky-soft); border-radius: 12px; }
 
-main { padding: 28px 32px 120px; max-width: 1240px; width: 100%; min-width: 0; }
-.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-.page-head p { color: var(--muted); margin-top: 4px; }
+main { padding: 24px 32px 120px; max-width: 1260px; width: 100%; min-width: 0; }
+
+/* Page banner – the box over every section */
+.page-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;
+  padding: 22px 24px; border-radius: 22px; border: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 100% 0%, var(--sky-soft) 0, transparent 38%),
+    linear-gradient(120deg, var(--accent-soft) 0%, var(--accent-wash) 55%, var(--surface) 100%);
+  box-shadow: var(--shadow);
+}
+.page-head h1 { color: var(--ink); }
+.page-head p { color: var(--ink-2); margin-top: 6px; }
+
+/* Section label – small blue box above a group */
+.section-label {
+  display: inline-flex; align-items: center; gap: 8px; margin: 26px 0 12px; padding: 6px 14px 6px 10px;
+  background: var(--sky-soft); color: var(--sky-strong); border-radius: 999px; font-weight: 750; font-size: 13.5px;
+}
+.section-label span { font-size: 15px; }
+
 .grid { display: grid; gap: 16px; }
 .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -127,29 +164,46 @@ main { padding: 28px 32px 120px; max-width: 1240px; width: 100%; min-width: 0; }
 .small { font-size: 12px; }
 .strong { font-weight: 700; }
 
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); min-width: 0; }
-.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
-.card-head p { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+/* ---------- cards: each one a framed box with its own header band ---------- */
+.card {
+  --pad: 18px; --head-bg: var(--accent-wash); --head-bar: var(--accent); --head-line: var(--accent-soft);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--pad); box-shadow: var(--shadow); min-width: 0; overflow: hidden;
+}
+.card.calm { --head-bg: var(--sky-wash); --head-bar: var(--sky); --head-line: var(--sky-soft); }
+.card-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  margin: calc(-1 * var(--pad)) calc(-1 * var(--pad)) 16px; padding: 14px var(--pad);
+  background: var(--head-bg); border-bottom: 1px solid var(--head-line);
+}
+.card-head h2 { display: flex; align-items: center; gap: 9px; }
+.card-head h2::before { content: ''; width: 4px; height: 17px; border-radius: 3px; background: var(--head-bar); flex: 0 0 auto; }
+.card-head p { color: var(--muted); font-size: 12.5px; margin-top: 3px; padding-left: 13px; }
 .card.flat { box-shadow: none; }
-.card.tint { background: var(--accent-wash); border-color: var(--accent-soft); }
+.card.tint { background: var(--sky-wash); border-color: var(--sky-soft); }
+.card.tint h2, .card.tint h3 { color: var(--sky-strong); }
+.card.warm { background: var(--accent-wash); border-color: var(--accent-soft); }
 
 /* ---------- tabs ---------- */
-.tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 18px; scrollbar-width: none; }
+.tabs {
+  display: flex; gap: 4px; overflow-x: auto; margin-bottom: 18px; scrollbar-width: none; padding: 5px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow); width: max-content; max-width: 100%;
+}
 .tabs::-webkit-scrollbar { display: none; }
 .tabs button {
-  flex: 0 0 auto; border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 999px;
+  flex: 0 0 auto; border: 0; background: transparent; padding: 8px 15px; border-radius: 999px;
   font-weight: 650; cursor: pointer; color: var(--ink-2);
 }
-.tabs button.on { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.tabs button:hover { background: var(--line-soft); }
+.tabs button.on { background: var(--accent-fill); color: var(--on-accent); }
 
 /* ---------- controls ---------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line); background: var(--surface);
-  padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 650; white-space: nowrap; min-height: 38px;
+  padding: 8px 14px; border-radius: 11px; cursor: pointer; font-weight: 650; white-space: nowrap; min-height: 38px;
 }
 .btn:hover { border-color: var(--accent); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
-.btn.primary:hover { background: var(--accent-strong); }
+.btn.primary { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
+.btn.primary:hover { background: var(--accent-fill-hover); }
 .btn.ghost { border-color: transparent; background: transparent; }
 .btn.ghost:hover { background: var(--line-soft); }
 .btn.sm { padding: 4px 10px; min-height: 30px; font-size: 12.5px; border-radius: 8px; }
@@ -157,10 +211,10 @@ main { padding: 28px 32px 120px; max-width: 1240px; width: 100%; min-width: 0; }
 .icon-btn { border: 0; background: none; cursor: pointer; padding: 6px; border-radius: 8px; color: var(--muted); font-size: 15px; line-height: 1; min-width: 30px; min-height: 30px; }
 .icon-btn:hover { background: var(--line-soft); color: var(--ink); }
 input[type=text], input[type=number], input[type=date], input[type=search], select, textarea {
-  border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 11px; min-height: 38px; width: 100%;
+  border: 1px solid var(--line); background: var(--surface); border-radius: 11px; padding: 8px 11px; min-height: 38px; width: 100%;
 }
 textarea { min-height: 80px; resize: vertical; }
-input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--sky); outline-offset: 1px; }
 label.field { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; font-weight: 650; color: var(--ink-2); min-width: 0; }
 .form-row { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); align-items: end; }
 
@@ -172,19 +226,24 @@ label.field { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px
 .pill.good { background: var(--good-bg); color: var(--good); }
 .pill.warn { background: var(--warn-bg); color: var(--warn); }
 .pill.bad { background: var(--bad-bg); color: var(--bad); }
-.pill.plain { background: var(--line-soft); color: var(--ink-2); }
+.pill.plain { background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); }
+.pill.sky { background: var(--sky-soft); color: var(--sky-strong); }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .chip { border: 1px solid var(--line); background: var(--surface); padding: 5px 11px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 12.5px; }
-.chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); }
+.chip.on { background: var(--sky-soft); border-color: var(--sky); color: var(--sky-strong); }
 
-/* ---------- stat tiles ---------- */
+/* ---------- stat tiles: boxed with a coloured cap ---------- */
 .stat { display: flex; flex-direction: column; gap: 2px; }
-.stat .label { color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.card.stat { border-top: 4px solid var(--accent); }
+.g4 > .card.stat:nth-child(even) { border-top-color: var(--sky); }
+.g4 > .card.stat:nth-child(even) .value { color: var(--sky-strong); }
+.stat .label { color: var(--muted); font-size: 12.5px; font-weight: 650; }
 .stat .value { font-size: 28px; font-weight: 750; letter-spacing: -.02em; color: var(--accent-strong); }
 .stat .delta { font-size: 12px; font-weight: 650; color: var(--muted); }
 .stat .delta.up { color: var(--good); }
 .stat .delta.down { color: var(--bad); }
 .hero-num { font-size: 52px; font-weight: 750; letter-spacing: -.03em; line-height: 1; color: var(--accent-strong); }
+.calm .hero-num { color: var(--sky-strong); }
 
 /* ---------- lists ---------- */
 .list { display: flex; flex-direction: column; }
@@ -197,16 +256,19 @@ label.field { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px
   width: 24px; height: 24px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface); flex: 0 0 auto; cursor: pointer;
   display: grid; place-items: center; color: transparent; font-size: 13px; font-weight: 800; padding: 0;
 }
-.check:hover { border-color: var(--accent); }
-.check.on { background: var(--good); border-color: var(--good); color: var(--surface); }
-.empty { color: var(--muted); padding: 14px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; font-size: 13px; }
+.check:hover { border-color: var(--sky); }
+.check.on { background: var(--sky); border-color: var(--sky); color: #fff; }
+:root[data-theme="dark"] .check.on { color: #0b1420; }
+.empty { color: var(--muted); padding: 14px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; font-size: 13px; background: var(--line-soft); }
 
 /* ---------- top three ---------- */
 .three { display: grid; gap: 10px; }
-.three-item { display: flex; gap: 12px; align-items: center; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.three-item { display: flex; gap: 12px; align-items: center; padding: 14px; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 14px; background: var(--surface); }
+.three-item:nth-child(2) { border-left-color: var(--sky); }
 .three-item.done { opacity: .6; }
 .three-item.done .title { text-decoration: line-through; }
 .three-num { width: 30px; height: 30px; flex: 0 0 auto; border-radius: 50%; background: var(--accent-soft); color: var(--accent-strong); display: grid; place-items: center; font-weight: 800; }
+.three-item:nth-child(2) .three-num { background: var(--sky-soft); color: var(--sky-strong); }
 
 /* ---------- scorer ---------- */
 .scorer { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(220px, 1fr); gap: 20px; }
@@ -214,53 +276,62 @@ label.field { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px
 .slider:first-of-type { border-top: 0; }
 .slider .name { font-weight: 700; }
 .slider .hint { color: var(--muted); font-size: 12px; grid-column: 1 / -1; }
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 11px; overflow: hidden; }
 .seg button { border: 0; background: var(--surface); width: 38px; height: 34px; cursor: pointer; font-weight: 700; color: var(--ink-2); border-left: 1px solid var(--line); }
 .seg button:first-child { border-left: 0; }
-.seg button.on { background: var(--accent); color: var(--surface); }
-.verdict { border-radius: 16px; padding: 18px; text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--accent-wash); }
+.seg button.on { background: var(--accent-fill); color: var(--on-accent); }
+.verdict {
+  border-radius: 18px; padding: 18px; text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center;
+  border: 1px solid var(--accent-soft); background: linear-gradient(160deg, var(--accent-wash), var(--surface) 60%, var(--sky-wash));
+}
 .verdict .big { font-size: 46px; font-weight: 800; letter-spacing: -.03em; line-height: 1; color: var(--accent-strong); }
 .verdict .why { color: var(--ink-2); font-size: 12.5px; max-width: 260px; }
 .ring { width: 120px; height: 120px; }
-.formula { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: var(--line-soft); border-radius: 10px; padding: 10px 12px; color: var(--ink-2); overflow-x: auto; white-space: nowrap; }
+.formula { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: var(--sky-wash); border: 1px solid var(--sky-soft); border-radius: 10px; padding: 10px 12px; color: var(--sky-strong); overflow-x: auto; white-space: nowrap; }
 
 /* ---------- buckets ---------- */
 .buckets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.bucket { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; min-width: 0; }
-.bucket-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.bucket { --b: var(--accent); --b-bg: var(--accent-wash); --b-line: var(--accent-soft); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; min-width: 0; box-shadow: var(--shadow); overflow: hidden; }
+.bucket.schedule { --b: var(--sky); --b-bg: var(--sky-wash); --b-line: var(--sky-soft); }
+.bucket.park { --b: var(--park); --b-bg: var(--park-bg); --b-line: var(--line); }
+.bucket-head { display: flex; align-items: center; justify-content: space-between; margin: -14px -14px 10px; padding: 12px 14px; background: var(--b-bg); border-bottom: 1px solid var(--b-line); border-top: 4px solid var(--b); }
 .bucket-head h3 { display: flex; align-items: center; gap: 8px; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }
-.dot.now { background: var(--now); } .dot.schedule { background: var(--sched); } .dot.park { background: var(--park); }
+.dot.now { background: var(--accent); } .dot.schedule { background: var(--sky); } .dot.park { background: var(--park); }
 .tcard { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 8px; display: flex; gap: 10px; align-items: flex-start; background: var(--surface); }
 .tcard .grow { flex: 1; min-width: 0; }
-.score-badge { font-weight: 800; font-size: 12px; border-radius: 8px; padding: 2px 7px; background: var(--line-soft); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.score-badge { font-weight: 800; font-size: 12px; border-radius: 8px; padding: 2px 7px; background: var(--accent-soft); color: var(--accent-strong); font-variant-numeric: tabular-nums; }
 
 /* ---------- check-in ---------- */
 .scale { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
 .scale button {
   height: 48px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer;
 }
-.scale button:hover { border-color: var(--accent); }
-.scale button.on { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.scale button:hover { border-color: var(--accent); background: var(--accent-wash); }
+.scale button.on { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
 .scale.compact { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .scale-labels { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-top: 6px; }
 .mini-scale { display: inline-flex; gap: 4px; }
 .mini-scale button { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 700; }
-.mini-scale button.on { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.mini-scale button.on { background: var(--sky); border-color: var(--sky); color: #fff; }
+:root[data-theme="dark"] .mini-scale button.on { color: #0b1420; }
 
 /* ---------- focus ---------- */
-.focus-clock { font-size: 64px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--accent-strong); line-height: 1; }
-.progress { height: 8px; background: var(--accent-soft); border-radius: 999px; overflow: hidden; }
-.progress > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.focus-clock { font-size: 64px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--sky-strong); line-height: 1; }
+.progress { height: 8px; background: var(--sky-soft); border-radius: 999px; overflow: hidden; }
+.progress > span { display: block; height: 100%; background: var(--sky); border-radius: 999px; }
+.progress.warm { background: var(--accent-soft); }
+.progress.warm > span { background: var(--accent); }
 .meter { height: 8px; background: var(--line-soft); border-radius: 999px; overflow: hidden; }
-.meter > span { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
-.meter.warn > span { background: var(--warn); }
+.meter > span { display: block; height: 100%; border-radius: 999px; background: var(--sky); }
+.meter.warn > span { background: #d97706; }
 .meter.bad > span { background: var(--bad); }
 
 /* ---------- board ---------- */
 .board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.col { background: var(--line-soft); border-radius: 14px; padding: 10px; min-width: 0; }
-.col h3 { padding: 4px 4px 6px; display: flex; justify-content: space-between; }
+.col { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; min-width: 0; box-shadow: var(--shadow); overflow: hidden; }
+.col h3 { margin: -10px -10px 4px; padding: 12px 14px; display: flex; justify-content: space-between; background: var(--accent-wash); border-bottom: 1px solid var(--accent-soft); border-top: 4px solid var(--accent); }
+.col:nth-child(even) h3 { background: var(--sky-wash); border-bottom-color: var(--sky-soft); border-top-color: var(--sky); }
 
 /* ---------- chart ---------- */
 .chart { position: relative; width: 100%; }
@@ -276,7 +347,7 @@ label.field { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px
 #tip .v i { width: 12px; height: 2px; background: var(--accent); display: inline-block; border-radius: 2px; }
 #tip .l { color: var(--muted); }
 details.table-view { margin-top: 8px; }
-details.table-view summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+details.table-view summary { cursor: pointer; color: var(--sky); font-size: 12px; font-weight: 600; }
 table.data { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px; }
 table.data th, table.data td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--line-soft); }
 table.data td.num, table.data th.num { text-align: right; font-variant-numeric: tabular-nums; }
@@ -285,20 +356,29 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
 .habit-grid { display: grid; grid-template-columns: minmax(90px, 1.6fr) repeat(7, minmax(22px, 32px)); gap: 6px; align-items: center; font-size: 12.5px; }
 .habit-grid > span:not(.h) { overflow-wrap: anywhere; }
 .habit-grid .h { color: var(--muted); text-align: center; font-size: 11px; }
-.habit-cell { width: 100%; height: 28px; border-radius: 8px; background: var(--line-soft); border: 0; cursor: pointer; padding: 0; }
-.habit-cell.on { background: var(--good); }
+.habit-cell { width: 100%; height: 28px; border-radius: 8px; background: var(--line-soft); border: 1px solid var(--line); cursor: pointer; padding: 0; }
+.habit-cell.on { background: var(--sky); border-color: var(--sky); }
 
 /* ---------- modal & toast ---------- */
-.overlay { position: fixed; inset: 0; background: rgba(11, 18, 32, .45); z-index: 50; display: grid; place-items: center; padding: 16px; }
-.modal { background: var(--surface); border-radius: 20px; width: min(860px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; padding: 22px; box-shadow: var(--shadow-lg); }
-.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-#toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--surface); padding: 11px 18px; border-radius: 12px; font-weight: 650; z-index: 70; opacity: 0; transition: .2s; pointer-events: none; max-width: calc(100vw - 32px); }
+.overlay { position: fixed; inset: 0; background: rgba(27, 18, 12, .45); z-index: 50; display: grid; place-items: center; padding: 16px; }
+.modal { background: var(--surface); border-radius: 22px; width: min(860px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; padding: 22px; box-shadow: var(--shadow-lg); }
+.modal-head {
+  display: flex; justify-content: space-between; align-items: center; margin: -22px -22px 18px; padding: 16px 22px;
+  background: linear-gradient(120deg, var(--accent-soft), var(--accent-wash) 60%, var(--sky-wash)); border-bottom: 1px solid var(--line);
+}
+#toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: var(--sky-strong); color: #fff; padding: 11px 18px; border-radius: 12px; font-weight: 650; z-index: 70; opacity: 0; transition: .2s; pointer-events: none; max-width: calc(100vw - 32px); }
+:root[data-theme="dark"] #toast { color: #0b1420; }
 #toast.show { opacity: 1; transform: translateX(-50%); }
-.fab { position: fixed; right: 24px; bottom: 24px; z-index: 40; border: 0; background: var(--accent); color: var(--surface); border-radius: 999px; padding: 14px 20px; font-weight: 750; box-shadow: var(--shadow-lg); cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.fab { position: fixed; right: 24px; bottom: 24px; z-index: 40; border: 0; background: var(--accent-fill); color: var(--on-accent); border-radius: 999px; padding: 14px 20px; font-weight: 750; box-shadow: var(--shadow-lg); cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.fab:hover { background: var(--accent-fill-hover); }
 .fab span { font-size: 20px; line-height: 1; }
 .banner { background: var(--warn-bg); color: var(--warn); border-radius: 12px; padding: 10px 14px; font-weight: 600; margin-bottom: 14px; }
-.welcome { max-width: 640px; margin: 8vh auto; text-align: center; }
-.welcome .brand-mark { width: 56px; height: 56px; font-size: 24px; border-radius: 16px; margin: 0 auto 18px; }
+.welcome {
+  max-width: 680px; margin: 7vh auto; text-align: center; padding: 40px 28px; border-radius: 26px; border: 1px solid var(--line);
+  background: radial-gradient(circle at 100% 0%, var(--sky-soft) 0, transparent 40%), linear-gradient(150deg, var(--accent-soft), var(--accent-wash) 55%, var(--surface));
+  box-shadow: var(--shadow);
+}
+.welcome .brand-mark { width: 58px; height: 58px; font-size: 24px; border-radius: 17px; margin: 0 auto 18px; }
 .welcome p { color: var(--ink-2); margin: 12px auto 22px; max-width: 520px; }
 
 /* ---------- responsive ---------- */
@@ -314,10 +394,12 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
     border-right: 0; border-bottom: 1px solid var(--line); scrollbar-width: none;
   }
   .nav::-webkit-scrollbar { display: none; }
-  .brand, .nav-foot { display: none; }
+  .brand, .nav-foot, .nav-label { display: none; }
   .nav button { width: auto; flex: 0 0 auto; padding: 8px 11px; font-size: 13px; }
+  .nav button.on { box-shadow: inset 0 -3px 0 var(--accent); }
   .nav .tag { display: none; }
-  main { padding: 18px 16px 110px; }
+  main { padding: 16px 16px 110px; }
+  .page-head { padding: 18px; border-radius: 18px; }
   .g2, .g3, .scorer, .buckets { grid-template-columns: 1fr; }
   .span2 { grid-column: auto; }
   h1 { font-size: 22px; }
@@ -330,7 +412,7 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
   .stat .value { font-size: 23px; }
   .hero-num { font-size: 44px; }
   .seg button { width: 34px; }
-  .card { padding: 15px; }
+  .card { --pad: 15px; }
 }
 </style>
 </head>
@@ -617,7 +699,8 @@ function lineChart(id, points, opt) {
     });
     var every = Math.max(1, Math.ceil(points.length / Math.max(2, Math.floor((W - L - R) / 56))));
     points.forEach(function (p, i) {
-      if (i % every && i !== points.length - 1) return;
+      var last = points.length - 1;
+      if (i !== last && (i % every || last - i < every)) return;
       var tx = svgEl('text', { x: x(i), y: H - 6, 'text-anchor': 'middle' }, svg); tx.textContent = p.label;
     });
     var accent = css('--accent'), surface = css('--surface');
@@ -709,14 +792,14 @@ function ringSVG(score) {
    Router
    ===================================================================== */
 var NAV = [
-  { id: 'home', ico: '🏠', name: 'Today' },
+  { id: 'home', ico: '🏠', name: 'Today', group: 'Daily' },
   { id: 'adhd', ico: '🧠', name: 'ADHD hub', tag: 'Core' },
-  { id: 'admin', ico: '🗂️', name: 'Life admin' },
+  { id: 'admin', ico: '🗂️', name: 'Life admin', group: 'Life' },
   { id: 'money', ico: '💷', name: 'Finance' },
-  { id: 'content', ico: '🎬', name: 'Content ideas' },
+  { id: 'content', ico: '🎬', name: 'Content ideas', group: 'Create & move' },
   { id: 'socials', ico: '📱', name: 'Social channels' },
   { id: 'health', ico: '💚', name: 'Health & Strava' },
-  { id: 'settings', ico: '⚙️', name: 'Settings' }
+  { id: 'settings', ico: '⚙️', name: 'Settings', group: 'You' }
 ];
 var ADHD_TABS = [
   { id: 'checkin', name: 'How I\'m doing' },
@@ -737,7 +820,7 @@ window.addEventListener('hashchange', function () { if ($('#modal').innerHTML) c
 
 function renderNav() {
   $('#nav').innerHTML = '<div class="brand"><div class="brand-mark">L</div><div><b>' + esc(S.settings.name ? S.settings.name + '\'s life' : 'Life Dashboard') + '</b><small>Personal side, sorted</small></div></div>' +
-    NAV.map(function (n) { return '<button class="' + (route.page === n.id ? 'on' : '') + '" data-act="nav" data-id="' + n.id + '"><span class="ico">' + n.ico + '</span>' + n.name + (n.tag ? '<span class="tag">' + n.tag + '</span>' : '') + '</button>'; }).join('') +
+    NAV.map(function (n) { return (n.group ? '<div class="nav-label">' + n.group + '</div>' : '') + '<button class="' + (route.page === n.id ? 'on' : '') + '" data-act="nav" data-id="' + n.id + '"><span class="ico">' + n.ico + '</span>' + n.name + (n.tag ? '<span class="tag">' + n.tag + '</span>' : '') + '</button>'; }).join('') +
     '<div class="nav-foot">Saved in this browser. Back it up in Settings.</div>';
 }
 function render() {
@@ -802,20 +885,20 @@ function viewHome() {
   return '<div class="page-head"><div><h1>' + greeting() + (S.settings.name ? ', ' + esc(S.settings.name) : '') + '</h1><p>' + fmtDay(new Date()) + ' · One thing at a time. Here\'s what matters today.</p></div></div>' +
     '<div class="grid g3">' +
       '<div class="card span2"><div class="card-head"><div><h2>Today\'s 3</h2><p>' + todayLine() + '</p></div><button class="btn sm" data-act="reshuffle">↻ Re-pick for my energy</button></div>' + threeList(ids) + '</div>' +
-      '<div class="card ' + (c ? '' : 'tint') + '"><div class="card-head"><div><h2>How are you doing?</h2><p>' + (c ? 'Checked in today' : 'One tap — 1 is rough, 10 is flying') + '</p></div></div>' +
+      '<div class="card ' + (c ? 'calm' : 'warm') + '"><div class="card-head"><div><h2>How are you doing?</h2><p>' + (c ? 'Checked in today' : 'One tap — 1 is rough, 10 is flying') + '</p></div></div>' +
         (c ? '<div class="row"><span class="hero-num">' + c.score + '</span><span class="muted">/ 10' + (c.energy ? '<br>Energy ' + c.energy + '/5' : '') + '</span></div><div class="mt"><button class="btn sm" data-act="go" data-page="adhd" data-tab="checkin">See the trend →</button></div>'
            : '<div class="scale compact">' + range(1, 10).map(function (n) { return '<button data-act="quick-score" data-v="' + n + '">' + n + '</button>'; }).join('') + '</div><p class="small muted mt">Today\'s 3 re-picks itself to match. Add energy, sleep and notes in the <a href="#/adhd/checkin">full check-in</a>.</p>') +
       '</div>' +
     '</div>' +
-    '<h2 class="mt" style="margin:24px 0 12px">This week so far</h2>' + weekTiles(ws) +
+    '<div class="section-label"><span>📊</span>This week so far</div>' + weekTiles(ws) +
     '<div class="grid g3 mt">' +
-      '<div class="card"><div class="card-head"><div><h2>Coming up</h2><p>Bills and admin in the next 7 days</p></div><button class="btn sm ghost" data-act="go" data-page="admin">All →</button></div>' +
+      '<div class="card calm"><div class="card-head"><div><h2>Coming up</h2><p>Bills and admin in the next 7 days</p></div><button class="btn sm ghost" data-act="go" data-page="admin">All →</button></div>' +
         (bills.length + admin.length ? '<div class="list">' + bills.slice(0, 4).map(function (b) { return '<div class="item"><span>💷</span><div class="grow"><div class="title">' + esc(b.name) + '</div><div class="meta">' + dueText(b.next) + '</div></div><span class="strong">' + money(b.amount) + '</span></div>'; }).join('') +
           admin.slice(0, 4).map(taskRow).join('') + '</div>' : '<div class="empty">Nothing due this week. Enjoy that.</div>') + '</div>' +
       '<div class="card"><div class="card-head"><div><h2>Money this month</h2><p>' + MON[new Date().getMonth()] + ' so far</p></div><button class="btn sm ghost" data-act="go" data-page="money">Finance →</button></div>' +
         '<div class="stat"><span class="label">Left to spend</span><span class="value">' + money(month.left, 0) + '</span><span class="delta">' + money(month.income, 0) + ' in · ' + money(month.out, 0) + ' out</span></div>' +
         (month.budget ? '<div class="mt-s"><div class="meter ' + meterClass(month.out / month.budget) + '"><span style="width:' + clamp(month.out / month.budget * 100, 0, 100) + '%"></span></div><div class="small muted mt-s">' + Math.round(month.out / month.budget * 100) + '% of your ' + money(month.budget, 0) + ' budget used</div></div>' : '') + '</div>' +
-      '<div class="card"><div class="card-head"><div><h2>Moving this week</h2><p>From Strava and your own log</p></div><button class="btn sm ghost" data-act="go" data-page="health">Health →</button></div>' +
+      '<div class="card calm"><div class="card-head"><div><h2>Moving this week</h2><p>From Strava and your own log</p></div><button class="btn sm ghost" data-act="go" data-page="health">Health →</button></div>' +
         '<div class="grid g2"><div class="stat"><span class="label">Distance</span><span class="value">' + num(sum(acts, function (a) { return a.distance; }), 1) + ' km</span></div><div class="stat"><span class="label">Active time</span><span class="value">' + hrs(sum(acts, function (a) { return a.minutes; }) / 60) + '</span></div></div>' +
         '<div class="mt-s"><div class="progress"><span style="width:' + clamp(sum(acts, function (a) { return a.distance; }) / (S.settings.distanceGoal || 1) * 100, 0, 100) + '%"></span></div><div class="small muted mt-s">' + acts.length + ' activities · goal ' + S.settings.distanceGoal + ' km</div></div></div>' +
     '</div>' +
@@ -878,7 +961,7 @@ function tabCheckin() {
       '<div class="field mt" style="font-size:12.5px;font-weight:650;color:var(--ink-2)">What\'s affecting today?</div><div class="chips mt-s">' + TAGS.map(function (t) { return '<button class="chip ' + (c.tags.indexOf(t) >= 0 ? 'on' : '') + '" data-act="ci-tag" data-v="' + esc(t) + '">' + esc(t) + '</button>'; }).join('') + '</div>' +
       '<label class="field mt">A line about today (optional)<input type="text" id="ci-note" value="' + esc(c.note) + '" placeholder="e.g. Brain fog this morning, better after a walk"></label>' +
       '<div class="row mt"><button class="btn primary" data-act="ci-save">Save check-in</button><span class="small muted">Your Today\'s 3 adapts to your energy.</span></div></div>' +
-    '<div class="card"><div class="card-head"><div><h2>This week</h2><p>Average of your daily scores</p></div></div>' +
+    '<div class="card calm"><div class="card-head"><div><h2>This week</h2><p>Average of your daily scores</p></div></div>' +
       '<div class="hero-num">' + (cur.avgScore == null ? '–' : num(cur.avgScore, 1)) + '</div><div class="muted small mt-s">' + cur.checkins + ' of 7 days checked in</div>' +
       (trend != null ? '<div class="mt"><span class="pill ' + (trend >= 0 ? 'good' : 'warn') + '">' + (trend >= 0 ? '▲ ' : '▼ ') + num(Math.abs(trend), 1) + ' vs last week</span></div>' : '') +
       '<div class="mt small muted">' + streakText() + '</div></div>' +
@@ -921,7 +1004,7 @@ function patternsCard() {
 }
 function historyCard() {
   var keys = Object.keys(S.checkins).sort().reverse().slice(0, 7);
-  return '<div class="card"><div class="card-head"><div><h2>Recent check-ins</h2><p>Your last 7 entries</p></div></div>' +
+  return '<div class="card calm"><div class="card-head"><div><h2>Recent check-ins</h2><p>Your last 7 entries</p></div></div>' +
     (keys.length ? '<div class="list">' + keys.map(function (k) { var e = S.checkins[k]; return '<div class="item"><div class="three-num">' + e.score + '</div><div class="grow"><div class="title">' + fmtDay(k) + '</div><div class="meta">' + (e.energy ? 'Energy ' + e.energy + '/5' : '') + (e.sleep ? ' · ' + e.sleep + 'h sleep' : '') + ((e.tags || []).length ? ' · ' + esc(e.tags.join(', ')) : '') + '</div>' + (e.note ? '<div class="small">' + esc(e.note) + '</div>' : '') + '</div></div>'; }).join('') + '</div>' : '<div class="empty">No check-ins yet.</div>') + '</div>';
 }
 
@@ -980,7 +1063,7 @@ function tabScore() {
     '<p class="small muted mt-s">Two overrides: urgency 5 with impact 4+ always goes to Do it now; impact and urgency both 2 or less always gets parked. Change the weights in Settings.</p></div>' +
     '<div class="buckets mt">' + ['now', 'schedule', 'park'].map(function (b) {
       var list = open.filter(function (t) { return t.bucket === b; }).sort(function (x, y) { return b === 'schedule' ? byDue(x, y) || scoreOf(y) - scoreOf(x) : scoreOf(y) - scoreOf(x); });
-      return '<div class="bucket"><div class="bucket-head"><h3><span class="dot ' + b + '"></span>' + BUCKETS[b].icon + ' ' + BUCKETS[b].name + '</h3><span class="pill plain">' + list.length + '</span></div><p class="small muted">' + BUCKETS[b].blurb + '</p>' +
+      return '<div class="bucket ' + b + '"><div class="bucket-head"><h3><span class="dot ' + b + '"></span>' + BUCKETS[b].icon + ' ' + BUCKETS[b].name + '</h3><span class="pill plain">' + list.length + '</span></div><p class="small muted">' + BUCKETS[b].blurb + '</p>' +
         (list.length ? list.map(function (t) { return bucketCard(t, b); }).join('') : '<div class="empty mt-s">Nothing here.</div>') + '</div>';
     }).join('') + '</div>';
 }
@@ -998,7 +1081,7 @@ function tabToday() {
   var more = S.tasks.filter(function (t) { return !t.done && t.bucket === 'now' && ids.indexOf(t.id) < 0; }).sort(function (a, b) { return scoreOf(b) - scoreOf(a); });
   return '<div class="grid g3"><div class="card span2"><div class="card-head"><div><h2>Today\'s 3</h2><p>' + todayLine() + '</p></div><button class="btn sm" data-act="reshuffle">↻ Re-pick for my energy</button></div>' + threeList(ids) +
     '<p class="small muted mt">At least one is always for your health. If you have nothing scored, you\'ll get a simple health or admin task so the day still has a win in it.</p></div>' +
-    '<div class="card"><div class="card-head"><div><h2>Bonus round</h2><p>Only if the 3 are done and you\'ve got more in you</p></div></div>' +
+    '<div class="card calm"><div class="card-head"><div><h2>Bonus round</h2><p>Only if the 3 are done and you\'ve got more in you</p></div></div>' +
     (more.length ? '<div class="list">' + more.slice(0, 6).map(taskRow).join('') + '</div>' : '<div class="empty">Nothing else in Do it now. That\'s a good thing.</div>') + '</div></div>';
 }
 
@@ -1022,7 +1105,7 @@ function tabFocus() {
       '<div class="row mt"><button class="btn primary" data-act="focus-start">▶ Start deep focus</button><span class="small muted">Short sessions count. 15 minutes beats zero.</span></div>';
   }
   return '<div class="grid g3"><div class="card span2"><div class="card-head"><div><h2>Deep focus timer</h2><p>Every session adds to your weekly deep-focus hours</p></div></div>' + body + '</div>' +
-    '<div class="card"><div class="card-head"><div><h2>This week</h2><p>' + st.sessions + ' sessions</p></div></div><div class="hero-num">' + hrs(st.focusHours) + '</div>' + chartSlot('ch-focus', 140) +
+    '<div class="card calm"><div class="card-head"><div><h2>This week</h2><p>' + st.sessions + ' sessions</p></div></div><div class="hero-num">' + hrs(st.focusHours) + '</div>' + chartSlot('ch-focus', 140) +
     tableView(['Day', 'Hours'], days.map(function (d) { return [d.tip, hrs(d.value)]; })) + '</div></div>' +
     '<div class="card mt"><div class="card-head"><div><h2>Recent sessions</h2></div></div>' + (sessions.length ? '<div class="list">' + sessions.map(function (f) { var t = f.taskId && taskById(f.taskId); return '<div class="item"><span>🎯</span><div class="grow"><div class="title">' + (t ? esc(t.title) : 'Focus session') + '</div><div class="meta">' + fmtDay(f.start) + ' · ' + new Date(f.start).toTimeString().slice(0, 5) + '</div></div><span class="strong">' + f.minutes + ' min</span></div>'; }).join('') + '</div>' : '<div class="empty">No sessions yet. Start with 15 minutes.</div>') + '</div>';
 }
@@ -1053,7 +1136,7 @@ function tabWeek() {
     '<div class="grid g2 mt">' +
       '<div class="card"><div class="card-head"><div><h2>Time saved, week by week</h2><p>Hours you would have spent chasing ideas you parked instead</p></div></div>' + chartSlot('ch-saved', 190) +
         tableView(['Week of', 'Time saved', 'Solved', 'Focus', 'Parked'], hist.map(function (h) { return [fmtShort(h.ws), hrs(h.st.timeSaved), h.st.solved, hrs(h.st.focusHours), h.st.parked]; })) + '</div>' +
-      '<div class="card"><div class="card-head"><div><h2>How the numbers work</h2></div></div><div class="list small">' +
+      '<div class="card calm"><div class="card-head"><div><h2>How the numbers work</h2></div></div><div class="list small">' +
         '<div class="item"><span>⏱️</span><div class="grow"><b>Time saved</b> — each idea you park is credited with the time its effort score says it would have taken (1 = 15 min, 2 = 1h, 3 = 2h, 4 = 4h, 5 = 8h).</div></div>' +
         '<div class="item"><span>✅</span><div class="grow"><b>Problems solved</b> — tasks you ticked off this week, from any area.</div></div>' +
         '<div class="item"><span>🎯</span><div class="grow"><b>Deep focus</b> — minutes logged with the focus timer.</div></div>' +
@@ -1061,7 +1144,7 @@ function tabWeek() {
     '</div>' +
     '<div class="grid g2 mt">' +
       '<div class="card"><div class="card-head"><div><h2>Wins this week</h2><p>' + st.solved + ' things done</p></div></div>' + (st.solvedList.length ? '<div class="list">' + st.solvedList.slice(0, 10).map(function (t) { return '<div class="item"><span class="check on">✓</span><div class="grow"><div class="title">' + esc(t.title) + '</div><div class="meta">' + (AREAS[t.area] || '') + ' · ' + fmtDay(t.doneAt) + '</div></div></div>'; }).join('') + '</div>' : '<div class="empty">Tick something off and it shows up here.</div>') + '</div>' +
-      '<div class="card"><div class="card-head"><div><h2>Parked, not chased</h2><p>Safe here. Come back when it\'s the right time.</p></div></div>' + (st.parkedList.length ? '<div class="list">' + st.parkedList.slice(0, 10).map(function (t) { return '<div class="item"><span>🅿️</span><div class="grow"><div class="title">' + esc(t.title) + '</div><div class="meta">saved ~' + hrs(EFFORT_HOURS[t.effort]) + ' · score ' + scoreOf(t) + '</div></div></div>'; }).join('') + '</div>' : '<div class="empty">No ideas parked this week.</div>') + '</div>' +
+      '<div class="card calm"><div class="card-head"><div><h2>Parked, not chased</h2><p>Safe here. Come back when it\'s the right time.</p></div></div>' + (st.parkedList.length ? '<div class="list">' + st.parkedList.slice(0, 10).map(function (t) { return '<div class="item"><span>🅿️</span><div class="grow"><div class="title">' + esc(t.title) + '</div><div class="meta">saved ~' + hrs(EFFORT_HOURS[t.effort]) + ' · score ' + scoreOf(t) + '</div></div></div>'; }).join('') + '</div>' : '<div class="empty">No ideas parked this week.</div>') + '</div>' +
     '</div>' +
     '<div class="card mt"><div class="card-head"><div><h2>Two-minute weekly reflection</h2><p>Saved for this week only</p></div></div><div class="grid g3">' +
       '<label class="field">What went well?<textarea id="rv-good">' + esc(rv.good) + '</textarea></label>' +
@@ -1097,7 +1180,7 @@ function viewAdmin() {
       if (!g[1].length) return '';
       return '<div class="card"><div class="card-head"><h2>' + g[0] + '</h2><span class="pill plain">' + g[1].length + '</span></div><div class="list">' + g[1].map(taskRow).join('') + '</div></div>';
     }).join('') + (open.length ? '' : '<div class="card"><div class="empty">No admin waiting. Add the next thing that\'s bugging you.</div></div>') + '</div>' +
-    '<div class="stack"><div class="card"><div class="card-head"><div><h2>Bills this month</h2><p>From Finance</p></div></div>' + (bills.length ? '<div class="list">' + bills.map(function (b) { return '<div class="item"><div class="grow"><div class="title">' + esc(b.name) + '</div><div class="meta">' + dueText(b.next) + '</div></div><span class="strong">' + money(b.amount) + '</span></div>'; }).join('') + '</div>' : '<div class="empty">Add bills in Finance to see them here.</div>') + '</div>' +
+    '<div class="stack"><div class="card calm"><div class="card-head"><div><h2>Bills this month</h2><p>From Finance</p></div></div>' + (bills.length ? '<div class="list">' + bills.map(function (b) { return '<div class="item"><div class="grow"><div class="title">' + esc(b.name) + '</div><div class="meta">' + dueText(b.next) + '</div></div><span class="strong">' + money(b.amount) + '</span></div>'; }).join('') + '</div>' : '<div class="empty">Add bills in Finance to see them here.</div>') + '</div>' +
       '<div class="card"><div class="card-head"><div><h2>Done this week</h2></div><span class="pill good">✓ ' + doneRecent.length + '</span></div>' + (doneRecent.length ? '<div class="list">' + doneRecent.map(taskRow).join('') + '</div>' : '<div class="empty">Nothing ticked yet.</div>') + '</div>' +
       '<div class="card tint"><h3>Ideas for regular admin</h3><p class="small muted mt-s">Car MOT & insurance · TV licence · phone contract end · dentist & GP check-ups · passport expiry · self-assessment tax (31 Jan) · home insurance · subscriptions review</p></div></div></div>';
 }
@@ -1138,7 +1221,7 @@ function viewMoney() {
           return '<div class="item" style="flex-wrap:wrap"><div class="grow" style="min-width:140px"><div class="title">' + esc(b.cat) + '</div><div class="meta">' + money(sp, 0) + (lim ? ' of ' + money(lim, 0) : ' · no limit set') + '</div></div>' +
             (lim ? '<div style="flex:2;min-width:140px"><div class="meter ' + meterClass(r) + '"><span style="width:' + clamp(r * 100, 0, 100) + '%"></span></div></div><span class="pill ' + (r > 1 ? 'bad' : r >= .85 ? 'warn' : 'good') + '">' + (r > 1 ? '⚠ Over by ' + money(sp - lim, 0) : r === 1 ? '● All used' : r >= .85 ? '● ' + money(lim - sp, 0) + ' left' : '✓ ' + money(lim - sp, 0) + ' left') + '</span>' : '') + '</div>';
         }).join('') + '</div>' + (S.finance.budgets.some(function (b) { return +b.limit > 0; }) || m.out ? '' : '<div class="empty">Tap “Edit limits” to set your first budget.</div>') + '</div>' +
-      '<div class="card"><div class="card-head"><div><h2>Spending trend</h2><p>Last 6 months</p></div></div>' + chartSlot('ch-spend', 180) + tableView(['Month', 'Spent'], months.map(function (x) { return [x.tip.replace(' spending', ''), money(x.value, 0)]; })) + '</div>' +
+      '<div class="card calm"><div class="card-head"><div><h2>Spending trend</h2><p>Last 6 months</p></div></div>' + chartSlot('ch-spend', 180) + tableView(['Month', 'Spent'], months.map(function (x) { return [x.tip.replace(' spending', ''), money(x.value, 0)]; })) + '</div>' +
     '</div>' +
     '<div class="card mt"><div class="card-head"><div><h2>Add money in or out</h2></div></div><div class="form-row">' +
       '<label class="field">Type<select id="tx-type"><option value="out">Money out</option><option value="in">Money in</option></select></label>' +
@@ -1149,11 +1232,11 @@ function viewMoney() {
       '<button class="btn primary" data-act="tx-add">Add</button></div></div>' +
     '<div class="grid g3 mt">' +
       '<div class="card"><div class="card-head"><div><h2>Recent</h2></div></div>' + (recent.length ? '<div class="list">' + recent.map(function (t) { return '<div class="item"><div class="grow"><div class="title">' + esc(t.desc) + '</div><div class="meta">' + fmtShort(t.date) + ' · ' + esc(t.cat) + '</div></div><span class="strong" style="color:' + (t.type === 'in' ? 'var(--good)' : 'var(--ink)') + '">' + (t.type === 'in' ? '+' : '−') + money(t.amount) + '</span><button class="icon-btn" data-act="tx-del" data-id="' + t.id + '" aria-label="Delete">✕</button></div>'; }).join('') + '</div>' : '<div class="empty">Nothing logged yet.</div>') + '</div>' +
-      '<div class="card"><div class="card-head"><div><h2>Bills & subscriptions</h2><p>They also show in Life admin and Today</p></div></div>' +
+      '<div class="card calm"><div class="card-head"><div><h2>Bills & subscriptions</h2><p>They also show in Life admin and Today</p></div></div>' +
         (S.finance.bills.length ? '<div class="list">' + S.finance.bills.slice().sort(function (a, b) { return nextBillDate(+a.day).localeCompare(nextBillDate(+b.day)); }).map(function (b) { return '<div class="item"><div class="grow"><div class="title">' + esc(b.name) + '</div><div class="meta">' + dueText(nextBillDate(+b.day)) + '</div></div><span class="strong">' + money(b.amount) + '</span><button class="icon-btn" data-act="bill-del" data-id="' + b.id + '" aria-label="Delete">✕</button></div>'; }).join('') + '</div>' : '<div class="empty">No bills added.</div>') +
         '<div class="form-row mt"><input type="text" id="bill-name" placeholder="Name"><input type="number" id="bill-amount" placeholder="£" step="0.01"><input type="number" id="bill-day" placeholder="Day (1–31)" min="1" max="31"><button class="btn" data-act="bill-add">Add bill</button></div></div>' +
       '<div class="card"><div class="card-head"><div><h2>Savings goals</h2></div></div>' +
-        (S.finance.goals.length ? '<div class="list">' + S.finance.goals.map(function (g) { var r = g.saved / (g.target || 1); return '<div class="item" style="flex-wrap:wrap"><div class="grow"><div class="title">' + esc(g.name) + '</div><div class="meta">' + money(g.saved, 0) + ' of ' + money(g.target, 0) + ' · ' + Math.round(r * 100) + '%</div><div class="progress mt-s"><span style="width:' + clamp(r * 100, 0, 100) + '%"></span></div></div><button class="btn sm" data-act="goal-add-money" data-id="' + g.id + '">+ £</button><button class="icon-btn" data-act="goal-del" data-id="' + g.id + '" aria-label="Delete">✕</button></div>'; }).join('') + '</div>' : '<div class="empty">Add something to save for.</div>') +
+        (S.finance.goals.length ? '<div class="list">' + S.finance.goals.map(function (g) { var r = g.saved / (g.target || 1); return '<div class="item" style="flex-wrap:wrap"><div class="grow"><div class="title">' + esc(g.name) + '</div><div class="meta">' + money(g.saved, 0) + ' of ' + money(g.target, 0) + ' · ' + Math.round(r * 100) + '%</div><div class="progress warm mt-s"><span style="width:' + clamp(r * 100, 0, 100) + '%"></span></div></div><button class="btn sm" data-act="goal-add-money" data-id="' + g.id + '">+ £</button><button class="icon-btn" data-act="goal-del" data-id="' + g.id + '" aria-label="Delete">✕</button></div>'; }).join('') + '</div>' : '<div class="empty">Add something to save for.</div>') +
         '<div class="form-row mt"><input type="text" id="goal-name" placeholder="Goal, e.g. Holiday"><input type="number" id="goal-target" placeholder="Target £"><button class="btn" data-act="goal-add">Add goal</button></div></div>' +
     '</div>';
 }
@@ -1210,7 +1293,7 @@ function viewSocials() {
       var monthAgo = h.filter(function (x) { return daysBetween(x.date, new Date()) >= 28; }).pop() || h[0];
       var gain = monthAgo ? cur - monthAgo.count : 0;
       var posts = S.content.ideas.filter(function (i) { return i.status === 'posted' && i.platform === s.platform && inWeek(i.postedAt, ws); }).length;
-      return '<div class="card"><div class="card-head"><div><h2>' + esc(s.platform) + '</h2><p>' + esc(s.handle) + '</p></div><button class="icon-btn" data-act="social-del" data-id="' + s.id + '" aria-label="Remove channel">✕</button></div>' +
+      return '<div class="card' + (S.socials.indexOf(s) % 2 ? ' calm' : '') + '"><div class="card-head"><div><h2>' + esc(s.platform) + '</h2><p>' + esc(s.handle) + '</p></div><button class="icon-btn" data-act="social-del" data-id="' + s.id + '" aria-label="Remove channel">✕</button></div>' +
         '<div class="row between"><div class="stat"><span class="label">Followers</span><span class="value">' + compact(cur) + '</span><span class="delta ' + (gain > 0 ? 'up' : gain < 0 ? 'down' : '') + '">' + (gain ? (gain > 0 ? '▲ ' : '▼ ') + compact(Math.abs(gain)) + ' in 30 days' : 'No change yet') + '</span></div>' + sparkline(h.slice(-12).map(function (x) { return x.count; })) + '</div>' +
         '<div class="row mt small muted"><span>Posted this week: <b style="color:var(--ink)">' + posts + '</b></span>' + (s.url ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">Open ↗</a>' : '') + '</div>' +
         '<div class="row mt-s"><input type="number" placeholder="New follower count" id="f-' + s.id + '" style="flex:1"><button class="btn sm" data-act="social-update" data-id="' + s.id + '">Update</button></div></div>';
@@ -1237,10 +1320,10 @@ function viewHealth() {
   return '<div class="page-head"><div><h1>💚 Health & Strava</h1><p>Move, sleep, eat, repeat — the basics that make every other day easier.</p></div><div class="row"><label class="btn" for="strava-file">⬆ Import Strava CSV</label><input type="file" id="strava-file" accept=".csv,text/csv" hidden></div></div>' +
     '<div class="grid g4">' + statTile('Distance this week', num(sum(week, function (a) { return a.distance; }), 1) + ' km', 'Goal ' + S.settings.distanceGoal + ' km') + statTile('Active time', hrs(sum(week, function (a) { return a.minutes; }) / 60)) + statTile('Activities', week.length) + statTile('Average sleep', sleep.length ? num(avg(sleep), 1) + 'h' : '–', sleep.length ? 'From ' + sleep.length + ' check-ins' : 'Add sleep in your check-in') + '</div>' +
     '<div class="grid g3 mt"><div class="card span2"><div class="card-head"><div><h2>Weekly distance</h2><p>Last 8 weeks · Strava imports and manual entries</p></div></div>' + chartSlot('ch-km', 200) + tableView(['Week of', 'Distance'], weeks.map(function (w) { return [w.label, num(w.value, 1) + ' km']; })) + '</div>' +
-    '<div class="card"><div class="card-head"><div><h2>Daily basics</h2><p>Tap to tick · last 7 days</p></div></div><div class="habit-grid"><span></span>' + days.map(function (d) { return '<span class="h">' + DOW[toDate(d).getDay()][0] + '<br>' + toDate(d).getDate() + '</span>'; }).join('') +
+    '<div class="card calm"><div class="card-head"><div><h2>Daily basics</h2><p>Tap to tick · last 7 days</p></div></div><div class="habit-grid"><span></span>' + days.map(function (d) { return '<span class="h">' + DOW[toDate(d).getDay()][0] + '<br>' + toDate(d).getDate() + '</span>'; }).join('') +
       S.settings.habits.map(function (h) { return '<span>' + esc(h) + '</span>' + days.map(function (d) { var on = (hab[d] || []).indexOf(h) >= 0; return '<button class="habit-cell ' + (on ? 'on' : '') + '" data-act="habit" data-d="' + d + '" data-h="' + esc(h) + '" aria-label="' + esc(h) + ' on ' + fmtDay(d) + (on ? ', done' : '') + '"></button>'; }).join(''); }).join('') + '</div></div></div>' +
     '<div class="grid g2 mt"><div class="card"><div class="card-head"><div><h2>Recent activities</h2></div></div>' + (recent.length ? '<div class="list">' + recent.map(function (a) { return '<div class="item"><span>' + actIcon(a.type) + '</span><div class="grow"><div class="title">' + esc(a.name || a.type) + '</div><div class="meta">' + fmtDay(a.date) + ' · ' + esc(a.type) + (a.source === 'strava' ? ' · Strava' : '') + '</div></div><span class="strong">' + num(a.distance, 1) + ' km</span><span class="muted small">' + Math.round(a.minutes) + ' min</span><button class="icon-btn" data-act="act-del" data-id="' + a.id + '" aria-label="Delete">✕</button></div>'; }).join('') + '</div>' : '<div class="empty">Import your Strava export or add an activity.</div>') + '</div>' +
-    '<div class="card"><div class="card-head"><div><h2>Log an activity</h2></div></div><div class="form-row">' +
+    '<div class="card calm"><div class="card-head"><div><h2>Log an activity</h2></div></div><div class="form-row">' +
       '<label class="field">Type<select id="a-type">' + ['Run', 'Walk', 'Ride', 'Swim', 'Gym', 'Hike', 'Other'].map(function (t) { return '<option>' + t + '</option>'; }).join('') + '</select></label>' +
       '<label class="field">Distance (km)<input type="number" id="a-dist" step="0.1" min="0" placeholder="0"></label>' +
       '<label class="field">Minutes<input type="number" id="a-min" min="0" placeholder="30"></label>' +
@@ -1300,7 +1383,7 @@ function viewSettings() {
       '<label class="field mt">Daily basics (one per line)<textarea id="set-habits">' + esc(s.habits.join('\n')) + '</textarea></label>' +
       '<label class="field mt">Content pillars (one per line)<textarea id="set-pillars">' + esc(S.content.pillars.join('\n')) + '</textarea></label>' +
       '<div class="row mt"><button class="btn primary" data-act="set-save">Save</button></div></div>' +
-    '<div class="card"><div class="card-head"><div><h2>Your scoring formula</h2><p>How much each toggle counts. They don\'t need to add up to 100.</p></div></div><div class="form-row">' +
+    '<div class="card calm"><div class="card-head"><div><h2>Your scoring formula</h2><p>How much each toggle counts. They don\'t need to add up to 100.</p></div></div><div class="form-row">' +
       '<label class="field">Impact weight<input type="number" id="w-impact" min="0" value="' + w.impact + '"></label>' +
       '<label class="field">Urgency weight<input type="number" id="w-urgency" min="0" value="' + w.urgency + '"></label>' +
       '<label class="field">Energy fit weight<input type="number" id="w-energy" min="0" value="' + w.energy + '"></label>' +
