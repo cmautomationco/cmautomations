@@ -19,6 +19,12 @@ It has three connected systems plus an automation engine that links them:
 
 The design uses a deep nautical sky blue on a white background with black text. Headers and key figures are in blue text.
 
+### 🧠 Life Dashboard: the personal side
+
+The personal side lives separately at **`/life`**. It has an ADHD hub with daily check-ins, the impact/urgency/energy/effort score (Do it now · Schedule it · Park it), Today's 3, a deep-focus timer and weekly wins. Alongside it are life admin, finance, content ideas, social channels, and health with Strava import. It's a single page with no build step, and your data stays in your own browser. See [docs/LIFE-DASHBOARD.md](docs/LIFE-DASHBOARD.md).
+
+![Life Dashboard](docs/screenshots/40-life-today.png)
+
 ---
 
 ## Screenshots
