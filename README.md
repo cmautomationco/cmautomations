@@ -21,7 +21,7 @@ The design uses a deep nautical sky blue on a white background with black text. 
 
 ### 🧠 Life Dashboard: the personal side
 
-The personal side lives separately at **`/life`**. It has an ADHD hub with daily check-ins, the impact/urgency/energy/effort score (Do it now · Schedule it · Park it), Today's 3, a deep-focus timer and weekly wins. Alongside it are life admin, finance, content ideas, social channels, and health with Strava import. It's a single page with no build step, and your data stays in your own browser. See [docs/LIFE-DASHBOARD.md](docs/LIFE-DASHBOARD.md).
+The personal side lives separately at **`/life`**. It has an ADHD hub with daily check-ins, the impact/urgency/energy/effort score (Do it now · Schedule it · Park it), Today's 3, a deep-focus timer and weekly wins. Alongside it are life admin, finance, a content hub (strategy and ideas), social channels, and health with Strava import. Every section except Finance has a task manager ranked with a 1–5 importance bar. It's a single page with no build step, and your data stays in your own browser. See [docs/LIFE-DASHBOARD.md](docs/LIFE-DASHBOARD.md).
 
 ![Life Dashboard](docs/screenshots/40-life-today.png)
 

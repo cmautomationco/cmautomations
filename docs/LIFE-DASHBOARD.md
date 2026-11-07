@@ -1,6 +1,6 @@
 # Life Dashboard (personal side)
 
-A personal dashboard that sits apart from the business system. It covers the ADHD hub, life admin, finance, content ideas, social channels, and health with Strava.
+A personal dashboard that sits apart from the business system. It covers the ADHD hub, life admin, finance, the content hub, social channels, and health with Strava.
 
 - **Open it:** `/life` on the running server (for example `http://localhost:3000/life`). You can also open `public/life/index.html` straight from your computer or phone.
 - **One file, no build:** everything is in `public/life/index.html`.
@@ -9,14 +9,35 @@ A personal dashboard that sits apart from the business system. It covers the ADH
 
 ![Today](screenshots/40-life-today.png)
 
+## 🎯 Task manager with a 1–5 importance bar
+
+Every section except Finance has its own ranked task manager:
+
+| Section | What it lists |
+|---|---|
+| **Today** | Your top 6 priorities from every area |
+| **ADHD hub → Task manager** | Every task from every area, with area filters |
+| **Life admin** | Admin, home and money jobs |
+| **Content hub → Content tasks** | Filming, editing and posting jobs |
+| **Social channels** | Replies, bio updates and collabs |
+| **Health & Strava** | Appointments and training |
+
+- **Ranking:** slide the bar from **1 (least important)** to **5 (most important)**. The list re-sorts as soon as you let go: 5s at the top, 1s at the bottom, each under its own heading.
+- **Adding:** type the task, set the bar, add a date if it has one, then press **Add** or Enter.
+- **Starting rank:** tasks added through the scorer start at the ranking their formula score suggests (score ÷ 20, rounded up). You can slide them anywhere after that.
+- **Effect on Today's 3:** your ranking feeds into Today's 3, alongside the formula score and due dates.
+
+![Admin task manager](screenshots/49-life-admin-task-manager.png)
+
 ## 🧠 ADHD hub (the core)
 
-It has six tabs, kept separate:
+It has seven tabs, kept separate:
 
 | Tab | What it does |
 |---|---|
 | **How I'm doing** | A daily score from 1 (really rough) to 10 (flying), plus optional energy (1–5), sleep, tags and a note. It shows a daily line chart (7/14/30 days), weekly averages for the last 8 weeks, your check-in streak, and **Patterns** (how your score changes on days tagged "Slept well", "Exercised", "Overwhelmed" and so on). |
 | **Score & sort** | Score a task or idea *before* you add it. Four toggles (Impact, Urgency, Energy fit, Effort) give a live score from 0 to 100 and a verdict: **Do it now**, **Schedule it** or **Park it**. Below it are the three buckets, where you can tick tasks off, move them or rescore them. |
+| **Task manager** | Every task from every area, ranked 5 → 1 with the importance bar. Filter by area. |
 | **Today's 3** | At least three tasks every day, with one always for your health. They're matched to today's check-in: on a low-energy day you get quick, gentle wins. If you haven't scored enough tasks, it suggests a simple health or admin task. |
 | **Deep focus** | A 15–90 minute timer linked to a task. It logs your deep-focus hours. If a distracting thought comes up mid-session, type it in and it goes to the brain dump. |
 | **Weekly wins** | **Time saved**, **problems solved**, **deep focus hours** and **ideas parked, not chased**, each compared with last week. It also lists your wins and parked ideas, shows time saved week by week, and has a two-minute reflection. |
@@ -60,14 +81,24 @@ You can change the weights and the score thresholds in **Settings → Your scori
 
 - **🗂️ Life admin:** home, admin and money tasks, grouped into overdue, today, next 7 days, later and no date. Tasks can repeat weekly, monthly or yearly, and the next one is created when you tick one off. Bills from Finance show here too.
 - **💷 Finance:** money in and out, monthly budgets for each category (with warnings at 85% and when you go over), a 6-month spending trend, bills and subscriptions by the day they come out, and savings goals.
-- **🎬 Content ideas:** pick a pillar and a platform to get 3 ideas, each with a hook, format and call to action. Save them, or score one first. A board takes each idea from Idea → Scripted → Filmed → Posted, with a weekly posting goal.
+- **🎬 Content hub:** three tabs.
+  - **Strategy:**
+    - *The big picture:* who you are, who it's for, what you sell, how you sound, your 90-day goal, and your always/never rules.
+    - *Content pillars:* each with its share of your content.
+    - *Pillar balance:* what you actually posted in the last 30 days compared with your plan.
+    - *Posting plan:* posts per week on each platform.
+    - *Weekly rhythm:* one pillar for each day.
+  - **Ideas:** get 3 ideas at a time (today's pillar is picked for you), each with a hook, format and call to action. The board takes each idea from Idea → Scripted → Filmed → Posted, and every idea has its own 1–5 bar, so each column is ranked.
+  - **Content tasks:** the content task manager.
 - **📱 Social channels:** every channel with its follower count, change over 30 days, a sparkline, and posts this week.
 - **💚 Health & Strava:** weekly distance for the last 8 weeks, recent activities, daily basics (habits you choose) and average sleep taken from your check-ins.
   - **To import Strava:** go to Strava → Settings → My Account → *Download or delete your account* → request your archive. Then import `activities.csv`. Activities you've already imported are skipped.
 
-| Finance | Content ideas |
+| Content hub → Strategy | Content hub → Ideas |
 |---|---|
-| ![Finance](screenshots/45-life-finance.png) | ![Content ideas](screenshots/46-life-content-ideas.png) |
+| ![Content strategy](screenshots/46-life-content-hub-strategy.png) | ![Content ideas](screenshots/48-life-content-hub-ideas.png) |
+
+![Finance](screenshots/45-life-finance.png)
 
 ![Health & Strava](screenshots/47-life-health-strava.png)
 

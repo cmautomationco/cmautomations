@@ -381,6 +381,45 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
 .welcome .brand-mark { width: 58px; height: 58px; font-size: 24px; border-radius: 17px; margin: 0 auto 18px; }
 .welcome p { color: var(--ink-2); margin: 12px auto 22px; max-width: 520px; }
 
+/* ---------- task manager & priority bar ---------- */
+.tm-add {
+  display: grid; grid-template-columns: minmax(120px, 1fr) minmax(200px, 1.6fr) minmax(130px, 1fr) auto; gap: 10px 14px; align-items: end;
+  padding: 14px; border-radius: 14px; background: var(--accent-wash); border: 1px solid var(--accent-soft);
+}
+.tm-add.no-area { grid-template-columns: minmax(200px, 1.6fr) minmax(130px, 1fr) auto; }
+.tm-add .f-title { grid-column: 1 / -1; }
+.tm-filters { margin-top: 14px; }
+.tm-group { margin-top: 16px; }
+.tm-group-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 750; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-2); padding: 0 2px 6px; border-bottom: 1px solid var(--line-soft); }
+.tm-group-head .n { color: var(--muted); font-weight: 650; }
+.tm-row { --p-col: var(--line); display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-left: 4px solid var(--p-col); border-radius: 12px; margin-top: 8px; background: var(--surface); }
+.tm-row .prio-box { display: flex; align-items: center; gap: 10px; width: 220px; flex: 0 0 auto; }
+.p-badge { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-weight: 800; background: var(--p-bg); color: var(--p-ink); flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+.p-badge.sm { width: 22px; height: 22px; font-size: 11px; border-radius: 7px; }
+.p5 { --p-col: var(--accent); --p-bg: var(--accent-fill); --p-ink: var(--on-accent); }
+.p4 { --p-col: #f6b48a; --p-bg: var(--accent-soft); --p-ink: var(--accent-strong); }
+.p3 { --p-col: var(--sky); --p-bg: var(--sky-soft); --p-ink: var(--sky-strong); }
+.p2 { --p-col: #a9c4d9; --p-bg: var(--sky-wash); --p-ink: var(--sky-strong); }
+.p1 { --p-col: var(--line); --p-bg: var(--line-soft); --p-ink: var(--muted); }
+input[type=range].prio {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 10px; border-radius: 999px; margin: 8px 0;
+  background: linear-gradient(to right, var(--accent) var(--fill, 50%), var(--line-soft) var(--fill, 50%)); border: 1px solid var(--line); cursor: pointer;
+}
+input[type=range].prio::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 4px solid var(--accent); box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+input[type=range].prio::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--surface); border: 4px solid var(--accent); box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+input[type=range].prio:focus-visible { outline: 2px solid var(--sky); outline-offset: 4px; }
+.prio-scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-weight: 600; }
+.tcard .prio-box { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+
+/* ---------- content strategy ---------- */
+.strat-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pillar-row { display: grid; grid-template-columns: minmax(0, 1.2fr) 90px minmax(0, 2fr) auto; gap: 8px; align-items: center; margin-top: 8px; }
+.rhythm { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.rhythm .day { border: 1px solid var(--line); border-radius: 12px; padding: 8px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
+.rhythm .day.today { border-color: var(--accent); background: var(--accent-wash); }
+.rhythm .day b { font-size: 12px; }
+.rhythm select { font-size: 12px; padding: 6px 8px; min-height: 34px; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 1080px) {
   .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -405,6 +444,12 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
   h1 { font-size: 22px; }
   .scale { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .fab { right: 16px; bottom: 16px; }
+  .tm-add, .tm-add.no-area { grid-template-columns: 1fr; }
+  .tm-row { flex-wrap: wrap; }
+  .tm-row .prio-box { width: 100%; order: 5; }
+  .strat-grid { grid-template-columns: 1fr; }
+  .pillar-row { grid-template-columns: minmax(0, 1fr) 80px auto; }
+  .pillar-row .about { grid-column: 1 / -1; grid-row: 2; }
 }
 @media (max-width: 520px) {
   .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -471,7 +516,8 @@ function hash(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s
    ===================================================================== */
 var DEFAULT_HABITS = ['Walk or move for 20 minutes', 'Drink 2 litres of water', 'Took meds / supplements', 'Ate a proper meal', 'Off screens by 11pm'];
 var DEFAULT_PILLARS = ['ADHD life', 'AI & automation tips', 'Digital products', 'Running & health', 'Behind the scenes'];
-var AREAS = { admin: '🗂️ Admin', health: '💚 Health', finance: '💷 Money', content: '🎬 Content', home: '🏠 Home', personal: '🙂 Personal', idea: '💡 Idea' };
+var AREAS = { admin: '🗂️ Admin', health: '💚 Health', finance: '💷 Money', content: '🎬 Content', social: '📱 Social', home: '🏠 Home', personal: '🙂 Personal', idea: '💡 Idea' };
+var PRIO = ['', 'Least important', 'Low', 'Medium', 'Important', 'Most important'];
 var BUCKETS = { now: { name: 'Do it now', icon: '⚡', blurb: 'High impact, it fits — get it done.' }, schedule: { name: 'Schedule it', icon: '📅', blurb: 'Worth doing, just not today. Give it a date.' }, park: { name: 'Park it', icon: '🅿️', blurb: 'Not now. Parked, not lost — and not chased.' } };
 var EFFORT_HOURS = [0, 0.25, 1, 2, 4, 8];
 var TAGS = ['Slept well', 'Poor sleep', 'Exercised', 'Took meds', 'Ate well', 'Stressed', 'Overwhelmed', 'Social', 'Hyperfocus', 'Scattered'];
@@ -484,12 +530,17 @@ function blank() {
     settings: { name: '', theme: 'system', weights: { impact: 40, urgency: 30, energy: 20, ease: 10 }, nowAt: 70, scheduleAt: 45, habits: DEFAULT_HABITS.slice(), postGoal: 5, distanceGoal: 20 },
     checkins: {}, tasks: [], inbox: [], focus: [], activeFocus: null, today: {}, reviews: {},
     finance: { tx: [], budgets: BUDGET_CATS.map(function (c) { return { cat: c, limit: 0 }; }), goals: [], bills: [] },
-    content: { pillars: DEFAULT_PILLARS.slice(), ideas: [] },
+    content: { pillars: DEFAULT_PILLARS.slice(), ideas: [], strategy: { who: '', audience: '', offer: '', voice: '', goal: '', rules: '', platforms: { TikTok: 5, Instagram: 3 }, rhythm: ['', '', '', '', '', '', ''], mix: {}, about: {} } },
     socials: [],
     health: { activities: [], habits: {} }
   };
 }
 var S = load();
+migrate();
+function migrate() {
+  S.tasks.forEach(function (t) { if (!t.priority) t.priority = prioFromScore(scoreOf(t)); });
+  S.content.ideas.forEach(function (i) { if (!i.priority) i.priority = 3; });
+}
 var saveOk = true;
 function load() {
   try {
@@ -535,6 +586,11 @@ function whyOf(t) {
   var lead = parts.length ? parts.join(', ').replace(/^./, function (c) { return c.toUpperCase(); }) + '. ' : '';
   return lead + (b === 'now' ? 'Do it now.' : b === 'schedule' ? 'Give it a slot in the diary.' : 'Park it and protect your focus.');
 }
+function prioFromScore(s) { return clamp(Math.ceil(s / 20), 1, 5); }
+function prioOf(t) { return t.priority || prioFromScore(scoreOf(t)); }
+function prioSlider(id, kind, v) {
+  return '<input type="range" class="prio" min="1" max="5" step="1" value="' + v + '" data-prio-kind="' + kind + '" data-id="' + id + '" style="--fill:' + ((v - 1) * 25) + '%" aria-label="Importance from 1 (least) to 5 (most)" aria-valuetext="' + v + ', ' + PRIO[v] + '">';
+}
 function hrs(h) { if (!h) return '0h'; if (h < 1) return Math.round(h * 60) + ' min'; return num(h, 1) + 'h'; }
 
 /* =====================================================================
@@ -543,6 +599,7 @@ function hrs(h) { if (!h) return '0h'; if (h < 1) return Math.round(h * 60) + ' 
 function newTask(p) {
   var t = Object.assign({ id: uid(), title: '', area: 'personal', impact: 3, urgency: 3, energy: 3, effort: 3, due: '', repeat: 'none', note: '', created: new Date().toISOString(), done: false, doneAt: null, parkedAt: null, auto: false }, p || {});
   if (!t.bucket) t.bucket = bucketOf(t);
+  if (!t.priority) t.priority = prioFromScore(scoreOf(t));
   if (t.bucket === 'park' && !t.parkedAt) t.parkedAt = new Date().toISOString();
   return t;
 }
@@ -556,7 +613,7 @@ function completeTask(id) {
     if (t.repeat === 'weekly') next = addDays(base, 7);
     else if (t.repeat === 'monthly') next.setMonth(next.getMonth() + 1);
     else if (t.repeat === 'yearly') next.setFullYear(next.getFullYear() + 1);
-    S.tasks.push(newTask({ title: t.title, area: t.area, impact: t.impact, urgency: t.urgency, energy: t.energy, effort: t.effort, bucket: t.bucket === 'park' ? 'schedule' : t.bucket, due: dkey(next), repeat: t.repeat, note: t.note }));
+    S.tasks.push(newTask({ title: t.title, area: t.area, impact: t.impact, urgency: t.urgency, energy: t.energy, effort: t.effort, priority: t.priority, bucket: t.bucket === 'park' ? 'schedule' : t.bucket, due: dkey(next), repeat: t.repeat, note: t.note }));
   }
   save();
   var n = weekStats(weekStart()).solved;
@@ -616,7 +673,8 @@ function ensureToday(force) {
   var open = S.tasks.filter(function (t) { return !t.done && keep.indexOf(t.id) < 0 && (t.bucket === 'now' || ((t.bucket === 'schedule') && t.due && t.due <= k)); });
   function rank(t) {
     var overdue = t.due && t.due <= k ? 18 : 0;
-    return low ? t.energy * 12 + (6 - t.effort) * 12 + scoreOf(t) * 0.3 + overdue : scoreOf(t) + overdue;
+    var mine = (prioOf(t) - 3) * 10; // your own 1–5 ranking counts too
+    return (low ? t.energy * 12 + (6 - t.effort) * 12 + scoreOf(t) * 0.3 : scoreOf(t)) + overdue + mine;
   }
   open.sort(function (a, b) { return rank(b) - rank(a); });
   var picks = keep.map(taskById);
@@ -796,7 +854,7 @@ var NAV = [
   { id: 'adhd', ico: '🧠', name: 'ADHD hub', tag: 'Core' },
   { id: 'admin', ico: '🗂️', name: 'Life admin', group: 'Life' },
   { id: 'money', ico: '💷', name: 'Finance' },
-  { id: 'content', ico: '🎬', name: 'Content ideas', group: 'Create & move' },
+  { id: 'content', ico: '🎬', name: 'Content hub', group: 'Create & move' },
   { id: 'socials', ico: '📱', name: 'Social channels' },
   { id: 'health', ico: '💚', name: 'Health & Strava' },
   { id: 'settings', ico: '⚙️', name: 'Settings', group: 'You' }
@@ -804,11 +862,20 @@ var NAV = [
 var ADHD_TABS = [
   { id: 'checkin', name: 'How I\'m doing' },
   { id: 'score', name: 'Score & sort' },
+  { id: 'tasks', name: 'Task manager' },
   { id: 'today', name: 'Today\'s 3' },
   { id: 'focus', name: 'Deep focus' },
   { id: 'week', name: 'Weekly wins' },
   { id: 'dump', name: 'Brain dump' }
 ];
+var CONTENT_TABS = [
+  { id: 'strategy', name: '🧭 Strategy' },
+  { id: 'ideas', name: '💡 Ideas' },
+  { id: 'tasks', name: '🎯 Content tasks' }
+];
+function tabsBar(page, tabs, cur) {
+  return '<div class="tabs" role="tablist">' + tabs.map(function (t) { return '<button role="tab" aria-selected="' + (t.id === cur) + '" class="' + (t.id === cur ? 'on' : '') + '" data-act="go" data-page="' + page + '" data-tab="' + t.id + '">' + t.name + '</button>'; }).join('') + '</div>';
+}
 var route = { page: 'home', tab: 'checkin' };
 function readHash() {
   var h = (location.hash || '').replace(/^#\/?/, '').split('/');
@@ -890,6 +957,7 @@ function viewHome() {
            : '<div class="scale compact">' + range(1, 10).map(function (n) { return '<button data-act="quick-score" data-v="' + n + '">' + n + '</button>'; }).join('') + '</div><p class="small muted mt">Today\'s 3 re-picks itself to match. Add energy, sleep and notes in the <a href="#/adhd/checkin">full check-in</a>.</p>') +
       '</div>' +
     '</div>' +
+    '<div class="section-label"><span>🎯</span>Top priorities</div>' + taskManager('home', { areas: null, def: 'personal', title: '🎯 Top priorities', blurb: 'Your most important open tasks, from every area.', limit: 6 }) +
     '<div class="section-label"><span>📊</span>This week so far</div>' + weekTiles(ws) +
     '<div class="grid g3 mt">' +
       '<div class="card calm"><div class="card-head"><div><h2>Coming up</h2><p>Bills and admin in the next 7 days</p></div><button class="btn sm ghost" data-act="go" data-page="admin">All →</button></div>' +
@@ -939,8 +1007,8 @@ function taskRow(t) {
 function viewADHD() {
   var tab = ADHD_TABS.some(function (t) { return t.id === route.tab; }) ? route.tab : 'checkin';
   return '<div class="page-head"><div><h1>🧠 ADHD hub</h1><p>Every day is different. This is how you stay on top of the ones that matter.</p></div></div>' +
-    '<div class="tabs" role="tablist">' + ADHD_TABS.map(function (t) { return '<button role="tab" class="' + (t.id === tab ? 'on' : '') + '" data-act="go" data-page="adhd" data-tab="' + t.id + '">' + t.name + '</button>'; }).join('') + '</div>' +
-    ({ checkin: tabCheckin, score: tabScore, today: tabToday, focus: tabFocus, week: tabWeek, dump: tabDump })[tab]();
+    tabsBar('adhd', ADHD_TABS, tab) +
+    ({ checkin: tabCheckin, score: tabScore, tasks: tabTasks, today: tabToday, focus: tabFocus, week: tabWeek, dump: tabDump })[tab]();
 }
 
 var draftCheckin = null;
@@ -1070,9 +1138,59 @@ function tabScore() {
 function bucketCard(t, b) {
   var moves = ['now', 'schedule', 'park'].filter(function (x) { return x !== b; });
   return '<div class="tcard"><button class="check" data-act="done" data-id="' + t.id + '" aria-label="Mark done">✓</button><div class="grow"><div class="title strong">' + esc(t.title) + '</div>' +
-    '<div class="meta small muted row" style="gap:6px;margin-top:3px"><span class="score-badge">' + scoreOf(t) + '</span><span>' + (AREAS[t.area] || '') + '</span>' + (t.due ? '<span>' + dueText(t.due) + '</span>' : '') +
+    '<div class="meta small muted row" style="gap:6px;margin-top:3px"><span class="p-badge sm p' + prioOf(t) + '" title="Importance: ' + PRIO[prioOf(t)] + '">' + prioOf(t) + '</span><span class="score-badge" title="Formula score">' + scoreOf(t) + '</span><span>' + (AREAS[t.area] || '') + '</span>' + (t.due ? '<span>' + dueText(t.due) + '</span>' : '') +
     (b === 'park' ? '<span>saves ~' + hrs(EFFORT_HOURS[t.effort]) + '</span>' : '') + '</div>' +
     '<div class="row mt-s" style="gap:4px">' + moves.map(function (m) { return '<button class="btn sm ghost" data-act="move" data-id="' + t.id + '" data-b="' + m + '">→ ' + BUCKETS[m].name.replace(' it', '') + '</button>'; }).join('') + '<button class="btn sm ghost" data-act="edit-task" data-id="' + t.id + '" aria-label="Rescore" title="Rescore">✎</button></div></div></div>';
+}
+
+/* ---------- Task manager (used on every section except Finance) ---------- */
+var TM = {}; // per-instance options, read back by the add button
+function taskManager(id, o) {
+  TM[id] = o;
+  var areas = o.areas, filter = sessionGet('tmf-' + id) || 'all', showDone = sessionGet('tmd-' + id) === '1';
+  var pool = S.tasks.filter(function (t) { return !areas || areas.indexOf(t.area) >= 0; });
+  if (!areas && filter !== 'all') pool = pool.filter(function (t) { return t.area === filter; });
+  var open = pool.filter(function (t) { return !t.done; }).sort(function (a, b) { return prioOf(b) - prioOf(a) || scoreOf(b) - scoreOf(a) || byDue(a, b); });
+  var total = open.length;
+  if (o.limit) open = open.slice(0, o.limit);
+  var done = pool.filter(function (t) { return t.done && inWeek(t.doneAt, weekStart()); });
+  var choices = areas || Object.keys(AREAS);
+  var np = +(sessionGet('tmp-' + id) || 3);
+  var html = '<div class="card' + (o.calm ? ' calm' : '') + (o.cls ? ' ' + o.cls : '') + '"><div class="card-head"><div><h2>' + (o.title || '🎯 Task manager') + '</h2><p>' + (o.blurb ? o.blurb + ' ' : '') + 'Slide the bar to rank it: 5 = most important (top), 1 = least (bottom).</p></div><span class="pill plain">' + total + ' open</span></div>';
+  if (!o.noAdd) {
+    html += '<div class="tm-add' + (choices.length > 1 ? '' : ' no-area') + '">' +
+      '<label class="field f-title">Task<input type="text" id="tm-title-' + id + '" data-tm="' + id + '" placeholder="' + esc(o.placeholder || 'What needs doing?') + '" autocomplete="off"></label>' +
+      (choices.length > 1 ? '<label class="field">Area<select id="tm-area-' + id + '">' + choices.map(function (a) { return '<option value="' + a + '"' + (a === o.def ? ' selected' : '') + '>' + AREAS[a] + '</option>'; }).join('') + '</select></label>' : '') +
+      '<label class="field">How important? <span id="tm-plabel-' + id + '" style="color:var(--accent-strong)">' + np + ' · ' + PRIO[np] + '</span>' + prioSlider(id, 'new', np) + '<span class="prio-scale"><span>1 · Least</span><span>3</span><span>5 · Most</span></span></label>' +
+      '<label class="field">Due (optional)<input type="date" id="tm-due-' + id + '"></label>' +
+      '<button class="btn primary" data-act="tm-add" data-tm="' + id + '">+ Add</button></div>';
+  }
+  if (!areas && !o.limit) {
+    html += '<div class="chips tm-filters">' + ['all'].concat(Object.keys(AREAS)).map(function (a) { return '<button class="chip ' + (filter === a ? 'on' : '') + '" data-act="tm-filter" data-tm="' + id + '" data-v="' + a + '">' + (a === 'all' ? 'Everything' : AREAS[a]) + '</button>'; }).join('') + '</div>';
+  }
+  var groups = [5, 4, 3, 2, 1].map(function (p) {
+    var list = open.filter(function (t) { return prioOf(t) === p; });
+    if (!list.length) return '';
+    return '<div class="tm-group"><div class="tm-group-head"><span class="p-badge sm p' + p + '">' + p + '</span>' + PRIO[p] + ' <span class="n">· ' + list.length + '</span></div>' + list.map(tmRow).join('') + '</div>';
+  }).join('');
+  html += groups || '<div class="empty mt">Nothing here yet. Add a task above and slide it to how important it feels.</div>';
+  if (o.limit && total > o.limit) html += '<div class="mt"><button class="btn sm" data-act="go" data-page="adhd" data-tab="tasks">See all ' + total + ' in the task manager →</button></div>';
+  if (!o.limit) {
+    html += '<div class="mt"><button class="btn sm ghost" data-act="tm-done-toggle" data-tm="' + id + '">' + (showDone ? 'Hide' : 'Show') + ' done this week (' + done.length + ')</button></div>';
+    if (showDone && done.length) html += '<div class="list">' + done.map(taskRow).join('') + '</div>';
+  }
+  return html + '</div>';
+}
+function tmRow(t) {
+  var p = prioOf(t);
+  return '<div class="tm-row p' + p + '" data-row="' + t.id + '"><button class="check" data-act="done" data-id="' + t.id + '" aria-label="Mark done">✓</button>' +
+    '<div class="grow"><div class="strong" style="overflow-wrap:anywhere">' + esc(t.title) + '</div><div class="meta small muted row" style="gap:6px;margin-top:3px"><span>' + (AREAS[t.area] || '') + '</span><span class="pill ' + t.bucket + '">' + BUCKETS[t.bucket].icon + ' ' + BUCKETS[t.bucket].name + '</span>' +
+    (t.due ? '<span>' + dueText(t.due) + '</span>' : '') + (t.repeat && t.repeat !== 'none' ? '<span>↻ ' + t.repeat + '</span>' : '') + '</div></div>' +
+    '<div class="prio-box"><span class="p-badge p' + p + '" data-pbadge="' + t.id + '" title="' + PRIO[p] + '">' + p + '</span>' + prioSlider(t.id, 'task', p) + '</div>' +
+    '<button class="icon-btn" data-act="edit-task" data-id="' + t.id + '" aria-label="Edit">✎</button><button class="icon-btn" data-act="del-task" data-id="' + t.id + '" aria-label="Delete">✕</button></div>';
+}
+function tabTasks() {
+  return taskManager('adhd', { areas: null, def: 'personal', title: '🎯 Task manager', blurb: 'Every task from every area in one ranked list.' });
 }
 
 /* ---------- Today's 3 ---------- */
@@ -1163,25 +1281,17 @@ function tabDump() {
 }
 
 /* ---------- Admin ---------- */
+var ADMIN_AREAS = ['admin', 'home', 'finance'];
 function viewAdmin() {
-  var open = S.tasks.filter(function (t) { return !t.done && (t.area === 'admin' || t.area === 'home' || t.area === 'finance'); }).sort(byDue);
+  var open = S.tasks.filter(function (t) { return !t.done && ADMIN_AREAS.indexOf(t.area) >= 0; }).sort(byDue);
   var k = dkey(), wk = dkey(addDays(new Date(), 7));
-  var groups = [
-    ['⚠ Overdue', open.filter(function (t) { return t.due && t.due < k; })],
-    ['Today', open.filter(function (t) { return t.due === k; })],
-    ['Next 7 days', open.filter(function (t) { return t.due && t.due > k && t.due <= wk; })],
-    ['Later', open.filter(function (t) { return t.due && t.due > wk; })],
-    ['No date yet', open.filter(function (t) { return !t.due; })]
-  ];
-  var doneRecent = S.tasks.filter(function (t) { return t.done && (t.area === 'admin' || t.area === 'home' || t.area === 'finance') && inWeek(t.doneAt, weekStart()); });
+  var soon = open.filter(function (t) { return t.due && t.due <= wk; });
+  var overdue = soon.filter(function (t) { return t.due < k; }).length;
   var bills = upcomingBills(31);
-  return '<div class="page-head"><div><h1>🗂️ Life admin</h1><p>The boring stuff, in order — so it stops living in your head.</p></div><button class="btn primary" data-act="add-task" data-area="admin">+ Add admin task</button></div>' +
-    '<div class="grid g3"><div class="span2 stack">' + groups.map(function (g) {
-      if (!g[1].length) return '';
-      return '<div class="card"><div class="card-head"><h2>' + g[0] + '</h2><span class="pill plain">' + g[1].length + '</span></div><div class="list">' + g[1].map(taskRow).join('') + '</div></div>';
-    }).join('') + (open.length ? '' : '<div class="card"><div class="empty">No admin waiting. Add the next thing that\'s bugging you.</div></div>') + '</div>' +
-    '<div class="stack"><div class="card calm"><div class="card-head"><div><h2>Bills this month</h2><p>From Finance</p></div></div>' + (bills.length ? '<div class="list">' + bills.map(function (b) { return '<div class="item"><div class="grow"><div class="title">' + esc(b.name) + '</div><div class="meta">' + dueText(b.next) + '</div></div><span class="strong">' + money(b.amount) + '</span></div>'; }).join('') + '</div>' : '<div class="empty">Add bills in Finance to see them here.</div>') + '</div>' +
-      '<div class="card"><div class="card-head"><div><h2>Done this week</h2></div><span class="pill good">✓ ' + doneRecent.length + '</span></div>' + (doneRecent.length ? '<div class="list">' + doneRecent.map(taskRow).join('') + '</div>' : '<div class="empty">Nothing ticked yet.</div>') + '</div>' +
+  return '<div class="page-head"><div><h1>🗂️ Life admin</h1><p>The boring stuff, ranked by what matters — so it stops living in your head.</p></div>' + (overdue ? '<span class="pill bad">⚠ ' + overdue + ' overdue</span>' : '<span class="pill sky">✓ Nothing overdue</span>') + '</div>' +
+    '<div class="grid g3"><div class="span2">' + taskManager('admin', { areas: ADMIN_AREAS, def: 'admin', title: '🎯 Admin task manager', blurb: 'Admin, home and money jobs.', placeholder: 'e.g. Renew the TV licence' }) + '</div>' +
+    '<div class="stack"><div class="card calm"><div class="card-head"><div><h2>Due in the next 7 days</h2><p>By date, so nothing slips</p></div></div>' + (soon.length ? '<div class="list">' + soon.map(taskRow).join('') + '</div>' : '<div class="empty">Nothing due this week.</div>') + '</div>' +
+      '<div class="card calm"><div class="card-head"><div><h2>Bills this month</h2><p>From Finance</p></div></div>' + (bills.length ? '<div class="list">' + bills.map(function (b) { return '<div class="item"><div class="grow"><div class="title">' + esc(b.name) + '</div><div class="meta">' + dueText(b.next) + '</div></div><span class="strong">' + money(b.amount) + '</span></div>'; }).join('') + '</div>' : '<div class="empty">Add bills in Finance to see them here.</div>') + '</div>' +
       '<div class="card tint"><h3>Ideas for regular admin</h3><p class="small muted mt-s">Car MOT & insurance · TV licence · phone contract end · dentist & GP check-ups · passport expiry · self-assessment tax (31 Jan) · home insurance · subscriptions review</p></div></div></div>';
 }
 
@@ -1264,21 +1374,68 @@ function genIdeas(pillar, platform) {
   });
 }
 var STAGES = [['idea', '💡 Ideas'], ['scripted', '✍️ Scripted'], ['filmed', '🎥 Filmed'], ['posted', '✅ Posted']];
+var WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+function strat() { return S.content.strategy; }
+function todaysPillar() { return strat().rhythm[(new Date().getDay() + 6) % 7] || ''; }
+function postGoal() { var t = sum(Object.keys(strat().platforms), function (k) { return +strat().platforms[k] || 0; }); return t || S.settings.postGoal; }
 function viewContent() {
-  var pillar = sessionGet('c-pillar') || S.content.pillars[0], platform = sessionGet('c-platform') || 'TikTok';
-  var postedWeek = S.content.ideas.filter(function (i) { return i.status === 'posted' && inWeek(i.postedAt, weekStart()); }).length;
-  return '<div class="page-head"><div><h1>🎬 Content ideas</h1><p>Ideas for your own channels, from rough thought to posted.</p></div><span class="pill ' + (postedWeek >= S.settings.postGoal ? 'good' : 'plain') + '">' + postedWeek + ' / ' + S.settings.postGoal + ' posted this week</span></div>' +
-    '<div class="card"><div class="card-head"><div><h2>Give me ideas</h2><p>Pick a pillar and a platform. Save the ones you like — or score one first if you\'re not sure it\'s worth the time.</p></div></div>' +
+  var tab = CONTENT_TABS.some(function (t) { return t.id === route.tab; }) ? route.tab : 'strategy';
+  var postedWeek = S.content.ideas.filter(function (i) { return i.status === 'posted' && inWeek(i.postedAt, weekStart()); }).length, goal = postGoal();
+  return '<div class="page-head"><div><h1>🎬 Content hub</h1><p>Your strategy, your ideas and your content to-dos — in one place.</p></div><div class="row">' + (todaysPillar() ? '<span class="pill sky">🗓️ Today: ' + esc(todaysPillar()) + '</span>' : '') + '<span class="pill ' + (postedWeek >= goal ? 'good' : 'plain') + '">' + postedWeek + ' / ' + goal + ' posted this week</span></div></div>' +
+    tabsBar('content', CONTENT_TABS, tab) +
+    ({ strategy: tabStrategy, ideas: tabIdeas, tasks: function () { return taskManager('content', { areas: ['content'], def: 'content', title: '🎯 Content task manager', blurb: 'Filming, editing, scripting and posting jobs.', placeholder: 'e.g. Batch-film 3 talking-head videos' }); } })[tab]();
+}
+function tabStrategy() {
+  var st = strat(), pillars = S.content.pillars;
+  var since = addDays(new Date(), -30);
+  var posted = S.content.ideas.filter(function (i) { return i.status === 'posted' && i.postedAt && toDate(i.postedAt) >= since; });
+  var mixTotal = sum(pillars, function (p) { return +st.mix[p] || 0; });
+  var field = function (k, label, ph, tall) { return '<label class="field">' + label + (tall ? '<textarea id="st-' + k + '" placeholder="' + esc(ph) + '">' + esc(st[k]) + '</textarea>' : '<input type="text" id="st-' + k + '" value="' + esc(st[k]) + '" placeholder="' + esc(ph) + '">') + '</label>'; };
+  return '<div class="card"><div class="card-head"><div><h2>🧭 The big picture</h2><p>Write it once, so every idea has something to aim at</p></div><button class="btn sm primary" data-act="strat-save">Save</button></div><div class="strat-grid">' +
+      field('who', 'Who I am & what I do', 'e.g. I build AI & automation systems and live with ADHD', true) +
+      field('audience', 'Who it\'s for', 'e.g. Busy founders and people with ADHD who feel behind', true) +
+      field('offer', 'What I sell / where it leads', 'e.g. Digital templates and guides via the link in bio', true) +
+      field('voice', 'How I sound', 'e.g. Honest, practical, no fluff, a bit funny', true) +
+      field('goal', 'Goal for the next 90 days', 'e.g. 10K on TikTok and 100 template sales', true) +
+      field('rules', 'Always / never', 'e.g. Always a clear hook in 2 seconds · never post without captions', true) + '</div></div>' +
+    '<div class="grid g2 mt">' +
+      '<div class="card"><div class="card-head"><div><h2>🧱 Content pillars</h2><p>The topics you talk about, and how much of your content each should be</p></div><span class="pill ' + (mixTotal === 100 ? 'good' : 'warn') + '">' + mixTotal + '% of 100%</span></div>' +
+        pillars.map(function (p, i) { return '<div class="pillar-row"><input type="text" id="pl-name-' + i + '" value="' + esc(p) + '" aria-label="Pillar name"><input type="number" id="pl-mix-' + i + '" min="0" max="100" value="' + (st.mix[p] || '') + '" placeholder="%" aria-label="Share of content %"><input class="about" type="text" id="pl-about-' + i + '" value="' + esc(st.about[p] || '') + '" placeholder="What it covers" aria-label="What it covers"><button class="icon-btn" data-act="pillar-del" data-i="' + i + '" aria-label="Remove pillar">✕</button></div>'; }).join('') +
+        '<div class="pillar-row"><input type="text" id="pl-new" placeholder="Add a pillar…"><span></span><span class="about"></span><span></span></div>' +
+        '<div class="row mt"><button class="btn primary" data-act="pillars-save">Save pillars</button></div></div>' +
+      '<div class="card calm"><div class="card-head"><div><h2>⚖️ Pillar balance</h2><p>What you actually posted in the last 30 days vs your plan</p></div><span class="pill plain">' + posted.length + ' posts</span></div>' +
+        (pillars.length ? '<div class="list">' + pillars.map(function (p) {
+          var n = posted.filter(function (i) { return i.pillar === p; }).length, actual = posted.length ? Math.round(n / posted.length * 100) : 0, target = +st.mix[p] || 0, diff = actual - target;
+          return '<div class="item" style="flex-wrap:wrap"><div class="grow" style="min-width:140px"><div class="title">' + esc(p) + '</div><div class="meta">' + n + ' posted · ' + actual + '% (plan ' + target + '%)</div></div><div style="flex:1.4;min-width:120px"><div class="meter"><span style="width:' + clamp(actual, 0, 100) + '%"></span></div></div>' +
+            (target ? '<span class="pill ' + (Math.abs(diff) <= 10 ? 'good' : 'warn') + '">' + (Math.abs(diff) <= 10 ? '✓ On plan' : diff > 0 ? '▲ ' + diff + '% over' : '▼ ' + (-diff) + '% under') + '</span>' : '') + '</div>';
+        }).join('') + '</div>' : '<div class="empty">Add pillars to see the balance.</div>') + '</div>' +
+    '</div>' +
+    '<div class="grid g2 mt">' +
+      '<div class="card calm"><div class="card-head"><div><h2>📱 Where & how often</h2><p>Posts per week on each platform (0 = not using it)</p></div><span class="pill sky">' + postGoal() + ' a week</span></div>' +
+        '<div class="form-row">' + PLATFORMS.map(function (pf, i) { return '<label class="field">' + pf + '<input type="number" min="0" max="50" id="pf-' + i + '" value="' + (st.platforms[pf] || 0) + '"></label>'; }).join('') + '</div>' +
+        '<div class="row mt"><button class="btn primary" data-act="platforms-save">Save plan</button></div></div>' +
+      '<div class="card"><div class="card-head"><div><h2>🗓️ Weekly rhythm</h2><p>One pillar per day — no deciding what to post</p></div></div>' +
+        '<div class="rhythm">' + WEEKDAYS.map(function (d, i) { var today = i === (new Date().getDay() + 6) % 7; return '<div class="day' + (today ? ' today' : '') + '"><b>' + d + (today ? ' · today' : '') + '</b><select data-rhythm="' + i + '"><option value="">Rest / free</option>' + pillars.map(function (p) { return '<option' + (st.rhythm[i] === p ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select></div>'; }).join('') + '</div>' +
+        '<p class="small muted mt">Changes save straight away. Today\'s pillar is picked for you in Ideas.</p></div>' +
+    '</div>';
+}
+function tabIdeas() {
+  var pillar = sessionGet('c-pillar') || todaysPillar() || S.content.pillars[0], platform = sessionGet('c-platform') || 'TikTok';
+  if (S.content.pillars.indexOf(pillar) < 0) pillar = S.content.pillars[0];
+  return '<div class="card"><div class="card-head"><div><h2>✨ Give me ideas</h2><p>Pick a pillar and a platform. Save the ones you like — or score one first if you\'re not sure it\'s worth the time.</p></div></div>' +
       '<div class="form-row"><label class="field">Pillar<select id="c-pillar">' + S.content.pillars.map(function (p) { return '<option' + (p === pillar ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select></label>' +
       '<label class="field">Platform<select id="c-platform">' + PLATFORMS.map(function (p) { return '<option' + (p === platform ? ' selected' : '') + '>' + p + '</option>'; }).join('') + '</select></label>' +
       '<button class="btn primary" data-act="gen-ideas">✨ Give me 3 ideas</button></div>' +
-      (generated.length ? '<div class="grid g3 mt">' + generated.map(function (g) { return '<div class="card flat"><span class="pill plain">' + esc(g.pillar) + ' · ' + esc(g.platform) + '</span><h3 class="mt-s">' + esc(g.title) + '</h3><p class="small mt-s"><b>Hook:</b> ' + esc(g.hook) + '</p><p class="small"><b>Format:</b> ' + esc(g.format) + '</p><p class="small"><b>Call to action:</b> ' + esc(g.cta) + '</p><div class="row mt-s"><button class="btn sm primary" data-act="idea-save" data-id="' + g.id + '">Save idea</button><button class="btn sm" data-act="idea-score" data-id="' + g.id + '">Score it</button></div></div>'; }).join('') + '</div>' : '') +
+      (generated.length ? '<div class="grid g3 mt">' + generated.map(function (g) { return '<div class="card flat warm"><span class="pill plain">' + esc(g.pillar) + ' · ' + esc(g.platform) + '</span><h3 class="mt-s">' + esc(g.title) + '</h3><p class="small mt-s"><b>Hook:</b> ' + esc(g.hook) + '</p><p class="small"><b>Format:</b> ' + esc(g.format) + '</p><p class="small"><b>Call to action:</b> ' + esc(g.cta) + '</p><div class="row mt-s"><button class="btn sm primary" data-act="idea-save" data-id="' + g.id + '">Save idea</button><button class="btn sm" data-act="idea-score" data-id="' + g.id + '">Score it</button></div></div>'; }).join('') + '</div>' : '') +
       '<div class="row mt"><input type="text" id="c-own" placeholder="Or write your own idea…" style="flex:1;min-width:200px"><button class="btn" data-act="idea-own">Add my idea</button></div></div>' +
-    '<div class="board mt">' + STAGES.map(function (st, si) {
+    '<div class="section-label"><span>🎯</span>Ideas board · ranked 5 (most important) to 1 within each column</div>' +
+    '<div class="board">' + STAGES.map(function (st, si) {
       var list = S.content.ideas.filter(function (i) { return i.status === st[0]; });
-      if (st[0] === 'posted') list = list.sort(function (a, b) { return (b.postedAt || '').localeCompare(a.postedAt || ''); }).slice(0, 8);
+      list = st[0] === 'posted' ? list.sort(function (a, b) { return (b.postedAt || '').localeCompare(a.postedAt || ''); }).slice(0, 8) : list.sort(function (a, b) { return (b.priority || 3) - (a.priority || 3); });
       return '<div class="col"><h3>' + st[1] + '<span class="pill plain">' + S.content.ideas.filter(function (i) { return i.status === st[0]; }).length + '</span></h3>' + (list.length ? list.map(function (i) {
-        return '<div class="tcard"><div class="grow"><div class="strong">' + esc(i.title) + '</div><div class="small muted">' + esc(i.platform) + (i.format ? ' · ' + esc(i.format) : '') + '</div>' + (i.hook ? '<div class="small mt-s">“' + esc(i.hook) + '”</div>' : '') +
+        var p = i.priority || 3;
+        return '<div class="tcard"><div class="grow"><div class="strong">' + esc(i.title) + '</div><div class="small muted">' + esc(i.pillar || '') + (i.pillar ? ' · ' : '') + esc(i.platform) + (i.format ? ' · ' + esc(i.format) : '') + '</div>' + (i.hook ? '<div class="small mt-s">“' + esc(i.hook) + '”</div>' : '') +
+          (st[0] !== 'posted' ? '<div class="prio-box"><span class="p-badge sm p' + p + '" data-pbadge="' + i.id + '">' + p + '</span>' + prioSlider(i.id, 'idea', p) + '</div>' : '') +
           '<div class="row mt-s" style="gap:4px">' + (si > 0 ? '<button class="btn sm ghost" data-act="idea-move" data-id="' + i.id + '" data-d="-1">←</button>' : '') + (si < 3 ? '<button class="btn sm" data-act="idea-move" data-id="' + i.id + '" data-d="1">' + (si === 2 ? 'Mark posted ✓' : 'Next →') + '</button>' : '') + '<button class="icon-btn" data-act="idea-del" data-id="' + i.id + '" aria-label="Delete">✕</button></div></div></div>';
       }).join('') : '<div class="empty small">Empty</div>') + '</div>';
     }).join('') + '</div>';
@@ -1298,7 +1455,8 @@ function viewSocials() {
         '<div class="row mt small muted"><span>Posted this week: <b style="color:var(--ink)">' + posts + '</b></span>' + (s.url ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">Open ↗</a>' : '') + '</div>' +
         '<div class="row mt-s"><input type="number" placeholder="New follower count" id="f-' + s.id + '" style="flex:1"><button class="btn sm" data-act="social-update" data-id="' + s.id + '">Update</button></div></div>';
     }).join('') + '</div>' : '<div class="card"><div class="empty">Add your first channel below.</div></div>') +
-    '<div class="card mt"><div class="card-head"><div><h2>Add a channel</h2></div></div><div class="form-row">' +
+    '<div class="mt">' + taskManager('socials', { areas: ['social'], def: 'social', title: '🎯 Social task manager', blurb: 'Replies, bio updates, collabs and account admin.', placeholder: 'e.g. Reply to comments on yesterday\'s video' }) + '</div>' +
+    '<div class="card calm mt"><div class="card-head"><div><h2>Add a channel</h2></div></div><div class="form-row">' +
       '<label class="field">Platform<select id="s-platform">' + PLATFORMS.map(function (p) { return '<option>' + p + '</option>'; }).join('') + '</select></label>' +
       '<label class="field">Handle<input type="text" id="s-handle" placeholder="@yourname"></label>' +
       '<label class="field">Followers now<input type="number" id="s-count" placeholder="0"></label>' +
@@ -1322,6 +1480,7 @@ function viewHealth() {
     '<div class="grid g3 mt"><div class="card span2"><div class="card-head"><div><h2>Weekly distance</h2><p>Last 8 weeks · Strava imports and manual entries</p></div></div>' + chartSlot('ch-km', 200) + tableView(['Week of', 'Distance'], weeks.map(function (w) { return [w.label, num(w.value, 1) + ' km']; })) + '</div>' +
     '<div class="card calm"><div class="card-head"><div><h2>Daily basics</h2><p>Tap to tick · last 7 days</p></div></div><div class="habit-grid"><span></span>' + days.map(function (d) { return '<span class="h">' + DOW[toDate(d).getDay()][0] + '<br>' + toDate(d).getDate() + '</span>'; }).join('') +
       S.settings.habits.map(function (h) { return '<span>' + esc(h) + '</span>' + days.map(function (d) { var on = (hab[d] || []).indexOf(h) >= 0; return '<button class="habit-cell ' + (on ? 'on' : '') + '" data-act="habit" data-d="' + d + '" data-h="' + esc(h) + '" aria-label="' + esc(h) + ' on ' + fmtDay(d) + (on ? ', done' : '') + '"></button>'; }).join(''); }).join('') + '</div></div></div>' +
+    '<div class="mt">' + taskManager('health', { areas: ['health'], def: 'health', title: '🎯 Health task manager', blurb: 'Appointments, training plans and anything for your body and head.', placeholder: 'e.g. Book a sports massage' }) + '</div>' +
     '<div class="grid g2 mt"><div class="card"><div class="card-head"><div><h2>Recent activities</h2></div></div>' + (recent.length ? '<div class="list">' + recent.map(function (a) { return '<div class="item"><span>' + actIcon(a.type) + '</span><div class="grow"><div class="title">' + esc(a.name || a.type) + '</div><div class="meta">' + fmtDay(a.date) + ' · ' + esc(a.type) + (a.source === 'strava' ? ' · Strava' : '') + '</div></div><span class="strong">' + num(a.distance, 1) + ' km</span><span class="muted small">' + Math.round(a.minutes) + ' min</span><button class="icon-btn" data-act="act-del" data-id="' + a.id + '" aria-label="Delete">✕</button></div>'; }).join('') + '</div>' : '<div class="empty">Import your Strava export or add an activity.</div>') + '</div>' +
     '<div class="card calm"><div class="card-head"><div><h2>Log an activity</h2></div></div><div class="form-row">' +
       '<label class="field">Type<select id="a-type">' + ['Run', 'Walk', 'Ride', 'Swim', 'Gym', 'Hike', 'Other'].map(function (t) { return '<option>' + t + '</option>'; }).join('') + '</select></label>' +
@@ -1378,10 +1537,9 @@ function viewSettings() {
     '<div class="grid g2"><div class="card"><div class="card-head"><h2>You</h2></div><div class="form-row">' +
       '<label class="field">Your first name<input type="text" id="set-name" value="' + esc(s.name) + '"></label>' +
       '<label class="field">Theme<select id="set-theme">' + [['system', 'Match my device'], ['light', 'Light'], ['dark', 'Dark']].map(function (o) { return '<option value="' + o[0] + '"' + (s.theme === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label>' +
-      '<label class="field">Posts per week goal<input type="number" id="set-posts" min="0" value="' + s.postGoal + '"></label>' +
       '<label class="field">Weekly distance goal (km)<input type="number" id="set-km" min="0" value="' + s.distanceGoal + '"></label></div>' +
       '<label class="field mt">Daily basics (one per line)<textarea id="set-habits">' + esc(s.habits.join('\n')) + '</textarea></label>' +
-      '<label class="field mt">Content pillars (one per line)<textarea id="set-pillars">' + esc(S.content.pillars.join('\n')) + '</textarea></label>' +
+      '<p class="small muted mt">Content pillars and your posting plan now live in Content hub → Strategy.</p>' +
       '<div class="row mt"><button class="btn primary" data-act="set-save">Save</button></div></div>' +
     '<div class="card calm"><div class="card-head"><div><h2>Your scoring formula</h2><p>How much each toggle counts. They don\'t need to add up to 100.</p></div></div><div class="form-row">' +
       '<label class="field">Impact weight<input type="number" id="w-impact" min="0" value="' + w.impact + '"></label>' +
@@ -1404,10 +1562,12 @@ function afterRender() {
   var di = $('#dump-input'); if (di) { di.addEventListener('keydown', function (e) { if (e.key === 'Enter') act('dump-add'); }); if (route.page === 'adhd') di.focus(); }
   var fd = $('#focus-dump'); if (fd) fd.addEventListener('keydown', function (e) { if (e.key === 'Enter' && fd.value.trim()) { S.inbox.push({ id: uid(), text: fd.value.trim(), created: new Date().toISOString() }); fd.value = ''; save(); toast('💭 Parked in your brain dump. Back to it.'); } });
   var sf = $('#strava-file'); if (sf) sf.addEventListener('change', function () { var f = sf.files[0]; if (!f) return; var r = new FileReader(); r.onload = function () { importStrava(String(r.result)); }; r.readAsText(f); });
-  var imf = $('#import-file'); if (imf) imf.addEventListener('change', function () { var f = imf.files[0]; if (!f) return; var r = new FileReader(); r.onload = function () { try { var d = JSON.parse(String(r.result)); if (!d || !d.settings) throw new Error('bad'); S = merge(blank(), d); S.started = true; save(); render(); toast('Backup imported.'); } catch (e) { toast('That doesn\'t look like a Life Dashboard backup.'); } }; r.readAsText(f); });
+  var imf = $('#import-file'); if (imf) imf.addEventListener('change', function () { var f = imf.files[0]; if (!f) return; var r = new FileReader(); r.onload = function () { try { var d = JSON.parse(String(r.result)); if (!d || !d.settings) throw new Error('bad'); S = merge(blank(), d); S.started = true; migrate(); save(); render(); toast('Backup imported.'); } catch (e) { toast('That doesn\'t look like a Life Dashboard backup.'); } }; r.readAsText(f); });
   var ft = $('#focus-task'); if (ft) ft.addEventListener('change', function () { sessionSet('focus-task', ft.value); });
   ['c-pillar', 'c-platform'].forEach(function (id) { var el = $('#' + id); if (el) el.addEventListener('change', function () { sessionSet(id, el.value); }); });
   var title = $('#main #sc-title'); if (title) title.addEventListener('keydown', function (e) { if (e.key === 'Enter') { readScorerFields(); act('sc-add', { b: bucketOf(draft()) }); } });
+  $$('input[id^="tm-title-"]').forEach(function (inp) { inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') act('tm-add', { tm: inp.dataset.tm }); }); });
+  if (refocus) { var rf = $(refocus); if (rf) { try { rf.focus({ preventScroll: true }); } catch (e) { rf.focus(); } } refocus = null; }
   var ci = $('#ci-note'); if (ci) ci.addEventListener('input', function () { draftCheckin.note = ci.value; });
   var cs = $('#ci-sleep'); if (cs) cs.addEventListener('input', function () { draftCheckin.sleep = cs.value; });
 }
@@ -1433,6 +1593,24 @@ document.addEventListener('click', function (e) {
   if (el.dataset.act === 'modal-bg' && e.target !== el) return;
   act(el.dataset.act, el.dataset, el);
 });
+var refocus = null;
+document.addEventListener('input', function (e) {
+  var r = e.target; if (!r.classList || !r.classList.contains('prio')) return;
+  var v = +r.value; r.style.setProperty('--fill', (v - 1) * 25 + '%'); r.setAttribute('aria-valuetext', v + ', ' + PRIO[v]);
+  if (r.dataset.prioKind === 'new') { var l = $('#tm-plabel-' + r.dataset.id); if (l) l.textContent = v + ' · ' + PRIO[v]; sessionSet('tmp-' + r.dataset.id, v); return; }
+  var b = $('[data-pbadge="' + r.dataset.id + '"]'); if (b) { b.textContent = v; b.className = b.className.replace(/p[1-5]\b/, 'p' + v); }
+  var row = r.closest('.tm-row'); if (row) row.className = row.className.replace(/p[1-5]\b/, 'p' + v);
+});
+document.addEventListener('change', function (e) {
+  var r = e.target; if (!r.classList || !r.classList.contains('prio') || r.dataset.prioKind === 'new') return;
+  var v = +r.value, item = r.dataset.prioKind === 'task' ? taskById(r.dataset.id) : S.content.ideas.find(function (x) { return x.id === r.dataset.id; });
+  if (!item || item.priority === v) return;
+  item.priority = v; save(); refocus = '.prio[data-id="' + r.dataset.id + '"]'; render(); toast('Ranked ' + v + ' · ' + PRIO[v] + '.');
+});
+document.addEventListener('change', function (e) {
+  var sel = e.target; if (!sel.dataset || sel.dataset.rhythm == null) return;
+  strat().rhythm[+sel.dataset.rhythm] = sel.value; save(); toast(WEEKDAYS[+sel.dataset.rhythm] + ': ' + (sel.value || 'rest / free') + '.');
+});
 function val(id) { var el = $('#' + id); return el ? el.value.trim() : ''; }
 function act(a, d, el) {
   d = d || {};
@@ -1443,8 +1621,8 @@ function act(a, d, el) {
     case 'start': S.started = true; save(); go('adhd', 'checkin'); break;
     case 'start-demo':
       if (S.started && (S.tasks.length || Object.keys(S.checkins).length) && !confirm('Replace everything with example data?')) return;
-      S = demoData(); save(); go('home'); toast('Example data loaded — clear it any time in Settings.'); break;
-    case 'add-task': openScorer(freshDraft({ area: d.area || (route.page === 'health' ? 'health' : route.page === 'money' ? 'finance' : route.page === 'content' ? 'content' : route.page === 'admin' ? 'admin' : 'personal') })); break;
+      S = demoData(); migrate(); save(); go('home'); toast('Example data loaded — clear it any time in Settings.'); break;
+    case 'add-task': openScorer(freshDraft({ area: d.area || (route.page === 'socials' ? 'social' : route.page === 'health' ? 'health' : route.page === 'money' ? 'finance' : route.page === 'content' ? 'content' : route.page === 'admin' ? 'admin' : 'personal') })); break;
     case 'edit-task': t = taskById(d.id); if (t) openScorer(freshDraft({ id: t.id, title: t.title, area: t.area, impact: t.impact, urgency: t.urgency, energy: t.energy, effort: t.effort, due: t.due, repeat: t.repeat }), true); break;
     case 'modal-close': case 'modal-bg': closeModal(); render(); break;
     case 'sc-set': readScorerFields(); draft()[d.k] = +d.v; refreshVerdict(); break;
@@ -1469,6 +1647,31 @@ function act(a, d, el) {
       render(); break;
     case 'sc-delete': var dd = draft(); if (dd && dd.id && confirm('Delete this task?')) { S.tasks = S.tasks.filter(function (x) { return x.id !== dd.id; }); save(); closeModal(); render(); } break;
     case 'done': completeTask(d.id); break;
+    case 'tm-add':
+      var tmTitle = val('tm-title-' + d.tm); if (!tmTitle) { toast('Type the task first.'); var tti = $('#tm-title-' + d.tm); if (tti) tti.focus(); return; }
+      var tmo = TM[d.tm] || {}, tmp = +(sessionGet('tmp-' + d.tm) || 3), tmDue = val('tm-due-' + d.tm);
+      var tmArea = val('tm-area-' + d.tm) || tmo.def || 'personal';
+      S.tasks.push(newTask({ title: tmTitle, area: tmArea, impact: tmp, urgency: tmDue && daysBetween(new Date(), tmDue) <= 2 ? 5 : 3, energy: 3, effort: 2, due: tmDue, priority: tmp, bucket: tmp >= 4 || (tmDue && tmDue <= dkey()) ? 'now' : 'schedule' }));
+      save(); refocus = '#tm-title-' + d.tm; render(); toast('Added at ' + tmp + ' · ' + PRIO[tmp] + '.'); break;
+    case 'tm-filter': sessionSet('tmf-' + d.tm, d.v); render(); break;
+    case 'tm-done-toggle': sessionSet('tmd-' + d.tm, sessionGet('tmd-' + d.tm) === '1' ? '0' : '1'); render(); break;
+    case 'del-task': var dt = taskById(d.id); if (dt && confirm('Delete “' + dt.title + '”?')) { S.tasks = S.tasks.filter(function (x) { return x.id !== d.id; }); save(); render(); toast('Deleted.'); } break;
+    case 'strat-save': ['who', 'audience', 'offer', 'voice', 'goal', 'rules'].forEach(function (k) { strat()[k] = val('st-' + k); }); save(); toast('Strategy saved.'); break;
+    case 'pillars-save':
+      var newPillars = [], newMix = {}, newAbout = {};
+      S.content.pillars.forEach(function (old, i) {
+        var nm = val('pl-name-' + i); if (!nm) return;
+        newPillars.push(nm); newMix[nm] = parseInt(val('pl-mix-' + i), 10) || 0; newAbout[nm] = val('pl-about-' + i);
+        if (nm !== old) { S.content.ideas.forEach(function (x) { if (x.pillar === old) x.pillar = nm; }); strat().rhythm = strat().rhythm.map(function (r) { return r === old ? nm : r; }); }
+      });
+      var addP = val('pl-new'); if (addP && newPillars.indexOf(addP) < 0) { newPillars.push(addP); newMix[addP] = 0; newAbout[addP] = ''; }
+      if (!newPillars.length) return toast('Keep at least one pillar.');
+      S.content.pillars = newPillars; strat().mix = newMix; strat().about = newAbout; save(); render(); toast('Pillars saved.'); break;
+    case 'pillar-del':
+      var gone = S.content.pillars[+d.i]; if (S.content.pillars.length < 2) return toast('Keep at least one pillar.');
+      if (!confirm('Remove the pillar “' + gone + '”?')) return;
+      S.content.pillars.splice(+d.i, 1); delete strat().mix[gone]; delete strat().about[gone]; strat().rhythm = strat().rhythm.map(function (r) { return r === gone ? '' : r; }); save(); render(); break;
+    case 'platforms-save': PLATFORMS.forEach(function (pf, i) { var n = parseInt(val('pf-' + i), 10) || 0; if (n) strat().platforms[pf] = n; else delete strat().platforms[pf]; }); S.settings.postGoal = postGoal(); save(); render(); toast('Posting plan saved.'); break;
     case 'move': moveTask(d.id, d.b); toast(d.b === 'park' ? '🅿️ Parked, not chased.' : 'Moved to ' + BUCKETS[d.b].name + '.'); break;
     case 'reshuffle': ensureToday(true); render(); toast('Re-picked for ' + (todayEnergy() == null ? 'your scores' : 'your energy today') + '.'); break;
     case 'quick-score': S.checkins[dkey()] = Object.assign({ tags: [], note: '' }, S.checkins[dkey()], { score: +d.v }); save(); ensureToday(true); render(); toast('Checked in at ' + d.v + '/10. Today\'s 3 adjusted.'); break;
@@ -1504,9 +1707,9 @@ function act(a, d, el) {
         S.finance.budgets.map(function (b, k) { return '<label class="field">' + esc(b.cat) + '<input type="number" min="0" step="1" data-bud="' + k + '" value="' + (+b.limit || '') + '" placeholder="0"></label>'; }).join('') + '<button class="btn primary" data-act="budgets-save">Save budgets</button></div></div></div>'; break;
     case 'budgets-save': $$('[data-bud]').forEach(function (inp) { S.finance.budgets[+inp.dataset.bud].limit = parseFloat(inp.value) || 0; }); save(); closeModal(); render(); break;
     case 'gen-ideas': sessionSet('c-pillar', val('c-pillar')); sessionSet('c-platform', val('c-platform')); generated = genIdeas(val('c-pillar'), val('c-platform')); render(); break;
-    case 'idea-save': var gi = generated.find(function (x) { return x.id === d.id; }); if (gi) { S.content.ideas.push(gi); generated = generated.filter(function (x) { return x !== gi; }); save(); render(); toast('💡 Saved to your ideas.'); } break;
+    case 'idea-save': var gi = generated.find(function (x) { return x.id === d.id; }); if (gi) { gi.priority = gi.priority || 3; S.content.ideas.push(gi); generated = generated.filter(function (x) { return x !== gi; }); save(); render(); toast('💡 Saved to your ideas.'); } break;
     case 'idea-score': var gs = generated.find(function (x) { return x.id === d.id; }); if (gs) openScorer(freshDraft({ title: 'Make content: ' + gs.title, area: 'content', ideaId: gs.id })); break;
-    case 'idea-own': var own = val('c-own'); if (!own) return; S.content.ideas.push({ id: uid(), title: own, pillar: val('c-pillar'), platform: val('c-platform'), status: 'idea', created: new Date().toISOString() }); save(); render(); break;
+    case 'idea-own': var own = val('c-own'); if (!own) return; S.content.ideas.push({ id: uid(), title: own, pillar: val('c-pillar'), platform: val('c-platform'), status: 'idea', priority: 3, created: new Date().toISOString() }); save(); render(); break;
     case 'idea-move': var id2 = S.content.ideas.find(function (x) { return x.id === d.id; }); var order = STAGES.map(function (s) { return s[0]; }); var ni = clamp(order.indexOf(id2.status) + +d.d, 0, 3); id2.status = order[ni]; if (id2.status === 'posted') { id2.postedAt = new Date().toISOString(); toast('✅ Posted! Nice one.'); } save(); render(); break;
     case 'idea-del': S.content.ideas = S.content.ideas.filter(function (x) { return x.id !== d.id; }); save(); render(); break;
     case 'social-add': S.socials.push({ id: uid(), platform: val('s-platform'), handle: val('s-handle'), url: val('s-url'), history: [{ date: dkey(), count: parseInt(val('s-count'), 10) || 0 }] }); save(); render(); break;
@@ -1518,9 +1721,8 @@ function act(a, d, el) {
       S.health.activities.push({ id: uid(), date: val('a-date') || dkey(), type: val('a-type'), name: val('a-name'), distance: dist, minutes: mins, source: 'manual' }); save(); render(); toast('Activity logged. 💪'); break;
     case 'act-del': S.health.activities = S.health.activities.filter(function (x) { return x.id !== d.id; }); save(); render(); break;
     case 'set-save':
-      S.settings.name = val('set-name'); S.settings.theme = val('set-theme'); S.settings.postGoal = parseInt(val('set-posts'), 10) || 0; S.settings.distanceGoal = parseFloat(val('set-km')) || 0;
+      S.settings.name = val('set-name'); S.settings.theme = val('set-theme'); S.settings.distanceGoal = parseFloat(val('set-km')) || 0;
       S.settings.habits = val('set-habits').split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
-      var pl = val('set-pillars').split('\n').map(function (x) { return x.trim(); }).filter(Boolean); if (pl.length) S.content.pillars = pl;
       save(); render(); toast('Saved.'); break;
     case 'w-save':
       S.settings.weights = { impact: +val('w-impact') || 0, urgency: +val('w-urgency') || 0, energy: +val('w-energy') || 0, ease: +val('w-ease') || 0 };
@@ -1554,13 +1756,22 @@ function demoData() {
   var day = function (n) { return dkey(addDays(now, n)); };
   var iso = function (n, h) { var x = addDays(now, n); x.setHours(h || 10, 0, 0, 0); if (x > now) x = new Date(now.getTime() - 6e4); return x.toISOString(); };
   var wkIso = function (n, h) { var x = new Date(iso(n, h)); if (x < ws) x = new Date(Math.min(now.getTime() - 6e4, ws.getTime() + 8 * 36e5)); return x.toISOString(); };
-  T({ title: 'Renew car insurance before it auto-renews', area: 'admin', impact: 4, urgency: 5, energy: 3, effort: 2, due: day(2) });
+  T({ title: 'Renew car insurance before it auto-renews', area: 'admin', impact: 4, urgency: 5, energy: 3, effort: 2, due: day(2), priority: 5 });
   T({ title: 'Book dentist check-up', area: 'admin', impact: 3, urgency: 3, energy: 4, effort: 1, bucket: 'now' });
   T({ title: 'Film 2 TikToks for the new template pack', area: 'content', impact: 5, urgency: 4, energy: 4, effort: 3 });
   T({ title: 'Cancel the gym app subscription I don\'t use', area: 'finance', impact: 3, urgency: 4, energy: 5, effort: 1 });
   T({ title: 'Do the self-assessment tax return', area: 'admin', impact: 5, urgency: 3, energy: 2, effort: 4, bucket: 'schedule', due: day(9) });
   T({ title: 'Plan meals for next week', area: 'health', impact: 3, urgency: 2, energy: 3, effort: 2, bucket: 'schedule', due: day(3) });
-  T({ title: 'Sort out the spare room', area: 'home', impact: 2, urgency: 2, energy: 2, effort: 4, bucket: 'schedule', due: day(12) });
+  T({ title: 'Sort out the spare room', area: 'home', impact: 2, urgency: 2, energy: 2, effort: 4, bucket: 'schedule', due: day(12), priority: 1 });
+  T({ title: 'Reply to comments on the template video', area: 'social', impact: 4, urgency: 4, energy: 4, effort: 1, priority: 5 });
+  T({ title: 'Update the Instagram bio link to the new product', area: 'social', impact: 4, urgency: 3, energy: 4, effort: 1, priority: 4 });
+  T({ title: 'Message two creators about a collab', area: 'social', impact: 3, urgency: 2, energy: 3, effort: 2, bucket: 'schedule', priority: 2 });
+  T({ title: 'Batch-film 3 talking-head videos', area: 'content', impact: 5, urgency: 3, energy: 3, effort: 3, bucket: 'schedule', due: day(1), priority: 4 });
+  T({ title: 'Write captions for next week', area: 'content', impact: 3, urgency: 2, energy: 4, effort: 2, bucket: 'schedule', due: day(4), priority: 3 });
+  T({ title: 'Make thumbnail templates', area: 'content', impact: 2, urgency: 1, energy: 4, effort: 2, bucket: 'schedule', priority: 1 });
+  T({ title: 'Book a sports massage', area: 'health', impact: 3, urgency: 3, energy: 4, effort: 1, priority: 3 });
+  T({ title: 'Sign up for the spring half marathon', area: 'health', impact: 4, urgency: 3, energy: 4, effort: 1, bucket: 'schedule', due: day(6), priority: 4 });
+  T({ title: 'Renew the TV licence', area: 'admin', impact: 3, urgency: 3, energy: 4, effort: 1, bucket: 'schedule', due: day(14), priority: 2 });
   T({ title: 'Pay council tax', area: 'finance', impact: 4, urgency: 3, energy: 4, effort: 1, bucket: 'schedule', due: day(5), repeat: 'monthly' });
   var p1 = T({ title: 'Start a podcast about ADHD and business', area: 'idea', impact: 3, urgency: 1, energy: 3, effort: 5 }); p1.parkedAt = wkIso(-1);
   var p2 = T({ title: 'Rebuild my personal website from scratch', area: 'idea', impact: 2, urgency: 1, energy: 3, effort: 5 }); p2.parkedAt = wkIso(-2);
@@ -1612,6 +1823,12 @@ function demoData() {
     s.health.activities.push({ id: uid(), extId: 'demo' + a, date: dkey(addDays(now, -a)), name: (type === 'Run' ? ['Morning run', 'Easy 5K', 'Lunch run', 'Long run'] : type === 'Walk' ? ['Lunch walk', 'Evening walk'] : ['Weekend ride'])[Math.floor(rnd() * (type === 'Run' ? 4 : type === 'Walk' ? 2 : 1))], type: type, distance: +dist.toFixed(1), minutes: Math.round(dist * pace), source: 'strava' });
   }
   for (var h = 1; h <= 6; h++) { var hk = dkey(addDays(now, -h)); s.health.habits[hk] = s.settings.habits.filter(function () { return rnd() < .6; }); }
+  s.settings.postGoal = 8;
+  s.content.strategy = { who: 'I build AI & automation systems for businesses, sell digital products, and live with ADHD.', audience: 'Busy founders, creators and people with ADHD who feel behind and want simple systems.', offer: 'Templates and guides through the link in bio on TikTok and Instagram.', voice: 'Honest, practical, no fluff — a bit of humour.', goal: '10K followers on TikTok and 100 template sales by February.', rules: 'Always: a hook in the first 2 seconds and captions · Never: post without a call to action',
+    platforms: { TikTok: 4, Instagram: 3, YouTube: 1 }, rhythm: ['ADHD life', 'AI & automation tips', 'Digital products', 'ADHD life', 'Behind the scenes', 'Running & health', ''],
+    mix: { 'ADHD life': 30, 'AI & automation tips': 25, 'Digital products': 20, 'Running & health': 15, 'Behind the scenes': 10 },
+    about: { 'ADHD life': 'Systems and honest days with an ADHD brain', 'AI & automation tips': 'Simple automations anyone can copy', 'Digital products': 'Building and selling templates', 'Running & health': 'Running as my reset, Strava honesty', 'Behind the scenes': 'Real days running a one-person business' } };
+  [5, 4, 2, 3].forEach(function (pr, i) { if (s.content.ideas[i]) s.content.ideas[i].priority = pr; });
   s.inbox = [{ id: uid(), text: 'Look into a standing desk', created: iso(-1) }, { id: uid(), text: 'Idea: a TikTok series on ADHD money habits', created: iso(0, 8) }];
   return s;
 }
