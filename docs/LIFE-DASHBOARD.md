@@ -36,7 +36,7 @@ It has seven tabs, kept separate:
 | Tab | What it does |
 |---|---|
 | **How I'm doing** | A daily score from 1 (really rough) to 10 (flying), plus optional energy (1–5), sleep, tags and a note. It shows a daily line chart (7/14/30 days), weekly averages for the last 8 weeks, your check-in streak, and **Patterns** (how your score changes on days tagged "Slept well", "Exercised", "Overwhelmed" and so on). |
-| **Score & sort** | Score a task or idea *before* you add it. Four toggles (Impact, Urgency, Energy fit, Effort) give a live score from 0 to 100 and a verdict: **Do it now**, **Schedule it** or **Park it**. Below it are the three buckets, where you can tick tasks off, move them or rescore them. |
+| **Score & sort** | Score a task or idea *before* you add it. The formula is shown at the top. Four sliders (Impact, Urgency, Energy fit, Effort) show the sum (e.g. `4 × 3 × 4 ÷ 4`), a live score and a verdict: **Do it now**, **Schedule it** or **Park it**. Below it are the three buckets, where you can tick tasks off, move them or rescore them. |
 | **Task manager** | Every task from every area, ranked 5 → 1 with the importance bar. Filter by area. |
 | **Today's 3** | At least three tasks every day, with one always for your health. They're matched to today's check-in: on a low-energy day you get quick, gentle wins. If you haven't scored enough tasks, it suggests a simple health or admin task. |
 | **Deep focus** | A 15–90 minute timer linked to a task. It logs your deep-focus hours. If a distracting thought comes up mid-session, type it in and it goes to the brain dump. |
@@ -45,26 +45,25 @@ It has seven tabs, kept separate:
 
 ### The formula
 
-Each toggle runs from 1 to 5:
+Each slider runs from 1 to 5:
 
 ```
-Score = ((Impact×40 + Urgency×30 + Energy fit×20 + (6 − Effort)×10) ÷ 100 − 1) ÷ 4 × 100
+Score = Impact × Urgency × Energy fit ÷ Effort
 
-Score 70 or more  → Do it now
-Score 45 to 69    → Schedule it
-Below 45          → Park it
+15 or more   → Do it now
+6 or more    → Schedule it
+Below 6      → Park it
 ```
 
-Two overrides apply whatever the score:
+For example, 4 × 3 × 4 ÷ 4 = 12.0, which goes to **Schedule it**. Scores run from 0.2 (1 × 1 × 1 ÷ 5) to 125 (5 × 5 × 5 ÷ 1).
 
-- Urgency 5 with impact 4 or more always goes to **Do it now**.
-- Impact and urgency both 2 or less always gets **parked**.
-
-You can change the weights and the score thresholds in **Settings → Your scoring formula**.
+In **Settings → Your scoring formula** you can change the cut-offs. You can also switch back to the older weighted score out of 100, which has its own weights, cut-offs and two overrides.
 
 ### How the weekly numbers are worked out
 
-- **Time saved:** each idea you park gets credited with the time its effort score says it would have taken (1 = 15 min, 2 = 1h, 3 = 2h, 4 = 4h, 5 = 8h).
+- **Time saved:** two parts added together.
+  - Each idea you park gets credited with the time its effort score says it would have taken (1 = 15 min, 2 = 1h, 3 = 2h, 4 = 4h, 5 = 8h).
+  - Plus the time your systems save each week, from **Content hub → Overview → Where the hours come from**.
 - **Problems solved:** tasks ticked off this week.
 - **Deep focus:** minutes logged with the focus timer.
 - **Ideas parked, not chased:** ideas parked this week that are still parked.
@@ -81,7 +80,11 @@ You can change the weights and the score thresholds in **Settings → Your scori
 
 - **🗂️ Life admin:** home, admin and money tasks, grouped into overdue, today, next 7 days, later and no date. Tasks can repeat weekly, monthly or yearly, and the next one is created when you tick one off. Bills from Finance show here too.
 - **💷 Finance:** money in and out, monthly budgets for each category (with warnings at 85% and when you go over), a 6-month spending trend, bills and subscriptions by the day they come out, and savings goals.
-- **🎬 Content hub:** three tabs.
+- **🎬 Content hub:** four tabs.
+  - **Overview:**
+    - Tiles for views last week, posts out last week and hours saved on content.
+    - A 12-week views chart with last week highlighted. You log weekly views from your platforms' analytics.
+    - **Where the hours come from:** each content job's time before and now and how often you do it, giving the hours saved a week.
   - **Strategy:**
     - *The big picture:* who you are, who it's for, what you sell, how you sound, your 90-day goal, and your always/never rules.
     - *Content pillars:* each with its share of your content.
@@ -93,6 +96,8 @@ You can change the weights and the score thresholds in **Settings → Your scori
 - **📱 Social channels:** every channel with its follower count, change over 30 days, a sparkline, and posts this week.
 - **💚 Health & Strava:** weekly distance for the last 8 weeks, recent activities, daily basics (habits you choose) and average sleep taken from your check-ins.
   - **To import Strava:** go to Strava → Settings → My Account → *Download or delete your account* → request your archive. Then import `activities.csv`. Activities you've already imported are skipped.
+
+![Content hub overview](screenshots/51-life-content-hub-overview.png)
 
 | Content hub → Strategy | Content hub → Ideas |
 |---|---|
