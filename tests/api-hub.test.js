@@ -6,6 +6,7 @@ import { config } from '../server/config.js';
 import { openDatabase } from '../server/db/index.js';
 import { createApp } from '../server/app.js';
 import { parseCsv, parseDate, parseMoney, remindMissingMonths, taxYear } from '../server/modules/streams/service.js';
+import { localDate } from '../server/lib/time.js';
 
 /** The API hub: separate income streams, their web addresses, and the key-protected API. */
 
@@ -97,7 +98,11 @@ describe('income streams kept separate', () => {
 
   test('a broker statement imports wins, losses and deposits – and only once', async () => {
     const tr = streams.trading;
-    const csv = 'Action,Time,Ticker,Name,Result,Total,Currency (Result)\nDeposit,2026-10-01 09:00:00,,,,"500.00",GBP\nMarket sell,2026-10-03 14:00:00,TSLA,Tesla,45.20,300.00,GBP\nMarket sell,2026-10-05 10:00:00,AAPL,Apple,-12.10,200,GBP\nMarket buy,2026-10-06 10:00:00,NVDA,Nvidia,,500,GBP\nDividend (Ordinary),2026-10-07 10:00:00,MSFT,Microsoft,,1.20,GBP\n';
+    // Dated today (UK time) so the trades always fall in the current tax year, which
+    // is the period the win/loss stats cover. Fixed October 2026 dates stopped
+    // counting once that tax year ended (6 April 2027).
+    const d = localDate(new Date(), 'Europe/London');
+    const csv = `Action,Time,Ticker,Name,Result,Total,Currency (Result)\nDeposit,${d} 00:00:01,,,,"500.00",GBP\nMarket sell,${d} 00:00:02,TSLA,Tesla,45.20,300.00,GBP\nMarket sell,${d} 00:00:03,AAPL,Apple,-12.10,200,GBP\nMarket buy,${d} 00:00:04,NVDA,Nvidia,,500,GBP\nDividend (Ordinary),${d} 00:00:05,MSFT,Microsoft,,1.20,GBP\n`;
     const dry = (await call('POST', `/streams/${tr.id}/import`, { csv, dry_run: true })).body;
     assert.equal(dry.mapping.amount, 'Result');
     assert.equal(dry.mapping.reference, 'Ticker');

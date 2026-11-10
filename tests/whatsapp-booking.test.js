@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { after, before, describe, test } from 'node:test';
+import { after, before, describe, mock, test } from 'node:test';
 import { config } from '../server/config.js';
 import { openDatabase } from '../server/db/index.js';
 import { createApp } from '../server/app.js';
@@ -14,7 +14,16 @@ let ctx;
 let token;
 const saved = { ...config };
 
+// These tests book "the first day offered" and pick times by position, so they
+// need the same calendar every run. Without a fixed clock they failed at certain
+// times of day: in the afternoon the 3-hour job had only one slot left today,
+// and by midday earlier tests had filled today, so "the last time offered" fell
+// on tomorrow, outside the 24-hour cancel notice. Only Date is frozen; real timers
+// (and so the HTTP calls) still run normally.
+const FIXED_NOW = new Date('2026-11-18T09:00:00Z'); // a Wednesday, 9am in London
+
 before(async () => {
+  mock.timers.enable({ apis: ['Date'], now: FIXED_NOW });
   config.requirePasswords = true;
   const made = createApp(openDatabase(':memory:'));
   ({ ctx } = made);
@@ -33,7 +42,7 @@ before(async () => {
     { name: 'Radiator fit', kind: 'job', duration_min: 180, price_pence: 22000, deposit_pence: 5000 },
   ]) await call('POST', '/bookings/services', s, token);
 });
-after(() => { Object.assign(config, saved); server.close(); });
+after(() => { Object.assign(config, saved); server.close(); mock.timers.reset(); });
 
 async function call(method, path, body, t) {
   const res = await fetch(`${base}/api${path}`, { method, headers: { 'content-type': 'application/json', ...(t ? { authorization: `Bearer ${t}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
