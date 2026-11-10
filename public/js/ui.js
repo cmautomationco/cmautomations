@@ -64,6 +64,9 @@ const ICONS = {
   phoneMissed: 'M23 1l-6 6M17 1l6 6M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z',
   inbox: 'M22 12h-6l-2 3h-4l-2-3H2M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z',
   whatsapp: 'M3 21l1.7-5A8.5 8.5 0 1 1 8 19.4zM9 9.5c0 3 2.5 5.5 5.5 5.5l1.5-1.5-2-1-1 1c-1-.5-2-1.5-2.5-2.5l1-1-1-2L9 9.5',
+  instagram: 'M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM17.5 6.5h.01',
+  facebook: 'M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z',
+  tiktok: 'M16 3a5 5 0 0 0 5 5M16 3v12a5 5 0 1 1-5-5',
   mail: 'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6',
   receipt: 'M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2l-1 .7-3-2-3 2-3-2-3 2-3-2zM8 7h8M8 11h8M8 15h5',
   briefcase: 'M4 7h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M2 13h20',
@@ -159,8 +162,8 @@ export function select(name, options, value) {
 export const pounds = (pence) => `${Number(pence) < 0 ? '-' : ''}£${(Math.abs(Number(pence) || 0) / 100).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 /** "12.50" typed in a box → 1250 pence. */
 export const toPence = (value) => Math.round((Number(String(value).replace(/[£,\s]/g, '')) || 0) * 100);
-export const CHANNEL_LABELS = { whatsapp: 'WhatsApp', sms: 'Text', email: 'Email' };
-export const channelIcon = (channel) => icon(channel === 'whatsapp' ? 'whatsapp' : channel === 'email' ? 'mail' : 'chat');
+export const CHANNEL_LABELS = { whatsapp: 'WhatsApp', sms: 'Text', email: 'Email', instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok' };
+export const channelIcon = (channel) => icon(['whatsapp', 'instagram', 'facebook', 'tiktok'].includes(channel) ? channel : channel === 'email' ? 'mail' : 'chat');
 /** "9am", "12:30pm" – how people say times. */
 export function time(iso) {
   if (!iso) return '';
@@ -227,6 +230,7 @@ export function messageStatus(m) {
   if (m.direction === 'in') return '';
   if (m.status === 'queued') return m.send_after ? `Scheduled ${new Date(m.send_after).toLocaleString('en-GB', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}` : 'Sending…';
   if (m.status === 'demo') return 'Demo – not actually sent';
+  if (m.provider === 'reply') return 'Handed back to your ManyChat/Make step to post';
   if (m.status === 'blocked') return `Not sent: ${m.error}`;
   if (m.status === 'failed') return `Failed: ${m.error || 'unknown error'}`;
   return m.status === 'delivered' ? 'Delivered' : 'Sent';

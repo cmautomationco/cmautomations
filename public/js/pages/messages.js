@@ -64,7 +64,7 @@ async function renderInbox(el, route, contactId) {
       h('div', { class: 'card msg-list' },
         h('div', { class: 'msg-list-head' },
           h('div', { class: 'row', style: { gap: '6px' } }, [['', 'All'], ['unread', 'Unread'], ['urgent', '🚨 Urgent']].map(([k, l]) => h('a', { class: `chip ${filter === k ? 'active' : ''}`, href: link({ filter: k }) }, l))),
-          h('div', { class: 'row', style: { gap: '6px' } }, [['', 'Every channel'], ['whatsapp', 'WhatsApp'], ['sms', 'Texts'], ['email', 'Email']].map(([k, l]) => h('a', { class: `chip ${channelFilter === k ? 'active' : ''} ${k === 'whatsapp' ? 'wa' : ''}`, href: link({ channel: k }) }, k === 'whatsapp' ? [icon('whatsapp'), l] : l))),
+          h('div', { class: 'row', style: { gap: '6px' } }, [['', 'Every channel'], ['whatsapp', 'WhatsApp'], ['sms', 'Texts'], ['email', 'Email'], ['social', 'Instagram · Facebook · TikTok']].map(([k, l]) => h('a', { class: `chip ${channelFilter === k ? 'active' : ''} ${k === 'whatsapp' ? 'wa' : ''}`, href: link({ channel: k }) }, k === 'whatsapp' ? [icon('whatsapp'), l] : l))),
           search),
         threads.length ? threads.map((t) => h('a', { href: `#/messages/${t.id}`, class: `thread ${t.id === selected ? 'selected' : ''} ${t.unread ? 'unread' : ''}` },
           avatar(contactName(t)),
@@ -91,6 +91,7 @@ async function renderThread(el, contactId, reloadList) {
   if (channels.whatsapp.available) options.push(['whatsapp', 'WhatsApp']);
   if (channels.sms.available) options.push(['sms', 'Text message']);
   if (channels.email.available) options.push(['email', 'Email']);
+  for (const sc of ['instagram', 'facebook', 'tiktok']) if (channels[sc]?.available) options.push([sc, `${CHANNEL_LABELS[sc]} DM (@${channels[sc].handle})`]);
   const channel = select('channel', options, 'auto');
   const subject = h('input', { name: 'subject', placeholder: 'Subject', value: `Re: your enquiry`, style: { display: 'none' } });
   const text = h('textarea', { name: 'body', placeholder: `Reply to ${name}…`, style: { minHeight: '70px' } });
@@ -98,7 +99,7 @@ async function renderThread(el, contactId, reloadList) {
   const updateChannel = () => {
     const ch = channel.value === 'auto' ? channels.best : channel.value;
     subject.style.display = ch === 'email' ? '' : 'none';
-    note.textContent = ch === 'whatsapp' ? channels.whatsapp.note || '' : ch === 'sms' ? channels.sms.note || '' : '';
+    note.textContent = ch === 'whatsapp' ? channels.whatsapp.note || '' : ch === 'sms' ? channels.sms.note || '' : channels[ch]?.note || '';
   };
   channel.addEventListener('change', updateChannel);
   updateChannel();
@@ -123,7 +124,7 @@ async function renderThread(el, contactId, reloadList) {
     h('div', { class: 'msg-head' },
       h('a', { href: '#/messages', class: 'icon-btn msg-back', title: 'Back' }, icon('x')),
       avatar(name),
-      h('div', { class: 'grow' }, h('h3', name), h('div', { class: 'small muted' }, [c.phone_display, c.email].filter(Boolean).join(' · ') || 'No contact details')),
+      h('div', { class: 'grow' }, h('h3', name), h('div', { class: 'small muted' }, [c.phone_display, c.email, ...Object.entries(socialHandles(c)).map(([k, v]) => `${CHANNEL_LABELS[k]} @${v}`)].filter(Boolean).join(' · ') || 'No contact details')),
       h('div', { class: 'row', style: { gap: '6px' } },
         c.phone_e164 ? h('a', { class: 'btn sm', href: `tel:${c.phone_e164}` }, icon('phone'), 'Call') : null,
         h('button', { class: 'btn sm', onclick: () => bookingModal({ contact: c, source: 'whatsapp', onDone: () => renderThread(el, contactId, reloadList) }) }, icon('calendar'), 'Book'),
@@ -204,6 +205,17 @@ const randomMobile = () => `07700 900${String(Math.floor(Math.random() * 900) + 
 
 function simulateMessage(reload) {
   const text = h('textarea', { name: 'body', value: 'Hi, water is leaking through my kitchen ceiling – can someone come today?' });
+  // Instagram, Facebook and TikTok DMs and comments run the same code as a real one from ManyChat/Make/Zapier.
+  const channelPick = select('channel', [['whatsapp', 'WhatsApp'], ['sms', 'Text message'], ['instagram', 'Instagram'], ['facebook', 'Facebook'], ['tiktok', 'TikTok']]);
+  const fromInput = h('input', { name: 'from', value: randomMobile() });
+  const typeBox = h('div', { hidden: true }, field('Type', select('type', [['dm', 'DM'], ['comment', 'Comment on a post']], 'dm')));
+  channelPick.addEventListener('change', () => {
+    const social = ['instagram', 'facebook', 'tiktok'].includes(channelPick.value);
+    typeBox.hidden = !social;
+    if (social && !fromInput.value.startsWith('@')) fromInput.value = '@jess.walker';
+    if (!social && fromInput.value.startsWith('@')) fromInput.value = randomMobile();
+    if (social && text.value.includes('leaking')) text.value = 'Hi! How much is a full set? 😍';
+  });
   const presets = [
     ['📅 BOOK', 'BOOK'],
     ['🚨 Leak', 'Hi, water is leaking through my kitchen ceiling – can someone come today?'],
@@ -214,12 +226,19 @@ function simulateMessage(reload) {
   ];
   const body = h('div', { class: 'stack' },
     h('p', { class: 'small muted' }, 'Pretend to be a customer. This runs exactly what happens when a real WhatsApp or text arrives: the contact is found or created, emergencies are flagged, booking replies (C / R) are handled and the team is alerted.'),
-    h('div', { class: 'grid g2' }, field('Channel', select('channel', [['whatsapp', 'WhatsApp'], ['sms', 'Text message']])), field('From (mobile)', h('input', { name: 'from', value: randomMobile() }))),
+    h('div', { class: 'grid g2' }, field('Channel', channelPick), field('From (mobile or @handle)', fromInput)),
+    typeBox,
     field('Their name (as shown on WhatsApp)', h('input', { name: 'name', value: 'Jess Walker' })),
     h('div', { class: 'row', style: { gap: '6px' } }, presets.map(([l, v]) => h('button', { class: 'chip', type: 'button', onclick: () => { text.value = v; } }, l))),
     field('Message', text));
   modal('Test an incoming message', body, { actions: [{ label: 'Cancel' }, { label: 'Send it in', primary: true, onClick: async () => {
     const res = await post('/messages/simulate/inbound', formData(body));
+    if (res.replies) {
+      toast(res.replies.length ? `Replied automatically on ${CHANNEL_LABELS[res.message.channel]}${res.answered ? ' (keyword rule)' : ''}` : 'Received – a reply task was made (switch on DM & comment auto replies in Automations → Essentials to reply instantly)');
+      location.hash = `#/messages/${res.contact.id}`;
+      reload();
+      return;
+    }
     const what = {
       opted_out: 'They’ve been opted out of texts and WhatsApp.', opted_in: 'They’re opted back in.', booking_confirmed: 'Their next booking is marked as confirmed by the customer.',
       booking_reschedule: 'Their booking is flagged to rearrange and the team has a task.', chat_started: '📅 The booking assistant replied – carry on as the customer in the test box under the conversation.',
@@ -245,3 +264,10 @@ function simulateCall(reload) {
   } }] });
 }
 
+
+/** Instagram / Facebook / TikTok handles saved on a contact. */
+function socialHandles(c) {
+  if (!c?.socials) return {};
+  if (typeof c.socials !== 'string') return c.socials;
+  try { return JSON.parse(c.socials) || {}; } catch { return {}; }
+}

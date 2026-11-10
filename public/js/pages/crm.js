@@ -103,10 +103,11 @@ function contactModal(team, reload, prefill = {}) {
     h('div', { class: 'grid g2' }, field('Address', h('input', { name: 'address' })), field('Postcode', h('input', { name: 'postcode' }))),
     h('label', { class: 'row small', style: { gap: '8px', fontWeight: 600 } }, h('input', { type: 'checkbox', name: 'whatsapp_opt_in', style: { width: 'auto' } }), 'Happy to get messages on WhatsApp'),
     h('div', { class: 'grid g2' }, field('Stage', select('lifecycle', [['lead', 'Lead'], ['prospect', 'Prospect'], ['customer', 'Customer']])), field('Owner', select('owner_id', team.map((t) => [t.id, t.name])))),
+    extrasFields({}),
     h('div', { class: 'why small' }, '⚡ When you save a lead, they get an instant welcome message, the owner gets a welcome-call task, a follow-up is set for 3 days and it’s all logged.'));
   modal('Add a lead', body, { actions: [
     { label: 'Cancel' },
-    { label: 'Save lead', primary: true, onClick: async () => { const res = await post('/crm/contacts', formData(body)); announce(res.automations); reload(); } },
+    { label: 'Save lead', primary: true, onClick: async () => { const res = await post('/crm/contacts', readExtras(formData(body))); announce(res.automations); reload(); } },
   ] });
 }
 
@@ -133,6 +134,9 @@ async function contactDrawer(id, team, reload) {
         h('button', { class: 'btn sm ghost', onclick: () => editContact(c, () => { contactDrawer(id, team, reload); reload(); }) }, icon('edit'), 'Edit')),
       h('div', { class: 'grid g2 small' }, h('div', h('div', { class: 'muted' }, 'Email'), c.email || '–', c.email_opt_out ? h('span', { class: 'badge red', style: { marginLeft: '6px' } }, 'Unsubscribed') : null), h('div', h('div', { class: 'muted' }, 'Mobile'), c.phone || '–', c.sms_opt_out ? h('span', { class: 'badge red', style: { marginLeft: '6px' } }, 'Replied STOP') : c.whatsapp_opt_in ? h('span', { class: 'badge green', style: { marginLeft: '6px' } }, 'WhatsApp OK') : null),
         c.address || c.postcode ? h('div', { class: 'span2' }, h('div', { class: 'muted' }, 'Address'), h('a', { href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([c.address, c.postcode].filter(Boolean).join(', '))}`, target: '_blank', rel: 'noopener' }, [c.address, c.postcode].filter(Boolean).join(', '))) : null,
+        c.birthday ? h('div', h('div', { class: 'muted' }, 'Birthday'), `🎂 ${showDay(c.birthday)}`) : null,
+        c.special_date ? h('div', h('div', { class: 'muted' }, c.special_date_label ? titleCase(c.special_date_label) : 'Special date'), `🎉 ${showDay(c.special_date)}`) : null,
+        Object.keys(socialsOf(c)).length ? h('div', { class: 'span2' }, h('div', { class: 'muted' }, 'Social'), Object.entries(socialsOf(c)).map(([k, v]) => `${titleCase(k)} @${v}`).join(' · ')) : null,
         h('div', h('div', { class: 'muted' }, 'Source'), c.source || '–'), h('div', h('div', { class: 'muted' }, 'Stage'),
         (() => { const s = select('lifecycle', [['lead', 'Lead'], ['prospect', 'Prospect'], ['customer', 'Customer'], ['churned', 'Churned']], c.lifecycle); s.onchange = async () => { await patch(`/crm/contacts/${c.id}`, { lifecycle: s.value }); toast('Updated'); reload(); }; return s; })())),
       h('div', { class: 'card card-pad', style: { boxShadow: 'none' } },
@@ -187,8 +191,35 @@ function editContact(c, done) {
     h('div', { class: 'grid g2' }, field('Company', h('input', { name: 'company', value: c.company || '' })), field('Prefers', select('preferred_channel', [['auto', 'Whatever works best'], ['whatsapp', 'WhatsApp'], ['sms', 'Text'], ['email', 'Email']], c.preferred_channel || 'auto'))),
     h('label', { class: 'row small', style: { gap: '8px', fontWeight: 600 } }, h('input', { type: 'checkbox', name: 'whatsapp_opt_in', checked: Boolean(c.whatsapp_opt_in), style: { width: 'auto' } }), 'Happy to get WhatsApp messages'),
     h('label', { class: 'row small', style: { gap: '8px', fontWeight: 600 } }, h('input', { type: 'checkbox', name: 'sms_opt_out', checked: Boolean(c.sms_opt_out), style: { width: 'auto' } }), 'Don’t send texts or WhatsApp (they opted out)'),
-    h('label', { class: 'row small', style: { gap: '8px', fontWeight: 600 } }, h('input', { type: 'checkbox', name: 'email_opt_out', checked: Boolean(c.email_opt_out), style: { width: 'auto' } }), 'Don’t send marketing emails (they unsubscribed)'));
-  modal(`Edit ${c.first_name}`, body, { actions: [{ label: 'Cancel' }, { label: 'Save', primary: true, onClick: async () => { await patch(`/crm/contacts/${c.id}`, formData(body)); toast('Saved'); done(); } }] });
+    h('label', { class: 'row small', style: { gap: '8px', fontWeight: 600 } }, h('input', { type: 'checkbox', name: 'email_opt_out', checked: Boolean(c.email_opt_out), style: { width: 'auto' } }), 'Don’t send marketing emails (they unsubscribed)'),
+    extrasFields(c));
+  modal(`Edit ${c.first_name}`, body, { actions: [{ label: 'Cancel' }, { label: 'Save', primary: true, onClick: async () => { await patch(`/crm/contacts/${c.id}`, readExtras(formData(body))); toast('Saved'); done(); } }] });
+}
+
+// Birthdays, special dates and social handles (Automations → Essentials).
+const showDay = (d) => { if (!d) return ''; const [y, m, day] = d.length === 5 ? [null, ...d.split('-')] : d.split('-'); return `${day}/${m}${y ? `/${y}` : ''}`; };
+const socialsOf = (c) => (typeof c.socials === 'string' ? (() => { try { return JSON.parse(c.socials); } catch { return {}; } })() : c.socials || {});
+
+function extrasFields(c) {
+  const so = socialsOf(c);
+  return h('details', { class: 'extras', open: Boolean(c.birthday || c.special_date || Object.keys(so).length) },
+    h('summary', { class: 'small', style: { cursor: 'pointer', fontWeight: 700 } }, 'Birthday, special date & social handles'),
+    h('div', { class: 'stack', style: { marginTop: '10px' } },
+      h('div', { class: 'grid g2' },
+        field('Birthday', h('input', { name: 'birthday', placeholder: 'e.g. 21/06 or 21/06/1990', value: showDay(c.birthday) })),
+        field('Special date', h('input', { name: 'special_date', placeholder: 'e.g. 14/02', value: showDay(c.special_date) }))),
+      field('What’s the special date?', h('input', { name: 'special_date_label', placeholder: 'e.g. wedding anniversary, moving-in day, Bella’s birthday', value: c.special_date_label || '' }), { help: 'With birthday & occasion messages on (Automations → Essentials), they get a message on the day.' }),
+      h('div', { class: 'grid g3' },
+        field('Instagram', h('input', { name: 'social_instagram', placeholder: '@handle', value: so.instagram ? `@${so.instagram}` : '' })),
+        field('Facebook', h('input', { name: 'social_facebook', placeholder: 'name or @handle', value: so.facebook || '' })),
+        field('TikTok', h('input', { name: 'social_tiktok', placeholder: '@handle', value: so.tiktok ? `@${so.tiktok}` : '' })))));
+}
+
+function readExtras(data) {
+  const out = { ...data, socials: {} };
+  for (const k of ['instagram', 'facebook', 'tiktok']) { if (data[`social_${k}`]) out.socials[k] = data[`social_${k}`]; delete out[`social_${k}`]; }
+  for (const k of ['birthday', 'special_date']) if (out[k] === '') out[k] = null;
+  return out;
 }
 
 // ───────────────────────── Lead forms ─────────────────────────

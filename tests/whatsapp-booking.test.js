@@ -106,7 +106,8 @@ describe('booking by WhatsApp', () => {
     const say = customer('07700 900402', 'whatsapp', 'Jo Bloggs');
     await say('BOOK');
     await say('radiator');
-    await say('1');
+    // The second day offered always has a full day of times (late in the afternoon, today may only have one left for a 3-hour job).
+    await say('2');
     await say('2');
     await say('5 High St, BS1 4DJ');
     await say('Old radiator leaking in the hall');

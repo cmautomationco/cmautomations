@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { parseJson } from '../../db/index.js';
 import { requireAuth } from '../../lib/auth.js';
 import { toE164 } from '../../lib/phone.js';
-import { createContact } from './service.js';
+import { cleanDay, cleanSocials, createContact } from './service.js';
 import { badRequest, id, notFound, now, pick } from '../../lib/util.js';
 
 export const DEAL_STAGES = ['new', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
@@ -14,10 +14,24 @@ const contactSchema = {
   next_follow_up_at: {}, address: { max: 300 }, postcode: { max: 12 },
   preferred_channel: { enum: ['auto', 'email', 'sms', 'whatsapp'] }, whatsapp_opt_in: { type: 'boolean' },
   sms_opt_out: { type: 'boolean' }, email_opt_out: { type: 'boolean' },
+  birthday: { max: 10 }, special_date: { max: 10 }, special_date_label: { max: 60 }, socials: { type: 'object' },
 };
 
+/** Tidies the Essentials fields: dates to 2026-10-09 or 10-09 (no year), handles without the @. */
+function cleanExtras(body) {
+  for (const key of ['birthday', 'special_date']) {
+    if (body[key] === undefined) continue;
+    if (body[key] === null) continue;
+    const day = cleanDay(body[key]);
+    if (!day) throw badRequest(`${key === 'birthday' ? 'Birthday' : 'Special date'} should look like 21/06 or 21/06/1990`);
+    body[key] = day;
+  }
+  if (body.socials) body.socials = cleanSocials(body.socials);
+  return body;
+}
+
 function getContact(db, orgId, contactId) {
-  const c = parseJson(db.get('SELECT * FROM contacts WHERE id = ? AND org_id = ?', contactId, orgId), 'tags');
+  const c = parseJson(db.get('SELECT * FROM contacts WHERE id = ? AND org_id = ?', contactId, orgId), 'tags', 'socials');
   if (!c) throw notFound('Contact');
   return c;
 }
@@ -52,7 +66,7 @@ export function crmRoutes({ db, engine }) {
   });
 
   r.post('/contacts', (req, res) => {
-    const body = pick(req.body, contactSchema);
+    const body = cleanExtras(pick(req.body, contactSchema));
     assertMember(db, req.org.id, body.owner_id);
     const { contact, automations } = createContact({ db, engine }, req.org.id, { ...body, owner_id: body.owner_id || req.user.id }, { actorId: req.user.id });
     res.status(201).json({ contact: getContact(db, req.org.id, contact.id), automations });
@@ -63,7 +77,8 @@ export function crmRoutes({ db, engine }) {
     if (!Array.isArray(req.body?.contacts)) throw badRequest('Send { contacts: [...] }');
     const created = [];
     for (const raw of req.body.contacts.slice(0, 1000)) {
-      const body = pick(raw, contactSchema);
+      let body;
+      try { body = cleanExtras(pick(raw, contactSchema)); } catch { body = pick({ ...raw, birthday: null, special_date: null }, contactSchema); }
       const { contact } = createContact({ db, engine }, req.org.id, { ...body, owner_id: req.user.id }, { actorId: req.user.id });
       created.push(contact.id);
     }
@@ -83,7 +98,7 @@ export function crmRoutes({ db, engine }) {
 
   r.patch('/contacts/:id', (req, res) => {
     getContact(db, req.org.id, req.params.id);
-    const patch = pick(req.body, contactSchema, { partial: true });
+    const patch = cleanExtras(pick(req.body, contactSchema, { partial: true }));
     assertMember(db, req.org.id, patch.owner_id);
     if (patch.phone !== undefined) patch.phone_e164 = toE164(patch.phone);
     if (patch.postcode) patch.postcode = patch.postcode.toUpperCase();

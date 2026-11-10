@@ -68,6 +68,12 @@ await shot('14-automations', '#/automations', { full: true });
 await shot('15-content-academy', '#/content/academy', { full: true });
 await shot('16-help-desk', '#/helpdesk', { full: true });
 await shot('18-automation-presentation', '#/automations/presentation?s=12');
+// Automations → Essentials: the square tile, the offer panel and the offer link a business receives.
+await shot('37-essentials-tile', '#/automations');
+await shot('38-essentials-offer', '#/automations/essentials', { before: async () => { await page.waitForSelector('.ess-drawer'); await page.waitForTimeout(300); } });
+await page.evaluate(() => document.querySelector('.drawer')?.remove());
+const offerToken = db.get(`SELECT o.token FROM automation_offers o JOIN organizations g ON g.id = o.org_id WHERE g.name = 'Glow Studio'`).token;
+await shot('39-essentials-offer-link', `#/essentials/${offerToken}`, { full: true });
 // API hub: Alex's income streams (Bright Path Coaching, the business Alex signs in to).
 await shot('33-api-hub', '#/api', { full: true });
 const tradingId = db.get(`SELECT id FROM income_streams WHERE type = 'trading'`).id;

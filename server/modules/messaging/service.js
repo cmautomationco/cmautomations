@@ -47,7 +47,40 @@ export const MESSAGING_DEFAULTS = {
   review_link: '',
   // Approved WhatsApp templates (Twilio Content SIDs) by message key, for messages sent outside the 24-hour window.
   whatsapp_content_sids: {},
+  // ── Essentials offer (Automations → Essentials) ──
+  // How a missed caller hears back: 'auto' (WhatsApp if they use it, otherwise a text), 'whatsapp', 'sms' or 'instagram'.
+  missed_call_channel: 'auto',
+  // Tag every new lead with where it came from (Instagram, Google, phone…).
+  tag_lead_source: false,
+  // A welcome message the first time someone becomes a customer.
+  welcome_new_customers: false,
+  // A thank-you when a job/appointment is done, and (optionally) after an answered call.
+  thank_you_after_job: false,
+  thank_you_after_call: false,
+  // Birthday and special-date messages for contacts with those dates saved.
+  occasion_messages: false,
+  // Flag replies to automatic messages that nobody has read after this many hours.
+  reply_watch: false,
+  reply_watch_hours: 2,
+  // Check in with leads that have gone quiet for this many days.
+  cold_lead_check_in: false,
+  cold_lead_days: 30,
+  // Instagram, Facebook and TikTok DMs & comments, through ManyChat, Make or Zapier.
+  social_enabled: false,
+  social_token: '',
+  social_webhook_url: '',
+  dm_auto_reply: true,
+  dm_reply: 'Hi{{first_name_spaced}}! Thanks for your message 🙌 We’ll get back to you very soon.{{book_line}}',
+  comment_auto_reply: true,
+  comment_public_reply: 'Thanks{{first_name_spaced}}! We’ve sent you a DM 📩',
+  comment_dm: 'Hi{{first_name_spaced}}, thanks for your comment! Here’s the info you asked about – any questions, just reply here.{{book_line}}',
+  // "price, cost, how much → Our prices start at …" – one rule per line.
+  keyword_replies: '',
 };
+
+export const SOCIAL_CHANNELS = ['instagram', 'facebook', 'tiktok'];
+export const CHANNEL_NAMES = { whatsapp: 'WhatsApp', sms: 'text', email: 'email', instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok' };
+const isSocial = (channel) => SOCIAL_CHANNELS.includes(channel);
 
 export const getMessagingSettings = (db, orgId) => getSetting(db, orgId, 'messaging', MESSAGING_DEFAULTS);
 
@@ -68,7 +101,7 @@ export function getTemplate(db, orgId, key) {
 
 /** Placeholders every message can use. */
 export function baseVars(org, contact, settings = {}) {
-  const first = contact?.first_name && !/^(new contact|caller|whatsapp enquiry|text enquiry)/i.test(contact.first_name) ? contact.first_name : '';
+  const first = contact?.first_name && !/^(new contact|caller|whatsapp enquiry|text enquiry|@)/i.test(contact.first_name) ? contact.first_name : '';
   const name = contact ? [contact.first_name, contact.last_name].filter(Boolean).join(' ') : '';
   return {
     business: businessName(org),
@@ -126,17 +159,35 @@ export function pickChannel(db, contact, settings, { audience = 'customer' } = {
     email: settings.email_enabled && Boolean(contact.email) && !(customer && contact.email_opt_out),
   };
   if (contact.preferred_channel && contact.preferred_channel !== 'auto' && can[contact.preferred_channel]) return contact.preferred_channel;
-  return ['whatsapp', 'sms', 'email'].find((c) => can[c]) || null;
+  return ['whatsapp', 'sms', 'email'].find((c) => can[c]) || socialChannelFor(db, contact, settings);
+}
+
+/**
+ * Someone we only know on Instagram, Facebook or TikTok can be messaged there –
+ * but, as with WhatsApp, only within 24 hours of their last message.
+ */
+export function socialChannelFor(db, contact, settings) {
+  if (!settings.social_enabled || !contact) return null;
+  const handles = socialsOf(contact);
+  return SOCIAL_CHANNELS.find((c) => handles[c] && within24h(lastInbound(db, contact.id, c))) || null;
 }
 
 function addressFor(channel, contact) {
   if (!contact) return null;
+  if (isSocial(channel)) return socialsOf(contact)[channel] || null;
   return channel === 'email' ? contact.email : contact.phone_e164;
+}
+
+/** A contact's social handles, e.g. { instagram: 'sarah.makeup' }. */
+export function socialsOf(contact) {
+  if (!contact?.socials) return {};
+  return typeof contact.socials === 'string' ? safeJson(contact.socials) : contact.socials;
 }
 
 function fromFor(channel, settings, creds) {
   if (channel === 'email') return creds?.email?.from || config.emailFrom || settings.email_reply_to || 'notifications';
   if (channel === 'whatsapp') return settings.whatsapp_number || settings.business_number || 'business';
+  if (isSocial(channel)) return CHANNEL_NAMES[channel];
   return settings.business_number || 'business';
 }
 
@@ -161,17 +212,18 @@ export function queueMessage(ctx, orgId, opts) {
   if (!channel) return { message: null, skipped: 'No way to reach this contact (no number or email, or they have opted out)' };
 
   let to = opts.to || addressFor(channel, contact);
-  if (channel !== 'email') to = toE164(to);
+  if (channel !== 'email' && !isSocial(channel)) to = toE164(to);
   let status = 'queued';
   let error = null;
 
   // Respect opt-outs for anything that isn't a direct reply to the customer's own request.
   if (audience === 'customer' && contact) {
-    if (channel !== 'email' && contact.sms_opt_out) { status = 'blocked'; error = 'This contact replied STOP to texts and WhatsApp'; }
+    if ((channel === 'sms' || channel === 'whatsapp') && contact.sms_opt_out) { status = 'blocked'; error = 'This contact replied STOP to texts and WhatsApp'; }
     if (channel === 'email' && contact.email_opt_out) { status = 'blocked'; error = 'This contact unsubscribed from email'; }
   }
-  if (!to) { status = 'blocked'; error = channel === 'email' ? 'No email address' : 'No valid mobile number'; }
-  if (status === 'queued' && !settings[`${channel}_enabled`]) { status = 'blocked'; error = `${channel === 'sms' ? 'Text messages are' : channel === 'whatsapp' ? 'WhatsApp is' : 'Email is'} switched off in Settings`; }
+  if (!to) { status = 'blocked'; error = channel === 'email' ? 'No email address' : isSocial(channel) ? `We don’t have their ${CHANNEL_NAMES[channel]} handle` : 'No valid mobile number'; }
+  if (status === 'queued' && isSocial(channel) && !settings.social_enabled) { status = 'blocked'; error = 'DM & comment replies are switched off (Automations → Essentials)'; }
+  if (status === 'queued' && !isSocial(channel) && !settings[`${channel}_enabled`]) { status = 'blocked'; error = `${channel === 'sms' ? 'Text messages are' : channel === 'whatsapp' ? 'WhatsApp is' : 'Email is'} switched off in Settings`; }
 
   let provider = providerFor(channel, settings, creds);
   const extra = {};
@@ -196,7 +248,7 @@ export function queueMessage(ctx, orgId, opts) {
   // Customer messages wait until quiet hours end (no texts at 11pm). Emails can go any time.
   let sendAfter = opts.sendAfter || null;
   const tz = org?.timezone || 'Europe/London';
-  if (status === 'queued' && !opts.force && audience === 'customer' && channel !== 'email' && settings.quiet_hours?.enabled) {
+  if (status === 'queued' && !opts.force && audience === 'customer' && channel !== 'email' && !isSocial(channel) && settings.quiet_hours?.enabled) {
     const at = sendAfter || now();
     if (inQuietHours(at, tz, settings.quiet_hours.start, settings.quiet_hours.end)) sendAfter = quietHoursEnd(at, tz, settings.quiet_hours.end);
   }
@@ -204,7 +256,7 @@ export function queueMessage(ctx, orgId, opts) {
   const message = {
     id: id('msg'), org_id: orgId, contact_id: contact?.id || null, channel, direction: 'out',
     to_addr: to, from_addr: fromFor(channel, settings, creds), subject, body, status, provider: status === 'blocked' ? null : provider,
-    provider_id: null, error, template_key: tpl?.key || null, related_type: opts.related?.type || null, related_id: opts.related?.id || null,
+    provider_id: null, error, template_key: tpl?.key || opts.templateKey || null, related_type: opts.related?.type || null, related_id: opts.related?.id || null,
     send_after: sendAfter, read: 1, created_by: opts.actorId || null, created_at: now(), sent_at: null,
   };
   db.insert('messages', message);
@@ -449,8 +501,46 @@ export async function handleInbound(ctx, orgId, { channel, from, to, body, provi
   return result;
 }
 
+/**
+ * How a missed caller hears back, per the business's choice: WhatsApp if they
+ * use it (otherwise a text), always WhatsApp (a text if WhatsApp can't reach
+ * them), always a text, or Instagram when we're already talking there.
+ */
+export function missedCallChannel(db, contact, settings) {
+  const best = whatsappAllowed(db, contact) && settings.whatsapp_enabled ? 'whatsapp' : 'sms';
+  switch (settings.missed_call_channel) {
+    case 'sms': return 'sms';
+    case 'whatsapp': return settings.whatsapp_enabled ? 'whatsapp' : 'sms';
+    case 'instagram': return socialsOf(contact).instagram && socialChannelFor(db, contact, settings) === 'instagram' ? 'instagram' : best;
+    default: return best;
+  }
+}
+
+/**
+ * The first time someone becomes a customer they get a welcome; after a job
+ * (or appointment) a returning customer gets a thank-you instead – never both.
+ * reason: 'job' | 'payment' | 'deal'. firstTime: they weren't a customer before.
+ */
+export function welcomeOrThank(ctx, orgId, contactId, { reason, firstTime, vars = {}, related = null }) {
+  const { db } = ctx;
+  if (!contactId) return null;
+  const settings = getMessagingSettings(db, orgId);
+  const welcomed = db.get(`SELECT 1 FROM messages WHERE contact_id = ? AND template_key = 'new_customer_welcome' LIMIT 1`, contactId);
+  if (settings.welcome_new_customers && firstTime && !welcomed) {
+    const queued = sendInBackground(ctx, orgId, { contactId, template: 'new_customer_welcome', vars, related });
+    if (queued.message) ctx.engine?.logSystemRun(orgId, 'New customer welcome', 'contact.customer', `Welcomed ${queued.message.to_addr || 'a new customer'}`, 3);
+    return queued.message || null;
+  }
+  if (reason === 'job' && settings.thank_you_after_job) {
+    const queued = sendInBackground(ctx, orgId, { contactId, template: 'job_thank_you', vars, related });
+    if (queued.message) ctx.engine?.logSystemRun(orgId, 'Thank-you after the job', 'booking.completed', `Thanked ${queued.message.to_addr || 'the customer'}`, 2);
+    return queued.message || null;
+  }
+  return null;
+}
+
 /** Has anything (or a given message) gone to this contact in the last few hours? */
-function sentRecently(db, contactId, hours, templateKey = null) {
+export function sentRecently(db, contactId, hours, templateKey = null) {
   const since = new Date(Date.now() - hours * 3600_000).toISOString();
   return Boolean(db.get(`SELECT 1 FROM messages WHERE contact_id = ? AND direction = 'out' AND created_at > ? ${templateKey ? 'AND template_key = ?' : ''} LIMIT 1`, ...[contactId, since, ...(templateKey ? [templateKey] : [])]));
 }
@@ -481,14 +571,21 @@ export async function handleMissedCall(ctx, orgId, { from, to = null, providerId
     texted_back: 0, handled: status === 'answered' ? 1 : 0, created_at: now(),
   };
   db.insert('calls', call);
-  if (status === 'answered') return { call, contact, created, automations: [] };
+  if (status === 'answered') {
+    // Essentials: a short thank-you after a proper conversation (not every quick call).
+    let thanks = null;
+    if (settings.thank_you_after_call && (duration === null || duration >= 30) && !sentRecently(db, contact.id, 12, 'call_thank_you')) {
+      thanks = sendInBackground(ctx, orgId, { contact, template: 'call_thank_you', related: { type: 'call', id: call.id } }).message || null;
+    }
+    return { call, contact, created, thanks, automations: [] };
+  }
 
   // Text back once per half hour per caller (people often ring two or three times).
   let textBack = null;
   const recent = db.get(`SELECT 1 FROM calls WHERE org_id = ? AND from_number = ? AND texted_back = 1 AND created_at > ?`, orgId, call.from_number, new Date(Date.now() - 30 * 60_000).toISOString());
   if (settings.missed_call_text_back && !recent && phone && !contact.sms_opt_out) {
     textBack = await sendMessage(ctx, orgId, {
-      contact, channel: whatsappAllowed(db, contact) && settings.whatsapp_enabled ? 'whatsapp' : 'sms', template: 'missed_call',
+      contact, channel: missedCallChannel(db, contact, settings), template: 'missed_call',
       force: true, related: { type: 'call', id: call.id },
     });
     if (textBack.message && textBack.message.status !== 'blocked' && textBack.message.status !== 'failed') {

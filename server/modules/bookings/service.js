@@ -6,7 +6,7 @@ import { addLocalDays, formatClock, formatDay, inQuietHours, localDate, localTim
 import { badRequest, id, notFound, now, publicToken } from '../../lib/util.js';
 import { notifyUsers } from '../core/notifications.js';
 import { getContactRow, logActivity, upsertContact } from '../crm/service.js';
-import { alertStaff, baseVars, bookingVars, deliverMessage, getMessagingSettings, queueMessage } from '../messaging/service.js';
+import { alertStaff, baseVars, bookingVars, deliverMessage, getMessagingSettings, queueMessage, welcomeOrThank } from '../messaging/service.js';
 import { createDocument, invoiceFrom, sendDocument, voidDocument } from '../billing/service.js';
 
 /**
@@ -42,9 +42,14 @@ export function bookingDefaults(niche) {
     capacity: 1,
     auto_confirm: true,
     require_address: trade,
+    // Essentials: confirmation when booked, the day before, and 1 or 2 hours before.
+    send_confirmation: true,
     reminder_24h: true,
     reminder_time: '10:00',
     reminder_2h: true,
+    reminder_short_hours: 2,
+    // A "sorry we missed you" message with a rebooking link when someone doesn't turn up.
+    no_show_message: true,
     review_request: true,
     review_delay_hours: 2,
     job_sheet: true,
@@ -205,7 +210,7 @@ export async function createBooking(ctx, orgId, data, { actorId = null, source =
       depositInvoice = createDocument(ctx, orgId, { kind: 'invoice', purpose: 'deposit', contact_id: contact.id, booking_id: booking.id, title: `Deposit – ${service.name}`, line_items: [{ description: `Deposit to secure ${service.name} on ${formatDay(startsAt, tz)} at ${formatClock(startsAt, tz)}`, quantity: 1, unit_pence: deposit, vat_rate: 0 }], chase: false });
       const sent = await sendDocument(ctx, orgId, depositInvoice.id, { actorId }).catch(() => null);
       message = sent?.message || null;
-    } else {
+    } else if (settings.send_confirmation !== false) {
       message = await sendBookingMessage(ctx, orgId, booking, status === 'confirmed' ? 'booking_confirmation' : 'booking_request_received', {}, { force: true });
     }
   }
@@ -227,7 +232,9 @@ export async function confirmBooking(ctx, orgId, bookingId, { reason = '', actor
   ctx.db.update('bookings', booking.id, { status: 'confirmed', updated_at: now() });
   logActivity(ctx.db, orgId, booking.contact_id, `Booking confirmed${reason ? ` – ${reason}` : ''}`, { actorId });
   const updated = getBooking(ctx.db, orgId, booking.id);
-  if (notify) await sendBookingMessage(ctx, orgId, updated, 'booking_confirmation', {}, { force: true });
+  if (notify && getBookingSettings(ctx.db, ctx.db.get('SELECT * FROM organizations WHERE id = ?', orgId)).send_confirmation !== false) {
+    await sendBookingMessage(ctx, orgId, updated, 'booking_confirmation', {}, { force: true });
+  }
   return updated;
 }
 
@@ -292,8 +299,14 @@ export async function setBookingStatus(ctx, orgId, bookingId, status, { actorId 
     if (['cancelled', 'no_show'].includes(booking.status)) throw badRequest(`This booking was ${booking.status.replace('_', ' ')}`);
     db.update('bookings', booking.id, { status: 'completed', completed_at: ts, updated_at: ts });
     logActivity(db, orgId, booking.contact_id, `Job completed: ${booking.service_name || 'booking'}`, { actorId });
+    const firstTime = Boolean(contact && contact.lifecycle !== 'customer');
     if (contact && contact.lifecycle !== 'customer') db.update('contacts', contact.id, { lifecycle: 'customer', updated_at: ts });
     const msgSettings = getMessagingSettings(db, orgId);
+    // Essentials: a welcome the first time, a thank-you after later jobs.
+    if (notify && booking.contact_id) {
+      const service = booking.service_id ? db.get('SELECT name FROM services WHERE id = ?', booking.service_id) : null;
+      out.thanks = welcomeOrThank(ctx, orgId, booking.contact_id, { reason: 'job', firstTime, vars: bookingVars(booking, service, tz), related: { type: 'booking', id: booking.id } });
+    }
     if (notify && settings.review_request && msgSettings.review_link && booking.contact_id) {
       const queued = queueMessage(ctx, orgId, { contactId: booking.contact_id, template: 'booking_review_request', related: { type: 'booking', id: booking.id }, sendAfter: plusMinutes(ts, (settings.review_delay_hours || 0) * 60) });
       out.message = queued.message;
@@ -302,7 +315,7 @@ export async function setBookingStatus(ctx, orgId, bookingId, status, { actorId 
   } else if (status === 'no_show') {
     db.update('bookings', booking.id, { status: 'no_show', updated_at: ts });
     logActivity(db, orgId, booking.contact_id, `No-show: ${booking.service_name || 'booking'} on ${formatDay(booking.starts_at, tz)}`, { actorId });
-    if (notify) out.message = await sendBookingMessage(ctx, orgId, booking, 'booking_no_show', {}, {});
+    if (notify && settings.no_show_message !== false) out.message = await sendBookingMessage(ctx, orgId, booking, 'booking_no_show', {}, {});
   } else if (status === 'cancelled') {
     if (booking.status === 'cancelled') return { ...out, booking };
     db.update('bookings', booking.id, { status: 'cancelled', cancelled_at: ts, cancel_reason: reason || null, updated_at: ts });
@@ -385,12 +398,14 @@ export async function runBookingSchedule(ctx, at = new Date()) {
         summary.reminders++;
       }
     }
-    if (!b.reminder_2h_at && msUntil <= 2 * 3600_000 && msUntil > 20 * 60_000) {
+    // The shortly-before reminder: 1 or 2 hours before, as the business chooses.
+    const shortHours = Number(settings.reminder_short_hours) === 1 ? 1 : 2;
+    if (!b.reminder_2h_at && msUntil <= shortHours * 3600_000 && msUntil > 20 * 60_000) {
       db.update('bookings', b.id, { reminder_2h_at: iso });
       const quiet = messaging.quiet_hours?.enabled && inQuietHours(at, tz, messaging.quiet_hours.start, messaging.quiet_hours.end);
-      if (settings.reminder_2h && ageHours > 3 && !quiet) {
+      if (settings.reminder_2h && ageHours > shortHours + 1 && !quiet) {
         await sendBookingMessage(ctx, b.org_id, b, 'booking_reminder_2h');
-        engine.logSystemRun(b.org_id, 'Booking reminder', 'booking.reminder', `2-hour reminder sent for ${formatClock(b.starts_at, tz)}`, 2);
+        engine.logSystemRun(b.org_id, 'Booking reminder', 'booking.reminder', `${shortHours === 1 ? 'Hour' : '2-hour'}-before reminder sent for ${formatClock(b.starts_at, tz)}`, 2);
         summary.reminders++;
       }
     }

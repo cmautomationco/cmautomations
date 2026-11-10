@@ -9,6 +9,8 @@ import { config } from '../../config.js';
  *   webhook – posts the message to the business's Zapier / Make / custom URL
  *   twilio  – real texts and WhatsApp messages (the business's or the server's Twilio account)
  *   resend  – real email (the business's or the server's Resend account)
+ *   social  – Instagram, Facebook and TikTok DMs and comment replies, posted to the
+ *             business's ManyChat / Make / Zapier web address, which sends them on
  *
  * creds comes from integrations/service.js getCredentials().
  */
@@ -18,6 +20,10 @@ export const emailReady = (creds) => Boolean(creds?.email);
 
 /** Which adapter delivers a channel for a business, given its settings and connections. */
 export function providerFor(channel, settings, creds) {
+  if (['instagram', 'facebook', 'tiktok'].includes(channel)) {
+    if (settings.social_webhook_url) return 'social';
+    return config.demoMode ? 'demo' : 'none';
+  }
   if (channel === 'email') {
     if (emailReady(creds)) return 'resend';
   } else if (twilioReady(creds)) {
@@ -39,6 +45,24 @@ async function viaWebhook(msg, settings) {
     return res.ok ? { status: 'sent', provider_id: null } : { status: 'failed', error: `Webhook responded ${res.status}` };
   } catch (err) {
     return { status: 'failed', error: `Webhook unreachable: ${err.message}` };
+  }
+}
+
+/** Instagram / Facebook / TikTok: hands the DM or comment reply to the business's ManyChat, Make or Zapier step. */
+async function viaSocial(msg, settings) {
+  try {
+    const res = await fetch(settings.social_webhook_url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        platform: msg.channel, type: msg.related_type === 'comment_reply' ? 'comment_reply' : 'dm', to: msg.to_addr,
+        comment_id: msg.related_type === 'comment_reply' ? msg.related_id : null, text: msg.body, message_id: msg.id,
+      }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    return res.ok ? { status: 'sent', provider_id: null } : { status: 'failed', error: `Your social connection responded ${res.status}` };
+  } catch (err) {
+    return { status: 'failed', error: `Your social connection couldn’t be reached: ${err.message}` };
   }
 }
 
@@ -107,6 +131,8 @@ export async function deliver(provider, msg, settings, extra, creds) {
     case 'twilio': return creds?.twilio ? viaTwilio(msg, creds.twilio, extra) : { status: 'failed', error: 'Twilio isn’t connected' };
     case 'resend': return creds?.email ? viaResend(msg, settings, creds.email) : { status: 'failed', error: 'Email isn’t connected' };
     case 'webhook': return viaWebhook(msg, settings);
+    case 'social': return viaSocial(msg, settings);
+    case 'none': return { status: 'failed', error: 'Replies to Instagram, Facebook and TikTok need your social connection – add its web address in Automations → Essentials → DM & comment auto replies' };
     default: return { status: 'demo', provider_id: null };
   }
 }

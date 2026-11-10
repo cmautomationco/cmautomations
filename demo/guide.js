@@ -91,6 +91,20 @@ export const GUIDE = [
     ],
   },
   {
+    title: 'Essentials offer (in Automations)',
+    intro: 'The 17 automations that keep a business running – missed-call replies, reminders, reviews, invoices, DMs and more – as one simple offer, in five sections. Each can be switched on, tuned and built on.',
+    steps: [
+      ['Open Automations and press the square Essentials tile at the top right.', '#/automations'],
+      ['Read down the five sections. “Start” items are what most businesses begin with; “Next” items are the layer to add as they grow. Anything still needing set-up says what (e.g. “Add your Google review link”).', '#/automations/essentials'],
+      ['Switch one on – say Referral task – and the tile’s count goes up. It’s the same switch as the real automation underneath.', '#/automations/essentials'],
+      ['Open Options on “Hour-before reminder” and choose 1 hour, or on “Missed-call response” choose WhatsApp, text or Instagram.', '#/automations/essentials'],
+      ['DM & comment auto replies is on for Bright Path: open Messages and choose “Instagram · Facebook · TikTok” to see Hannah’s price question answered by a keyword rule and Tom’s comment answered publicly and by DM.', '#/messages?channel=social'],
+      ['Back in Essentials, open Options on DM & comment auto replies and press “Try it: send a test DM or comment”.', '#/automations/essentials'],
+      ['Press “Send as an offer”, pick “Everything not on yet”, add a note and create the link. Open it – that’s what the business sees – and press “Yes – switch on”. Everything is switched on in their system and a task lists what’s left to set up.', '#/automations/essentials'],
+      ['In the CRM, open a customer, press Edit and add a birthday or special date. Emma’s birthday is today, so her birthday message goes out while this page is open.', '#/crm/contacts'],
+    ],
+  },
+  {
     title: 'Assistant (chat)',
     intro: 'The round chat button in the bottom-right corner, on every page. It finds the answer and takes you there.',
     steps: [

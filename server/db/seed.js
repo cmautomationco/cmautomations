@@ -11,6 +11,7 @@ import { createTask } from '../modules/tasks/service.js';
 import { openDatabase, parseJson } from './index.js';
 import { seedBusinessTools } from './seedBusinessTools.js';
 import { seedIncomeStreams } from './seedStreams.js';
+import { seedEssentials } from './seedEssentials.js';
 
 /**
  * Seeds a realistic demo business so every screen has something to show.
@@ -59,6 +60,8 @@ export async function seedDemo(db) {
       [glow, { contact_name: 'Mia Roberts', email: 'mia@glowstudio.example', monthly_fee_pence: 14900, hourly_cost_pence: 3000 }],
     ],
   });
+  // Automations → Essentials: what's on in each business, Instagram DMs answered, an offer waiting.
+  await seedEssentials(db, engine, { owner });
   // Let any messages still being handed to the (demo) provider finish.
   await new Promise((resolve) => setTimeout(resolve, 0));
   return { org, owner, ...extra };
@@ -74,7 +77,11 @@ export async function upgradeDemo(db) {
   const alex = db.get('SELECT * FROM users WHERE email = ?', 'demo@cmautomations.com');
   const brightPath = db.get('SELECT * FROM organizations WHERE name = ?', 'Bright Path Coaching');
   if (alex && brightPath && !db.get('SELECT 1 FROM income_streams LIMIT 1')) added = seedIncomeStreams(db, brightPath, alex);
-  if (db.get(`SELECT 1 FROM organizations WHERE kind = 'agency'`)) return added;
+  // Earlier test builds had no Essentials offer.
+  if (db.get(`SELECT 1 FROM organizations WHERE kind = 'agency'`)) {
+    if (alex && (await seedEssentials(db, createEngine(db), { owner: alex }))) added = true;
+    return added;
+  }
   const owner = db.get('SELECT * FROM users WHERE email = ?', 'demo@cmautomations.com');
   const priya = db.get('SELECT * FROM users WHERE email = ?', 'priya@cmautomations.com');
   const bright = db.get('SELECT * FROM organizations WHERE name = ?', 'Bright Path Coaching');
@@ -94,6 +101,7 @@ export async function upgradeDemo(db) {
       [glow, { contact_name: 'Mia Roberts', email: 'mia@glowstudio.example', monthly_fee_pence: 14900, hourly_cost_pence: 3000 }],
     ],
   });
+  await seedEssentials(db, createEngine(db), { owner });
   await new Promise((resolve) => setTimeout(resolve, 0));
   return true;
 }

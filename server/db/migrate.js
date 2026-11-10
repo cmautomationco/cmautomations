@@ -19,6 +19,11 @@ const COLUMNS = {
     ['sms_opt_out', 'INTEGER NOT NULL DEFAULT 0'],
     ['email_opt_out', 'INTEGER NOT NULL DEFAULT 0'],
     ['whatsapp_opt_in', 'INTEGER NOT NULL DEFAULT 0'],
+    // Essentials offer: social handles (for DM & comment replies), birthdays and special dates.
+    ['socials', "TEXT NOT NULL DEFAULT '{}'"],
+    ['birthday', 'TEXT'],
+    ['special_date', 'TEXT'],
+    ['special_date_label', 'TEXT'],
   ],
 };
 
@@ -37,6 +42,7 @@ export function migrate(db) {
     }
   }
   db.exec('CREATE INDEX IF NOT EXISTS idx_contacts_phone ON contacts(org_id, phone_e164)');
+  allowSocialMessages(db);
   backfillPhones(db);
   // Every business gets a web-address-friendly name for its booking page.
   for (const o of db.prepare('SELECT id, name FROM organizations WHERE slug IS NULL').all()) {
@@ -56,5 +62,34 @@ export function backfillPhones(db) {
   const raw = db.raw || db;
   for (const c of raw.prepare('SELECT id, phone FROM contacts WHERE phone IS NOT NULL AND phone_e164 IS NULL').all()) {
     raw.prepare('UPDATE contacts SET phone_e164 = ? WHERE id = ?').run(toE164(c.phone), c.id);
+  }
+}
+
+/**
+ * Databases made before Instagram, Facebook and TikTok messages only allowed
+ * email, SMS and WhatsApp in the messages table. SQLite can't change a CHECK
+ * rule in place, so the table is rebuilt once with the same columns and data.
+ */
+function allowSocialMessages(db) {
+  const raw = db.raw || db;
+  const row = raw.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'messages'`).get();
+  if (!row || row.sql.includes("'instagram'")) return;
+  const sql = row.sql.replace("CHECK (channel IN ('email','sms','whatsapp'))", "CHECK (channel IN ('email','sms','whatsapp','instagram','facebook','tiktok'))");
+  if (sql === row.sql) return;
+  raw.exec('PRAGMA foreign_keys = OFF');
+  raw.exec('BEGIN');
+  try {
+    raw.exec(sql.replace(/^CREATE TABLE "?messages"?/, 'CREATE TABLE messages_new'));
+    raw.exec('INSERT INTO messages_new SELECT * FROM messages');
+    raw.exec('DROP TABLE messages');
+    raw.exec('ALTER TABLE messages_new RENAME TO messages');
+    raw.exec('CREATE INDEX IF NOT EXISTS idx_messages_org ON messages(org_id, created_at)');
+    raw.exec('CREATE INDEX IF NOT EXISTS idx_messages_contact ON messages(contact_id, created_at)');
+    raw.exec('COMMIT');
+  } catch (err) {
+    raw.exec('ROLLBACK');
+    throw err;
+  } finally {
+    raw.exec('PRAGMA foreign_keys = ON');
   }
 }

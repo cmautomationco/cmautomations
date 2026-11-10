@@ -20,6 +20,7 @@ import { publicRoutes } from '../server/modules/public/routes.js';
 import { integrationRoutes } from '../server/modules/integrations/routes.js';
 import { streamHookRoutes, streamRoutes } from '../server/modules/streams/routes.js';
 import { apiKeyRoutes, publicApiRoutes } from '../server/modules/api/routes.js';
+import { essentialsPublicRoutes, essentialsRoutes, socialHookRoutes } from '../server/modules/essentials/routes.js';
 
 export function createBackend(db, { onWrite = () => {} } = {}) {
   const engine = createEngine(db);
@@ -40,6 +41,7 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
     ['/api/bookings', bookingRoutes(ctx)],
     ['/api/invoices', billingRoutes(ctx)],
     ['/api/agency', agencyRoutes(ctx)],
+    ['/api/public/essentials', essentialsPublicRoutes(ctx)],
     ['/api/public', publicRoutes(ctx)],
     ['/api/integrations', integrationRoutes(ctx)],
     ['/api/streams', streamRoutes(ctx)],
@@ -47,6 +49,9 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
     ['/api/v1', publicApiRoutes(ctx)],
     // Each income stream's web address works in the browser too, so it can be tried out.
     ['/api/hooks/stream', streamHookRoutes(ctx)],
+    // The social address too, so DM & comment replies can be tried in the browser.
+    ['/api/hooks/social', socialHookRoutes(ctx)],
+    ['/api/essentials', essentialsRoutes(ctx)],
   ];
 
   async function request(method, url, headers = {}, rawBody) {

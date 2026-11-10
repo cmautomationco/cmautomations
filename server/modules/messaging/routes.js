@@ -8,7 +8,8 @@ import { setSetting } from '../../lib/settings.js';
 import { badRequest, notFound, now, pick, publicToken } from '../../lib/util.js';
 import { getContactRow } from '../crm/service.js';
 import { connectionStatus } from '../integrations/service.js';
-import { MESSAGING_DEFAULTS, closeReplyTasks, getMessagingSettings, getTemplate, handleInbound, handleMissedCall, pickChannel, sendMessage, threadFor, whatsappAllowed } from './service.js';
+import { MESSAGING_DEFAULTS, SOCIAL_CHANNELS, closeReplyTasks, getMessagingSettings, getTemplate, handleInbound, handleMissedCall, pickChannel, sendMessage, socialsOf, threadFor, whatsappAllowed } from './service.js';
+import { handleSocial } from './social.js';
 import { TEMPLATES, TEMPLATE_KEYS } from './templates.js';
 import { TEMPLATE_NEEDED, whatsappTemplate } from './whatsapp.js';
 
@@ -42,9 +43,11 @@ export function messagingRoutes(ctx) {
   r.get('/threads', (req, res) => {
     const where = ['c.org_id = ?'];
     const params = [req.org.id];
-    if (['whatsapp', 'sms', 'email'].includes(req.query.channel)) {
+    if (['whatsapp', 'sms', 'email', 'instagram', 'facebook', 'tiktok'].includes(req.query.channel)) {
       where.push('EXISTS (SELECT 1 FROM messages x WHERE x.contact_id = c.id AND x.channel = ?)');
       params.push(req.query.channel);
+    } else if (req.query.channel === 'social') {
+      where.push(`EXISTS (SELECT 1 FROM messages x WHERE x.contact_id = c.id AND x.channel IN ('instagram','facebook','tiktok'))`);
     }
     if (req.query.q) {
       where.push(`(c.first_name || ' ' || COALESCE(c.last_name,'') || ' ' || COALESCE(c.phone,'') || ' ' || COALESCE(c.email,'')) LIKE ?`);
@@ -75,6 +78,11 @@ export function messagingRoutes(ctx) {
         whatsapp: { available: Boolean(settings.whatsapp_enabled && contact.phone_e164), allowed: whatsappAllowed(db, contact), note: whatsappAllowed(db, contact) ? null : 'They haven’t opted in to WhatsApp or messaged in the last 24 hours, so this will go as a text when live.' },
         sms: { available: Boolean(settings.sms_enabled && contact.phone_e164 && !contact.sms_opt_out), note: contact.sms_opt_out ? 'Replied STOP – texts and WhatsApp are blocked.' : null },
         email: { available: Boolean(settings.email_enabled && contact.email && !contact.email_opt_out) },
+        ...Object.fromEntries(SOCIAL_CHANNELS.filter((c) => socialsOf(contact)[c]).map((c) => [c, {
+          available: Boolean(settings.social_enabled), handle: socialsOf(contact)[c],
+          note: !settings.social_enabled ? 'Switch on DM & comment auto replies (Automations → Essentials) to reply here.'
+            : !settings.social_webhook_url ? 'Add your social connection’s web address (Automations → Essentials → DM & comment auto replies) so replies are posted for you.' : null,
+        }])),
         best: pickChannel(db, contact, settings),
       },
       open_tasks: db.all(`SELECT id, title, priority, due_at FROM tasks WHERE org_id = ? AND source_ref = ? AND status != 'done' ORDER BY due_at`, req.org.id, contact.id),
@@ -86,14 +94,14 @@ export function messagingRoutes(ctx) {
   r.post('/threads/:contactId/send', async (req, res) => {
     const contact = getContactRow(db, req.params.contactId);
     if (!contact || contact.org_id !== req.org.id) throw notFound('Contact');
-    const body = pick(req.body, { channel: { enum: ['auto', 'email', 'sms', 'whatsapp'] }, body: { max: 2000 }, subject: { max: 200 }, template: { enum: TEMPLATE_KEYS } });
+    const body = pick(req.body, { channel: { enum: ['auto', 'email', 'sms', 'whatsapp', 'instagram', 'facebook', 'tiktok'] }, body: { max: 2000 }, subject: { max: 200 }, template: { enum: TEMPLATE_KEYS } });
     if (!body.body && !body.template) throw badRequest('Write a message');
     const { message, skipped } = await sendMessage(ctx, req.org.id, {
       contact, channel: body.channel || 'auto', body: body.body || undefined, subject: body.subject || undefined, template: body.template || undefined,
       actorId: req.user.id, audience: 'system', force: true,
     });
     if (!message) throw badRequest(skipped);
-    if (message.status === 'blocked') throw badRequest(message.error);
+    if (message.status === 'blocked' || (message.status === 'failed' && message.provider === 'none')) throw badRequest(message.error);
     closeReplyTasks(db, req.org.id, contact.id);
     res.status(201).json(message);
   });
@@ -156,7 +164,7 @@ export function messagingRoutes(ctx) {
     const base = apiBase();
     const wa = (settings.whatsapp_number || settings.business_number || '').replace('+', '');
     res.json({
-      settings: { ...settings, inbound_token: undefined },
+      settings: { ...settings, inbound_token: undefined, social_token: undefined },
       status: (() => {
         const c = connectionStatus(db, req.org.id);
         const live = c.twilio.connected || c.email.connected;
@@ -206,13 +214,18 @@ export function messagingRoutes(ctx) {
     // Strip nulls from optional text fields so defaults aren't overwritten with null.
     for (const [k, v] of Object.entries(body)) if (v === null) body[k] = MESSAGING_DEFAULTS[k] ?? '';
     const next = setSetting(db, req.org.id, 'messaging', { ...current, ...body });
-    res.json({ ...next, inbound_token: undefined });
+    res.json({ ...next, inbound_token: undefined, social_token: undefined });
   });
 
   // ── Try it: simulate a customer message or a missed call (works without Twilio) ──
   r.post('/simulate/inbound', requireRole('owner', 'admin'), async (req, res) => {
-    const body = pick(req.body, { channel: { enum: ['whatsapp', 'sms', 'email'] }, from: { required: true, max: 200 }, body: { required: true, max: 2000 }, name: { max: 80 } });
+    const body = pick(req.body, { channel: { enum: ['whatsapp', 'sms', 'email', 'instagram', 'facebook', 'tiktok'] }, from: { required: true, max: 200 }, body: { required: true, max: 2000 }, name: { max: 80 }, type: { enum: ['dm', 'comment'] }, post: { max: 120 } });
     const channel = body.channel || 'whatsapp';
+    // Instagram, Facebook and TikTok run exactly what a real DM or comment from ManyChat/Make/Zapier would.
+    if (SOCIAL_CHANNELS.includes(channel)) {
+      const out = await handleSocial(ctx, req.org.id, { platform: channel, type: body.type || 'dm', from: body.from, name: body.name, text: body.body, post: body.post, comment_id: body.type === 'comment' ? `test-${Date.now()}` : null });
+      return res.status(201).json({ ...out, contact: parseJson(out.contact, 'tags') });
+    }
     if (channel !== 'email' && !toE164(body.from)) throw badRequest('Enter a mobile number like 07700 900123');
     const settings = getMessagingSettings(db, req.org.id);
     const result = await handleInbound(ctx, req.org.id, { channel, from: body.from, to: channel === 'whatsapp' ? settings.whatsapp_number : settings.business_number, body: body.body, profileName: body.name });

@@ -7,7 +7,7 @@ import { formatDay, localDate } from '../../lib/time.js';
 import { addDays, badRequest, id, notFound, now, publicToken } from '../../lib/util.js';
 import { notifyUsers } from '../core/notifications.js';
 import { getContactRow, logActivity, moveDealStage } from '../crm/service.js';
-import { alertStaff, businessName, queueMessage, deliverMessage } from '../messaging/service.js';
+import { alertStaff, businessName, queueMessage, deliverMessage, sendInBackground, welcomeOrThank } from '../messaging/service.js';
 import { createTask } from '../tasks/service.js';
 import { createCheckoutSession, retrieveCheckoutSession, stripeReady } from './stripe.js';
 import { getCredentials } from '../integrations/service.js';
@@ -40,6 +40,8 @@ export const BILLING_DEFAULTS = {
   chase_days: [1, 7, 14],
   // Days after sending a quote with no answer before someone is asked to follow up.
   quote_follow_up_days: 3,
+  // Essentials: also send the customer a short nudge with the quote link (as well as the follow-up task).
+  quote_follow_up_message: false,
 };
 
 export const getBillingSettings = (db, orgId) => getSetting(db, orgId, 'billing', BILLING_DEFAULTS);
@@ -245,6 +247,8 @@ export async function recordPayment(ctx, orgId, docId, { amount_pence, method = 
 
   let automations = [];
   if (full) {
+    const firstTime = Boolean(doc.contact_id && getContactRow(db, doc.contact_id)?.lifecycle !== 'customer');
+    if (doc.contact_id) welcomeOrThank(ctx, orgId, doc.contact_id, { reason: 'payment', firstTime, related: { type: 'invoice', id: doc.id } });
     if (doc.contact_id) {
       const queued = queueMessage(ctx, orgId, { contactId: doc.contact_id, template: 'invoice_paid_thanks', vars: { ...documentVars(doc, org), amount: formatMoney(doc.total_pence) }, related: { type: 'invoice', id: doc.id }, force: true });
       if (queued.message) await deliverMessage(ctx, queued.message, queued.settings, queued.extra, queued.creds);
@@ -388,7 +392,12 @@ export async function runBillingChase(ctx, at = new Date()) {
       priority: 'high', due_at: now(), assignee_id: quote.created_by || adminIds(db, quote.org_id)[0] || null, source: 'crm', source_ref: quote.contact_id,
     });
     db.update('invoices', quote.id, { followed_up: 1 });
-    engine.logSystemRun(quote.org_id, 'Quote follow-up', 'quote.sent', `Follow-up task for ${quote.number}`, 3);
+    let nudged = false;
+    if (settings.quote_follow_up_message && quote.contact_id) {
+      const org = db.get('SELECT * FROM organizations WHERE id = ?', quote.org_id);
+      nudged = Boolean(sendInBackground(ctx, quote.org_id, { contactId: quote.contact_id, template: 'quote_follow_up', vars: documentVars(full, org), related: { type: 'invoice', id: quote.id } }).message);
+    }
+    engine.logSystemRun(quote.org_id, 'Quote follow-up', 'quote.sent', `${nudged ? 'Nudged the customer and made a' : 'Made a'} follow-up task for ${quote.number}`, nudged ? 5 : 3);
     summary.quotes++;
   }
   return summary;

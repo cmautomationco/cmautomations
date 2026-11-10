@@ -139,8 +139,9 @@ export function bookingRoutes(ctx) {
       max_days_ahead: { type: 'number' }, capacity: { type: 'number' }, auto_confirm: { type: 'boolean' }, require_address: { type: 'boolean' },
       reminder_24h: { type: 'boolean' }, reminder_time: {}, reminder_2h: { type: 'boolean' }, review_request: { type: 'boolean' }, review_delay_hours: { type: 'number' },
       job_sheet: { type: 'boolean' }, job_sheet_time: {}, emergency_callouts: { type: 'boolean' }, emergency_note: { max: 500 }, cancel_notice_hours: { type: 'number' },
-      chat_booking: { type: 'boolean' },
+      chat_booking: { type: 'boolean' }, send_confirmation: { type: 'boolean' }, reminder_short_hours: { type: 'number' }, no_show_message: { type: 'boolean' },
     }, { partial: true });
+    if (body.reminder_short_hours != null) body.reminder_short_hours = Number(body.reminder_short_hours) === 1 ? 1 : 2;
     const time = /^\d{2}:\d{2}$/;
     if (body.hours) {
       for (const [dayKey, h] of Object.entries(body.hours)) {

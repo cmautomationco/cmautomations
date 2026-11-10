@@ -123,7 +123,7 @@ export const TEMPLATES = {
     body: 'Hi{{first_name_spaced}}, a reminder that we’re booked for {{service}} tomorrow ({{date}}) at {{time}}{{address_line}}. Reply C to confirm or R to rearrange. – {{business}}',
   },
   booking_reminder_2h: {
-    group: 'Bookings', label: 'Reminder 2 hours before', audience: 'customer',
+    group: 'Bookings', label: 'Reminder 1–2 hours before', audience: 'customer',
     body: 'Hi{{first_name_spaced}}, see you at {{time}} today for {{service}}. – {{business}}',
   },
   booking_on_my_way: {
@@ -189,6 +189,44 @@ export const TEMPLATES = {
     group: 'Quotes & invoices', label: 'Payment received', audience: 'customer',
     subject: 'Payment received – thank you',
     body: 'Hi{{first_name_spaced}}, we’ve received your payment of {{amount}} for invoice {{number}}. Thank you! {{business}}',
+  },
+
+  quote_follow_up: {
+    group: 'Quotes & invoices', label: 'Quote follow-up', audience: 'customer',
+    subject: 'Any questions about your quote?',
+    body: 'Hi{{first_name_spaced}}, just checking you got our quote {{number}} for {{amount}}. Happy to answer any questions – you can view and accept it here: {{doc_link}} – {{business}}',
+  },
+
+  // ── Looking after customers (Essentials) ──
+  new_customer_welcome: {
+    group: 'Looking after customers', label: 'Welcome, new customer', audience: 'customer',
+    subject: 'Welcome to {{business}}',
+    body: 'Hi{{first_name_spaced}}, welcome to {{business}} and thank you for choosing us! Save this number – if you ever need anything, just reply here. – {{business}}',
+  },
+  job_thank_you: {
+    group: 'Looking after customers', label: 'Thank you after the job', audience: 'customer',
+    subject: 'Thank you from {{business}}',
+    body: 'Hi{{first_name_spaced}}, thank you for choosing us for your {{service}} today. Any questions at all, just reply to this message. – {{business}}',
+  },
+  call_thank_you: {
+    group: 'Looking after customers', label: 'Thank you after a call', audience: 'customer',
+    subject: 'Thanks for your call',
+    body: 'Hi{{first_name_spaced}}, thanks for your call today. If there’s anything else we can help with, just reply here. – {{business}}',
+  },
+  birthday_message: {
+    group: 'Looking after customers', label: 'Birthday message', audience: 'customer',
+    subject: 'Happy birthday from {{business}} 🎉',
+    body: 'Happy birthday{{first_name_comma}}! 🎉 Wishing you a brilliant day from all of us at {{business}}.',
+  },
+  special_occasion_message: {
+    group: 'Looking after customers', label: 'Special occasion message', audience: 'customer',
+    subject: 'Happy {{occasion}} from {{business}}',
+    body: 'Hi{{first_name_spaced}}, happy {{occasion}}! 🎉 Thinking of you today – from all of us at {{business}}.',
+  },
+  cold_lead_check_in: {
+    group: 'Looking after customers', label: 'Checking in with a quiet lead', audience: 'customer',
+    subject: 'Just checking in',
+    body: 'Hi{{first_name_spaced}}, it’s been a little while – just checking in to see if there’s anything we can help with. You can book a time here: {{booking_link}} – {{business}}',
   },
 
   // ── Agency ──

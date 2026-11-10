@@ -776,3 +776,40 @@ a.hbar-row:hover .hbar-fill { filter: brightness(1.15); }
 .stream-icon svg { width: 19px; height: 19px; color: var(--blue-600); }
 .page-head .stream-icon { width: 46px; height: 46px; flex-basis: 46px; margin-top: 2px; }
 .page-head .stream-icon svg { width: 22px; height: 22px; }
+
+/* ───────── Automations → Essentials offer ───────── */
+.auto-top { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 220px; gap: 16px; align-items: stretch; }
+.ess-tile { display: flex; flex-direction: column; gap: 6px; aspect-ratio: 1 / 1; width: 100%; padding: 18px; text-align: left; font: inherit; color: var(--ink); background: #fff; border: 2px solid var(--blue-500); border-radius: var(--radius); box-shadow: var(--shadow); cursor: pointer; transition: box-shadow .15s, transform .15s; }
+.ess-tile:hover, .ess-tile:focus-visible { box-shadow: var(--shadow-lg); transform: translateY(-1px); outline: none; }
+.ess-tile-top { display: flex; align-items: center; gap: 8px; }
+.ess-tile-icon { width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--blue-200); display: grid; place-items: center; color: var(--blue-600); }
+.ess-tile-icon svg { width: 16px; height: 16px; }
+.ess-tile-count { margin-top: auto; }
+.ess-tile-count b { font-size: 34px; font-weight: 800; color: var(--blue-600); letter-spacing: -0.02em; }
+.ess-tile-count span { font-size: 16px; color: var(--muted); font-weight: 700; }
+.ess-tile-open { font-size: 12px; font-weight: 800; color: var(--blue-600); }
+.ess-drawer { width: min(720px, 100vw); }
+.ess-summary { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.ess-section { border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+.ess-section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.ess-item { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.ess-item.on { border-color: var(--blue-200); }
+.ess-item-main { display: flex; gap: 12px; align-items: flex-start; }
+.ess-item-main .switch { margin-top: 2px; }
+.ess-stage { font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.ess-stage.start { color: var(--blue-600); }
+.ess-needs { display: flex; gap: 6px; align-items: flex-start; color: var(--amber); margin-top: 6px; font-weight: 600; }
+.ess-needs svg { width: 14px; height: 14px; flex: none; margin-top: 2px; }
+.ess-options { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.ess-pub-section { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.ess-pub-item { align-items: flex-start; }
+@media (max-width: 980px) {
+  .auto-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .auto-top > .card:first-child { grid-column: 1 / -1; }
+  .ess-tile { aspect-ratio: auto; min-height: 180px; }
+}
+@media (max-width: 720px) {
+  .auto-top { grid-template-columns: 1fr; }
+  /* On a phone the Essentials tile comes first, so it's the first thing you see. */
+  .auto-top .ess-tile { order: -1; min-height: 0; }
+}

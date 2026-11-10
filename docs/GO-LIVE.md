@@ -168,7 +168,29 @@ invoice page. A payment is never counted twice.
 
 ---
 
-## 5. Final checks
+## 5. Instagram, Facebook and TikTok DMs & comments (optional)
+
+These platforms only let approved apps read DMs and comments, so they come in
+through a tool that already has that approval: **ManyChat** (simplest for
+Instagram and Facebook), **Make** or **Zapier**.
+
+1. In **Automations → Essentials**, switch on **DM & comment auto replies** and
+   open its options. Copy the **social address**.
+2. In ManyChat, add an **External Request** to your default reply and comment flows. (In Make or Zapier, use a
+   "new DM / new comment" trigger and an HTTP step.) It should POST JSON to the social address:
+   `{ "platform": "instagram", "type": "dm" or "comment", "from": "{{username}}", "name": "{{full name}}", "text": "{{last input}}", "comment_id": "…" }`.
+3. The response has `reply` (the DM to send) and `comment_reply` (the public reply).
+   Map them into the next step's "Send message" / "Reply to comment" action.
+   - Or put that step's own web address in **Where replies are sent**. Replies, including the ones you
+     type in Messages, are then posted there.
+4. Use **Try it: send a test DM or comment** to see it work end to end.
+
+Instagram and Facebook only allow replies within 24 hours of the customer's
+last message, so later reminders go by WhatsApp, text or email instead.
+
+---
+
+## 6. Final checks
 
 - [ ] `npm run check:live` shows no ❌.
 - [ ] A missed call to the business number gets the text-back.

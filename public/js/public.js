@@ -6,7 +6,7 @@ import { applyBrandColor, field, h, icon, mount, paybackLabel, pounds, showError
  * their own booking, lead forms, quotes & invoices, proposals and reports.
  * Each one wears the business's own name, logo and colour.
  */
-export const PUBLIC_PAGES = ['book', 'booking', 'form', 'doc', 'proposal', 'report'];
+export const PUBLIC_PAGES = ['book', 'booking', 'form', 'doc', 'proposal', 'report', 'essentials'];
 
 export async function renderPublic(root, route) {
   const [page, key] = route.parts;
@@ -21,6 +21,7 @@ export async function renderPublic(root, route) {
     if (page === 'doc') return await docPage(shell, key, route.query);
     if (page === 'proposal') return await proposalPage(shell, key);
     if (page === 'report') return await reportPage(shell, key);
+    if (page === 'essentials') return await essentialsPage(shell, key);
   } catch (err) {
     mount(shell, h('div', { class: 'pub-card pub-empty' }, h('h2', 'This link isn’t working'), h('p', err.status === 404 ? 'It may have expired or been replaced. Please contact the business that sent it.' : err.message)));
   }
@@ -318,6 +319,41 @@ async function proposalPage(shell, token) {
       h('div', { class: 'pub-stats' }, h('div', h('b', pounds(p.investment.setup_pence)), h('span', 'one-off set-up')), h('div', h('b', pounds(p.investment.monthly_pence)), h('span', 'per month'))),
       h('p', { class: 'small muted' }, h('b', 'How we worked it out: '), p.assumptions.join(' ')),
       h('h2', 'Next ', h('span', { class: 'blue' }, 'steps')), h('ol', p.next_steps.map((x) => h('li', x))),
+      accept)), footer(b));
+}
+
+// ───────────────────────── Essentials offer ─────────────────────────
+
+async function essentialsPage(shell, token) {
+  const data = await get(`/public/essentials/${token}`);
+  const b = data.business;
+  const count = data.sections.reduce((n, sec) => n + sec.items.length, 0);
+  const accept = h('div', { class: 'stack' });
+  if (data.status === 'accepted') {
+    mount(accept, h('div', { class: 'pub-success' }, icon('tick'), h('div', h('b', `Switched on${data.accepted_by ? ` – thank you, ${data.accepted_by.split(' ')[0]}` : ''}!`), h('div', { class: 'small' }, `All ${count} are now running in your system. We’ll check the wording and finish any set-up with you.`))));
+  } else {
+    const name = h('input', { placeholder: 'Your full name', 'aria-label': 'Your full name' });
+    mount(accept, h('h2', 'Ready to ', h('span', { class: 'blue' }, 'switch these on?')),
+      h('p', { class: 'muted' }, 'Say yes and they start working in your system straight away. You can change the wording, or switch any of them off, whenever you like.'),
+      field('Your name', name),
+      h('button', { class: 'btn primary', onclick: async (e) => {
+        if (!name.value.trim()) return toast('Please add your name', 'error');
+        e.target.disabled = true;
+        try { await post(`/public/essentials/${token}/accept`, { name: name.value }); essentialsPage(shell, token); } catch (err) { showError(err); e.target.disabled = false; }
+      } }, icon('tick'), `Yes – switch on ${count === 1 ? 'this' : `all ${count}`}`));
+  }
+  mount(shell, header(b), h('main', { class: 'pub-main wide' },
+    h('div', { class: 'pub-card stack proposal' },
+      h('div', { class: 'eyebrow' }, data.from ? `From ${data.from.name}` : 'Your automations'),
+      h('h1', 'The ', h('span', { class: 'blue' }, 'Essentials'), ` for ${b.name}`),
+      h('p', `${count} automation${count === 1 ? '' : 's'} that keep${count === 1 ? 's' : ''} things running in the background – so no enquiry, booking, invoice or happy customer slips through. Start with these and build from here.`),
+      data.note ? h('div', { class: 'why' }, data.note) : null,
+      data.sections.map((sec) => h('section', { class: 'ess-pub-section' },
+        h('h2', sec.title),
+        h('p', { class: 'small muted', style: { marginBottom: '8px' } }, sec.blurb),
+        sec.items.map((i) => h('div', { class: 'pub-option static ess-pub-item' },
+          h('div', { class: 'grow' }, h('b', i.name), h('div', { class: 'small', style: { marginTop: '2px' } }, i.does), h('div', { class: 'small muted', style: { marginTop: '2px' } }, i.result)),
+          i.on ? h('span', { class: 'badge green' }, 'Already on') : null)))),
       accept)), footer(b));
 }
 

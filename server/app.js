@@ -20,6 +20,7 @@ import { hookRoutes } from './modules/hooks/routes.js';
 import { integrationRoutes } from './modules/integrations/routes.js';
 import { streamHookRoutes, streamRoutes } from './modules/streams/routes.js';
 import { apiKeyRoutes, publicApiRoutes } from './modules/api/routes.js';
+import { essentialsPublicRoutes, essentialsRoutes, socialHookRoutes } from './modules/essentials/routes.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -51,13 +52,16 @@ export function createApp(db) {
   app.use('/api/bookings', bookingRoutes(ctx));
   app.use('/api/invoices', billingRoutes(ctx));
   app.use('/api/agency', agencyRoutes(ctx));
+  app.use('/api/public/essentials', essentialsPublicRoutes(ctx));
   app.use('/api/public', publicRoutes(ctx));
   app.use('/api/hooks/stream', streamHookRoutes(ctx));
+  app.use('/api/hooks/social', socialHookRoutes(ctx));
   app.use('/api/hooks', hookRoutes(ctx));
   app.use('/api/integrations', integrationRoutes(ctx));
   app.use('/api/streams', streamRoutes(ctx));
   app.use('/api/api-keys', apiKeyRoutes(ctx));
   app.use('/api/v1', publicApiRoutes(ctx));
+  app.use('/api/essentials', essentialsRoutes(ctx));
 
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 

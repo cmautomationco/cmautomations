@@ -39,6 +39,7 @@ export const PLACES = {
   branding: { hash: '#/settings/branding', label: 'Branding', words: ['branding', 'logo', 'brand colour', 'colours', 'colors'] },
   phone: { hash: '#/settings/phone', label: 'Phone & alerts settings', words: ['phone settings', 'business number', 'call forwarding', 'alert settings'] },
   whatsapp_settings: { hash: '#/settings/whatsapp', label: 'WhatsApp settings', words: ['whatsapp settings', 'booking assistant', 'whatsapp templates', 'book on whatsapp'] },
+  essentials: { hash: '#/automations/essentials', label: 'Essentials offer', words: ['essentials', 'essentials offer', 'starter automations', 'automation offer'] },
   apihub: { hash: '#/api', label: 'API hub', words: ['api hub', 'income streams', 'my incomes', 'side hustles', 'all my income'] },
   api_keys: { hash: '#/api/keys', label: 'API keys', words: ['api keys', 'api key'] },
   api_docs: { hash: '#/api/docs', label: 'API docs', words: ['api docs', 'api documentation', 'try the api'] },
@@ -369,6 +370,24 @@ export const TOPICS = [
     keywords: ['go live with messages', 'go live with real', 'go live with texts', 'go live with whatsapp', 'connect twilio', 'connect stripe', 'connect resend', 'real texts', 'real whatsapp', 'send for real', 'api key', 'not actually sent', 'demo not sent'],
     answer: 'Go to Settings → Connections. Paste your Twilio Account SID and Auth Token (calls, texts and WhatsApp), your Stripe secret key (card payments) and your Resend API key (email). Each card has a Test button that checks it against the real service and explains any problem in plain English, plus “Send a test message” to your own phone. Keys are stored encrypted and each business uses its own accounts.',
     go: { place: 'connections' }, admin: true,
+  },
+  {
+    key: 'essentials', title: 'Which automations should a business start with?',
+    keywords: ['essentials', 'starter automations', 'what automations', 'which automations', 'automation offer', 'offer to a client', 'start with', 'must have automations', 'core automations'],
+    answer: 'Open Automations and press the square Essentials tile. It lists the 17 automations that keep a business running, in five sections – never miss a lead, bookings that happen, looking after customers, winning the work & getting paid, and reviews & referrals. “Start” ones are what most businesses begin with; “Next” ones are the layer to add as they grow. Switch each on there, tune its options, or press “Send as an offer” to send a business a link – saying yes switches them on in their system.',
+    go: { place: 'essentials' },
+  },
+  {
+    key: 'social_replies', title: 'Auto-reply to Instagram, Facebook and TikTok DMs and comments',
+    keywords: ['dm', 'dms', 'instagram dm', 'comment reply', 'reply to comments', 'auto reply instagram', 'manychat', 'tiktok comments', 'facebook messages', 'keyword reply'],
+    answer: 'In Automations → Essentials, switch on “DM & comment auto replies” and open its options. Point ManyChat, Make or Zapier at the social address shown there; every DM and comment then lands in Messages and gets an instant reply – comments get a public reply plus a DM, and keyword rules (like “price → …”) answer common questions for you. Press “Try it” to send a test DM.',
+    go: { place: 'essentials' }, admin: true,
+  },
+  {
+    key: 'birthdays', title: 'Birthday and special occasion messages',
+    keywords: ['birthday', 'birthdays', 'anniversary', 'special occasion', 'special date'],
+    answer: 'Add a birthday or special date (with what it is, e.g. “wedding anniversary”) to a contact in the CRM – press Edit, then “Birthday, special date & social handles”. With birthday & occasion messages switched on in Automations → Essentials, they get a message on the day, once a year.',
+    go: { place: 'essentials' },
   },
   {
     key: 'income_streams', title: 'Keep all my income streams in one place',

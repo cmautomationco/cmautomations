@@ -20,7 +20,7 @@ const REWRITES = [
 /** What to put in a placeholder we have no value for (WhatsApp rejects empty ones). */
 export const FALLBACKS = {
   first_name: 'there', address: 'the address you gave us', booking_link: 'our website', review_link: 'Google', staff: 'Our engineer',
-  eta: 'shortly', service: 'appointment', business: 'us',
+  eta: 'shortly', service: 'appointment', business: 'us', occasion: 'special day',
 };
 
 export function whatsappTemplate(body) {
@@ -51,4 +51,5 @@ export function contentVariables(body, vars) {
 export const TEMPLATE_NEEDED = [
   'booking_confirmation', 'booking_reminder_24h', 'booking_reminder_2h', 'booking_moved', 'booking_cancelled', 'booking_on_my_way', 'booking_no_show',
   'booking_review_request', 'deposit_request', 'missed_call', 'new_lead_welcome', 'quote_sent', 'invoice_sent', 'invoice_reminder_1', 'invoice_reminder_2', 'invoice_paid_thanks',
+  'quote_follow_up', 'new_customer_welcome', 'job_thank_you', 'call_thank_you', 'birthday_message', 'special_occasion_message', 'cold_lead_check_in',
 ];

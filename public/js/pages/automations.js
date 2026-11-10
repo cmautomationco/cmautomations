@@ -1,12 +1,15 @@
 import { del, get, patch, post } from '../api.js';
 import { state } from '../app.js';
 import * as presentation from './presentation.js';
+import { essentialsTile, openEssentials } from './essentials.js';
 import { ago, announce, confirmDialog, date, field, h, icon, modal, mount, select, showError, toast } from '../ui.js';
 
 export async function render(el, route = { parts: [], query: {} }) {
   if (route.parts?.[1] === 'presentation') return presentation.render(el, route);
-  const [rules, runs, impact, meta, team] = await Promise.all([get('/automations'), get('/automations/runs'), get('/automations/impact'), get('/automations/meta'), get('/team')]);
+  const [rules, runs, impact, meta, team, essentials] = await Promise.all([get('/automations'), get('/automations/runs'), get('/automations/impact'), get('/automations/meta'), get('/team'), get('/essentials')]);
   const reload = () => render(el);
+  // The Essentials tile reloads the page quietly when something is switched on or off.
+  const quietReload = () => render(el, { parts: ['automations'], query: {} });
   const canEdit = state.me.role !== 'member';
   const max = Math.max(1, ...impact.days.map((d) => d.minutes));
 
@@ -19,8 +22,8 @@ export async function render(el, route = { parts: [], query: {} }) {
         h('a', { class: 'btn soft', href: '#/automations/presentation' }, icon('screen'), 'Watch the walkthrough'),
         canEdit ? h('button', { class: 'btn primary', onclick: () => builder(null, meta, team, reload) }, icon('plus'), 'New automation') : null)),
 
-    h('div', { class: 'grid g3', style: { marginBottom: '16px' } },
-      h('div', { class: 'card card-pad span2' },
+    h('div', { class: 'auto-top', style: { marginBottom: '16px' } },
+      h('div', { class: 'card card-pad' },
         h('div', { class: 'row', style: { justifyContent: 'space-between' } },
           h('h3', 'Time ', h('span', { class: 'blue' }, 'saved'), ' – last 30 days'),
           h('span', { class: 'num' }, `${(impact.total_minutes / 60).toFixed(1)} hours`)),
@@ -30,7 +33,8 @@ export async function render(el, route = { parts: [], query: {} }) {
         h('div', { class: 'label' }, icon('zap'), 'Automated actions'),
         h('div', { class: 'value' }, impact.total_runs),
         h('div', { class: 'sub' }, `${rules.filter((r) => r.enabled).length} of ${rules.length} automations switched on`),
-        h('div', { class: 'sub', style: { marginTop: '14px' } }, `≈ ${Math.round(impact.total_minutes / 60 / 4.3 * 10) / 10} hrs saved per week, per business`))),
+        h('div', { class: 'sub', style: { marginTop: '14px' } }, `≈ ${Math.round(impact.total_minutes / 60 / 4.3 * 10) / 10} hrs saved per week, per business`)),
+      essentialsTile(essentials, quietReload)),
 
     h('div', { class: 'grid g3', style: { alignItems: 'start' } },
       h('div', { class: 'stack span2' }, rules.map((r) => h('div', { class: 'card card-pad' },
@@ -55,6 +59,8 @@ export async function render(el, route = { parts: [], query: {} }) {
           h('div', { class: 'ico', style: r.status === 'error' ? { background: 'var(--red-bg)', color: 'var(--red)' } : {} }, icon('zap')),
           h('div', { class: 'grow', style: { minWidth: 0 } }, h('div', { style: { fontWeight: 600, fontSize: '13px' } }, r.name), h('div', { class: 'small muted' }, r.detail)),
           h('div', { class: 'small muted', style: { whiteSpace: 'nowrap' } }, ago(r.created_at))))))));
+  // #/automations/essentials opens the Essentials panel straight away.
+  if (route.parts?.[1] === 'essentials' && !document.querySelector('.ess-drawer')) openEssentials(quietReload);
 }
 
 // Shows {{contact.first_name}} as ‹first name› so rules read naturally.

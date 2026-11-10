@@ -302,12 +302,12 @@ CREATE TABLE IF NOT EXISTS assistant_logs (
   created_at TEXT NOT NULL
 );
 
--- ───────────────────────── Messages (email, SMS, WhatsApp) ─────────────────────────
+-- ───────────────────────── Messages (email, SMS, WhatsApp, Instagram/Facebook/TikTok DMs & comments) ─────────────────────────
 CREATE TABLE IF NOT EXISTS messages (
   id            TEXT PRIMARY KEY,
   org_id        TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   contact_id    TEXT REFERENCES contacts(id) ON DELETE SET NULL,
-  channel       TEXT NOT NULL CHECK (channel IN ('email','sms','whatsapp')),
+  channel       TEXT NOT NULL CHECK (channel IN ('email','sms','whatsapp','instagram','facebook','tiktok')),
   direction     TEXT NOT NULL CHECK (direction IN ('out','in')),
   to_addr       TEXT,
   from_addr     TEXT,
@@ -635,3 +635,18 @@ CREATE TABLE IF NOT EXISTS api_log (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_api_log ON api_log(org_id, created_at);
+
+-- The Essentials offer sent to a business: which automations, and whether they said yes.
+CREATE TABLE IF NOT EXISTS automation_offers (
+  id           TEXT PRIMARY KEY,
+  org_id       TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  token        TEXT NOT NULL UNIQUE,
+  items        TEXT NOT NULL DEFAULT '[]',
+  note         TEXT,
+  status       TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent','accepted')),
+  created_by   TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at   TEXT NOT NULL,
+  viewed_at    TEXT,
+  accepted_at  TEXT,
+  accepted_by  TEXT
+);

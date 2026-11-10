@@ -23,7 +23,7 @@ const limited = (req, bucket, max = 8) => {
 };
 
 /** Name, logo, colour and contact details of a business, for its public pages. */
-function businessCard(db, org) {
+export function businessCard(db, org) {
   const brand = parseBrand(org);
   const messaging = getMessagingSettings(db, org.id);
   const agency = org.agency_id ? db.get('SELECT name, brand FROM organizations WHERE id = ?', org.agency_id) : null;

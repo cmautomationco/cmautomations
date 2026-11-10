@@ -241,6 +241,20 @@ export const RECIPES = [
     ],
   },
   {
+    recipe: 'referral_after_job',
+    name: 'Happy customer → ask for a referral',
+    description: 'A week after a job is done, the owner gets a task to ask the customer for a referral, with wording ready to send. Off until switched on in Essentials.',
+    trigger: 'booking.completed',
+    enabled: false,
+    conditions: [],
+    actions: [
+      {
+        type: 'create_task', title: 'Ask {{contact.first_name}} {{contact.last_name}} for a referral', priority: 'medium', due_in_days: 7, assign_to: 'owner',
+        description: 'They had their {{service.name}} done a week ago. Send something like:\n\n“Hi {{contact.first_name}}, really glad we could help. If you know anyone else who could do with us, we’d love an introduction – just pass on our number. Thank you!”',
+      },
+    ],
+  },
+  {
     recipe: 'proposal_accepted_celebrate',
     name: 'Proposal accepted → tell the agency team',
     description: 'When a prospect accepts an agency proposal, everyone in the agency hears about it.',

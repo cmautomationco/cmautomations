@@ -84,7 +84,20 @@ WHEN something happens, IF it matches, THEN the system does the work.
 - [ ] Check the activity log and the time-saved chart to see everything it has done.
 - [ ] Press “Watch the walkthrough” for the client presentation: the onboarding journey, how it works and live examples. Use ← → to move, Notes for what to say, Present for full screen.
 
-## 9. Assistant (chat)
+## 9. Essentials offer (in Automations)
+
+The 17 automations that keep a business running – missed-call replies, reminders, reviews, invoices, DMs and more – as one simple offer, in five sections. Each can be switched on, tuned and built on.
+
+- [ ] Open Automations and press the square Essentials tile at the top right.
+- [ ] Read down the five sections. “Start” items are what most businesses begin with; “Next” items are the layer to add as they grow. Anything still needing set-up says what (e.g. “Add your Google review link”).
+- [ ] Switch one on – say Referral task – and the tile’s count goes up. It’s the same switch as the real automation underneath.
+- [ ] Open Options on “Hour-before reminder” and choose 1 hour, or on “Missed-call response” choose WhatsApp, text or Instagram.
+- [ ] DM & comment auto replies is on for Bright Path: open Messages and choose “Instagram · Facebook · TikTok” to see Hannah’s price question answered by a keyword rule and Tom’s comment answered publicly and by DM.
+- [ ] Back in Essentials, open Options on DM & comment auto replies and press “Try it: send a test DM or comment”.
+- [ ] Press “Send as an offer”, pick “Everything not on yet”, add a note and create the link. Open it – that’s what the business sees – and press “Yes – switch on”. Everything is switched on in their system and a task lists what’s left to set up.
+- [ ] In the CRM, open a customer, press Edit and add a birthday or special date. Emma’s birthday is today, so her birthday message goes out while this page is open.
+
+## 10. Assistant (chat)
 
 The round chat button in the bottom-right corner, on every page. It finds the answer and takes you there.
 
@@ -97,7 +110,7 @@ The round chat button in the bottom-right corner, on every page. It finds the an
 - [ ] In Swift Plumbing & Heating ask “any missed calls?”, “who owes me money?”, “what jobs have I got today?” or “how do I link my WhatsApp?” – it answers from the real data and opens the right page.
 - [ ] Ask something it can’t answer – it offers to log it for the team so a person picks it up.
 
-## 10. Help Desk
+## 11. Help Desk
 
 Every problem tracked until it’s sorted, with response targets and automatic escalation.
 
@@ -107,7 +120,7 @@ Every problem tracked until it’s sorted, with response targets and automatic e
 - [ ] Write how it was fixed and press “Mark resolved” – whoever raised it gets a notification.
 - [ ] Check “What people ask the assistant” to see where your team or clients get stuck.
 
-## 11. Messages, calls & WhatsApp (trades)
+## 12. Messages, calls & WhatsApp (trades)
 
 Switch to Swift Plumbing & Heating first. Calls to the business number ring Dave’s mobile; missed callers are texted straight back; every WhatsApp and text lands here and on the customer’s record, so nothing is missed while he’s on the tools.
 
@@ -124,7 +137,7 @@ Switch to Swift Plumbing & Heating first. Calls to the business number ring Dave
 - [ ] Settings → Connections is where each business connects its own Twilio (calls, texts, WhatsApp), Stripe (card payments) and email accounts, with a Test button for each. In this test build it explains what to do on the live server.
 - [ ] Settings → Message wording lets you edit every automatic message (missed-call text, reminders, invoice chasers).
 
-## 12. Bookings & reminders
+## 13. Bookings & reminders
 
 The diary, online booking and automatic reminders that cut no-shows.
 
@@ -136,7 +149,7 @@ The diary, online booking and automatic reminders that cut no-shows.
 - [ ] Services: add what customers can book, the price and an optional deposit. Hours & reminders: opening hours, how many jobs at once, reminder times, the morning job sheet and time off.
 - [ ] The calendar link under “Sync to Google, Outlook or iPhone” puts every booking in your phone’s calendar (on the live system).
 
-## 13. Quotes, invoices & payments
+## 14. Quotes, invoices & payments
 
 Won deal or finished job → quote → invoice → paid, with automatic chasing.
 
@@ -146,7 +159,7 @@ Won deal or finished job → quote → invoice → paid, with automatic chasing.
 - [ ] Press “New quote” or “New invoice”, add lines and press Save & send. On a deal in the CRM pipeline you can also press Create quote or Create invoice.
 - [ ] Settings: VAT, bank details for bank transfers, numbering and the chasing schedule.
 
-## 14. Lead forms & branding
+## 15. Lead forms & branding
 
 Website enquiries straight into the CRM, and each business in its own colours.
 
@@ -154,7 +167,7 @@ Website enquiries straight into the CRM, and each business in its own colours.
 - [ ] Press “New form” to build your own, then “Copy embed code” to put it on a website.
 - [ ] Settings → Branding: change the logo, name and colour. The app and every customer page (booking page, quotes, invoices, forms, reports) use it.
 
-## 15. Agency control centre
+## 16. Agency control centre
 
 Your view across every client business, the audit → proposal → new client flow, and monthly reports.
 
@@ -164,7 +177,7 @@ Your view across every client business, the audit → proposal → new client fl
 - [ ] Press “New audit”: fill in the client, the discovery call and the time audit, then “Score it & write the proposal”. Send it, open the proposal link and accept it – the client’s branded system is created with a kick-off task.
 - [ ] Monthly reports: open Swift’s September report (hours saved, missed calls texted back, bookings, money collected), or build and send one for another client.
 
-## 16. Settings & notifications
+## 17. Settings & notifications
 
 Business details, team, channels and extra businesses.
 
@@ -173,7 +186,7 @@ Business details, team, channels and extra businesses.
 - [ ] Press “Add another business” to set up a new business in any niche. It comes ready with pillars, channels and automations.
 - [ ] Press the bell at the top to read notifications from automations and kudos.
 
-## 17. What this test build simulates
+## 18. What this test build simulates
 
 Everything works end to end, with these limits for now:
 

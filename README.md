@@ -88,6 +88,13 @@ All screenshots come from the running app with the built-in demo business (`npm 
 |---|---|---|
 | ![Invoices](docs/screenshots/23-quotes-invoices.png) | ![Booking page](docs/screenshots/25-customer-booking-page.png) | ![Invoice](docs/screenshots/26-customer-invoice.png) |
 
+### Automations → Essentials offer
+| The square Essentials tile on the Automations page | The offer: 17 automations in 5 sections, each switched on and tuned in place |
+|---|---|
+| ![Essentials tile](docs/screenshots/37-essentials-tile.png) | ![Essentials offer](docs/screenshots/38-essentials-offer.png) |
+
+![What the business sees when you send the offer](docs/screenshots/39-essentials-offer-link.png)
+
 ### API hub – every income stream in one place
 | All income streams side by side | One stream (Trading): wins, losses, fees, deposits kept apart |
 |---|---|
@@ -349,11 +356,42 @@ For anyone with more than one income – TikTok, trading, digital products, YouT
   - Money coming in can trigger automations ("Money comes into an income stream").
   - The Dashboard shows every stream's month at a glance.
 
-### 11. Lead forms
+### 11. Essentials offer (Automations)
+
+The automations that keep a business running, presented as one simple offer that a business starts with and builds on. Press the **square Essentials tile** on the Automations page to open it.
+
+| Section | Automations (**Start** = what most businesses begin with, *Next* = the layer to add) |
+|---|---|
+| Never miss a lead | **1-minute lead reply** · **Missed-call response** (WhatsApp, text or Instagram – their choice) · *DM & comment auto replies* · *Lead source tagging* |
+| Bookings that happen | **Booking confirmations** · **Day-before reminder** · **Hour-before reminder** (1 or 2 hours) · **No-show rebooking** |
+| Look after every customer | **New customer welcome** · **Thank you after the job** (and optionally after a call) · *Birthday & special occasion messages* |
+| Win the work & get paid | **Quote follow-up** · **Unpaid invoice reminders** |
+| Reviews, referrals & follow-ups | **Review request** · *Replies to automatic messages – checked* · *Referral task* · *Cold lead check-in* |
+
+- **Switching an item on changes the real setting or automation underneath.** It's the same switch as in Settings or the automation list, so nothing drifts out of sync.
+- Each item has **options** where they matter, such as the reply channel, reminder time, follow-up days and keyword replies, plus a link to change its wording.
+- Each item says **what's still needed**, for example "Add your Google review link".
+- **Send as an offer:** pick the automations, add a note and create a link. The business sees a branded page explaining each one in plain words. **"Yes – switch them on"** turns them all on in their system, creates a task listing anything left to set up, and tells the agency.
+- **New automations behind it:**
+  - **New customer welcome:** sent the first time someone becomes a customer – first job done, first payment, or deal won.
+  - **Thank-you:** after later jobs, and optionally after answered calls. A new customer gets the welcome instead, never both.
+  - **Birthday & special date messages:** the dates are saved on the CRM contact, and each message goes once a year (29 February birthdays on the 28th).
+  - **Cold lead check-in:** on weekdays in working hours, at most once every 3 months.
+  - **Unread replies:** a reply to any automatic message that's still unread after N hours becomes an urgent task with an alert.
+  - **Referral task:** a week after the job, with the wording ready to send.
+  - **Lead source tags:** for example "Source: Instagram".
+  - **Customer nudge on quote follow-up:** the customer gets the quote link as well as the team getting a task.
+- **Instagram, Facebook & TikTok DMs and comments:**
+  - They arrive through ManyChat, Make or Zapier at the business's private social address, since those platforms only let approved apps read messages.
+  - They land in Messages (new "Instagram · Facebook · TikTok" filter) and get an instant reply. A comment gets a public reply plus a DM, and keyword rules answer common questions.
+  - Replies are either handed back in the response for the step to post, or posted to the business's own connection.
+  - Replies typed in the inbox go out the same way.
+
+### 12. Lead forms
 
 Build a form in **CRM → Lead forms**, share the link or paste the embed code into a website. Submissions create or update the contact (tagged), send a thank-you, and run the new-lead automations. Spam is filtered with a hidden field and rate limits.
 
-### 12. Automation walkthrough presentation
+### 13. Automation walkthrough presentation
 
 Automations → **Watch the walkthrough** opens a 32-slide presentation for showing a client how an automation project works, from first conversation to results:
 
@@ -441,6 +479,7 @@ server/
     messaging/             templates, providers (Twilio, Resend, webhook, demo), WhatsApp templates, inbox, calls
     bookings/              services, availability, reminders, job sheet, calendar feed, WhatsApp booking assistant (chat.js)
     integrations/          each business's own Twilio, Stripe and email accounts (encrypted), checks and set-up
+    essentials/            the Essentials offer: catalogue of 17 automations, offers, and the timed ones (birthdays, cold leads, unread replies)
     streams/               API hub income streams: types, entries, figures, totals, CSV import, web addresses
     api/                   API keys, the key-protected /api/v1 and the activity log
     billing/               quotes, invoices, payments, chasing, Stripe Checkout
@@ -477,6 +516,7 @@ All endpoints are under `/api` and use `Authorization: Bearer <token>`, except t
 | Automations | `GET/POST /automations`, `PATCH/DELETE /automations/:id`, `POST /automations/:id/test`, `GET /automations/runs`, `GET /automations/impact`, `GET /automations/meta` |
 | Help Desk | `GET /helpdesk/meta`, `GET/POST /helpdesk/issues`, `GET/PATCH/DELETE /helpdesk/issues/:id`, `POST /helpdesk/issues/:id/comments`, `GET /helpdesk/stats` |
 | Assistant | `GET /assistant/meta`, `POST /assistant/chat`, `GET /assistant/insights` (owners/admins) |
+| Essentials | `GET /essentials`, `POST /essentials/apply` (`{ changes: [{ key, on, options }] }`), `POST /essentials/offers`, public `GET /public/essentials/:token`, `POST /public/essentials/:token/accept`, `POST /hooks/social/:token` (Instagram/Facebook/TikTok DMs & comments from ManyChat, Make or Zapier) |
 | API hub (signed in) | `GET /streams`, `GET /streams/types`, `POST /streams`, `GET/PATCH/DELETE /streams/:id`, `POST /streams/:id/entries`, `PATCH/DELETE /streams/:id/entries/:entryId`, `DELETE /streams/:id/test-entries`, `POST /streams/:id/metrics`, `POST /streams/:id/import`, `POST /streams/:id/hook/rotate`, `PUT /streams/:id/hook/secret`, `POST /streams/:id/hook/test`, `GET/POST /api-keys`, `DELETE /api-keys/:id`, `GET /api-keys/activity` |
 | API (key) | `GET /v1`, `GET /v1/summary`, `GET /v1/streams`, `GET /v1/streams/:id`, `GET/POST /v1/streams/:id/entries`, `DELETE /v1/streams/:id/entries/:entryId`, `POST /v1/streams/:id/metrics`, `GET/POST /v1/contacts`, `POST /v1/tasks`, `GET /v1/bookings`, `GET /v1/invoices` – send `Authorization: Bearer cmk_…` |
 | Connections | `GET /integrations`, `PUT/DELETE /integrations/:kind` (twilio, stripe, email), `POST /integrations/:kind/check`, `POST /integrations/twilio/connect-numbers`, `POST /integrations/stripe/webhook`, `POST /integrations/test-message` |
