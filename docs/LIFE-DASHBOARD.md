@@ -64,6 +64,12 @@ Every section except Finance has its own ranked task manager:
 
 ## How it's laid out
 
+On a phone, a tab bar along the bottom holds **Today, ADHD, Planner, Routines** and **More**. More opens every section plus your sync status. The **+** button for a new task or idea sits just above the tab bar.
+
+| Phone: Today | Phone: More |
+|---|---|
+| ![Phone Today](screenshots/65-life-phone-today.png) | ![Phone More](screenshots/66-life-phone-more.png) |
+
 | Group | Sections |
 |---|---|
 | **Daily** | Today · 🧠 ADHD hub (with 🌿 Mind & reset inside it) · 🗓️ Weekly planner · 🔁 Routines |

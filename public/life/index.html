@@ -537,6 +537,17 @@ input[type=range].prio:focus-visible { outline: 2px solid var(--sky); outline-of
 .ping-row { display: flex; align-items: center; gap: 12px; justify-content: space-between; max-width: 320px; }
 .btn[disabled] { opacity: .45; cursor: not-allowed; }
 
+/* ---------- phone tab bar & "More" sheet ---------- */
+.tabbar { display: none; }
+.fab b { font-weight: 750; }
+.sheet-overlay { align-items: end; padding: 0; }
+.sheet { width: 100%; max-height: 85vh; overflow-y: auto; background: var(--surface); border-radius: 22px 22px 0 0; padding: 10px 16px calc(18px + env(safe-area-inset-bottom)); box-shadow: var(--shadow-lg); }
+.sheet .grab { width: 44px; height: 5px; border-radius: 999px; background: var(--line); margin: 4px auto 12px; }
+.sheet-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sheet-grid button { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font-weight: 650; cursor: pointer; text-align: left; }
+.sheet-grid button.on { background: var(--accent-wash); border-color: var(--accent); color: var(--accent-strong); }
+.sheet-label { font-size: 11px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 14px 2px 6px; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 1080px) {
   .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -546,22 +557,29 @@ input[type=range].prio:focus-visible { outline: 2px solid var(--sky); outline-of
 }
 @media (max-width: 860px) {
   .app { grid-template-columns: 1fr; }
-  .nav {
-    position: sticky; top: 0; height: auto; z-index: 30; flex-direction: row; overflow-x: auto; padding: 8px 10px; gap: 4px;
-    border-right: 0; border-bottom: 1px solid var(--line); scrollbar-width: none;
+  .nav { display: none; }
+  .tabbar {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+    background: var(--surface); border-top: 1px solid var(--line); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow: 0 -6px 20px rgba(40, 20, 10, .06);
   }
+  .tabbar button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 12px; font-size: 11px; font-weight: 650; color: var(--muted); cursor: pointer; }
+  .tabbar button .ti { font-size: 21px; line-height: 1; }
+  .tabbar button.on { color: var(--accent-strong); background: var(--accent-wash); }
+  .fab { bottom: calc(78px + env(safe-area-inset-bottom)); right: 16px; width: 56px; height: 56px; padding: 0; justify-content: center; border-radius: 50%; }
+  .fab .fab-label { display: none; }
+  .fab span { font-size: 28px; }
+  #toast { bottom: calc(150px + env(safe-area-inset-bottom)); }
   .nav::-webkit-scrollbar { display: none; }
   .brand, .nav-foot, .nav-label { display: none; }
   .nav button { width: auto; flex: 0 0 auto; padding: 8px 11px; font-size: 13px; }
   .nav button.on { box-shadow: inset 0 -3px 0 var(--accent); }
   .nav .tag { display: none; }
-  main { padding: 16px 16px 110px; }
+  main { padding: 16px 16px calc(160px + env(safe-area-inset-bottom)); }
   .page-head { padding: 18px; border-radius: 18px; }
   .g2, .g3, .scorer, .buckets { grid-template-columns: 1fr; }
   .span2 { grid-column: auto; }
   h1 { font-size: 22px; }
   .scale { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .fab { right: 16px; bottom: 16px; }
   .tm-add, .tm-add.no-area { grid-template-columns: 1fr; }
   .tm-row { flex-wrap: wrap; }
   .tip { flex-wrap: wrap; }
@@ -586,6 +604,8 @@ input[type=range].prio:focus-visible { outline: 2px solid var(--sky); outline-of
   .hero-num { font-size: 44px; }
   .seg button { width: 34px; }
   .card { --pad: 15px; }
+  .card-head { flex-wrap: wrap; }
+  .card-head > .btn, .card-head > .row { margin-left: auto; }
 }
 </style>
 </head>
@@ -594,7 +614,8 @@ input[type=range].prio:focus-visible { outline: 2px solid var(--sky); outline-of
   <nav class="nav" id="nav" aria-label="Sections"></nav>
   <main id="main"></main>
 </div>
-<button class="fab" data-act="add-task" aria-label="Score a new task or idea"><span>+</span> New task or idea</button>
+<button class="fab" data-act="add-task" aria-label="Score a new task or idea"><span>+</span><b class="fab-label">New task or idea</b></button>
+<nav class="tabbar" id="tabbar" aria-label="Main sections"></nav>
 <div id="modal"></div>
 <div id="tip" role="status" aria-live="polite"></div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -1165,11 +1186,30 @@ function renderNav() {
     NAV.map(function (n) { return (n.group ? '<div class="nav-label">' + n.group + '</div>' : '') + '<button class="' + (route.page === n.id || (n.id === 'adhd' && route.page === 'mind') ? 'on' : '') + '" data-act="nav" data-id="' + n.id + '"><span class="ico">' + n.ico + '</span>' + n.name + (n.tag ? '<span class="tag">' + n.tag + '</span>' : '') + '</button>'; }).join('') +
     '<div class="nav-foot">' + esc(syncStatusText()) + '</div>';
 }
+var TABS = [['home', '🏠', 'Today'], ['adhd', '🧠', 'ADHD'], ['planner', '🗓️', 'Planner'], ['routines', '🔁', 'Routines']];
+function renderTabbar() {
+  var tb = $('#tabbar'); tb.hidden = !S.started; if (!S.started) return;
+  var cur = route.page === 'mind' ? 'adhd' : route.page, inTabs = TABS.some(function (t) { return t[0] === cur; });
+  tb.innerHTML = TABS.map(function (t) { return '<button class="' + (cur === t[0] ? 'on' : '') + '" data-act="nav" data-id="' + t[0] + '"' + (cur === t[0] ? ' aria-current="page"' : '') + '><span class="ti">' + t[1] + '</span>' + t[2] + '</button>'; }).join('') +
+    '<button class="' + (inTabs ? '' : 'on') + '" data-act="more-open"><span class="ti">☰</span>More</button>';
+}
+function openMore() {
+  var cur = route.page === 'mind' ? 'adhd' : route.page, group = '';
+  var html = NAV.map(function (n) {
+    var head = n.group && n.group !== group ? '</div><div class="sheet-label">' + n.group + '</div><div class="sheet-grid">' : '';
+    if (n.group) group = n.group;
+    return head + '<button class="' + (cur === n.id ? 'on' : '') + '" data-act="nav" data-id="' + n.id + '"><span>' + n.ico + '</span>' + n.name + '</button>';
+  }).join('');
+  $('#modal').innerHTML = '<div class="overlay sheet-overlay" data-act="modal-bg"><div class="sheet" role="dialog" aria-modal="true" aria-label="All sections"><div class="grab"></div>' +
+    '<div class="row between"><b>' + esc(S.settings.name ? S.settings.name + '\'s life' : 'Life Dashboard') + '</b><button class="icon-btn" data-act="modal-close" aria-label="Close">✕</button></div>' +
+    '<div><div class="sheet-grid">' + html + '</div></div><p class="small muted mt">' + esc(syncStatusText()) + '</p></div></div>';
+}
 function render() {
   applyTheme();
   chartQueue = [];
   hideTip();
   renderNav();
+  renderTabbar();
   var html;
   if (!S.started) { html = viewWelcome(); $('.fab').hidden = true; }
   else {
@@ -1233,7 +1273,7 @@ function viewHome() {
       '</div>' +
     '</div>' +
     homeProductivity() +
-    '<div class="section-label"><span>🎯</span>Top priorities</div>' + taskManager('home', { areas: null, def: 'personal', title: '🎯 Top priorities', blurb: 'Your most important open tasks, from every area.', limit: 6 }) +
+    '<div class="mt"></div>' + taskManager('home', { areas: null, def: 'personal', title: '🎯 Top priorities', blurb: 'Your most important open tasks, from every area.', limit: 5, noAdd: true }) +
     '<div class="section-label"><span>📊</span>This week so far</div>' + weekTiles(ws) +
     '<div class="grid g3 mt">' +
       '<div class="card calm"><div class="card-head"><div><h2>Coming up</h2><p>Bills and admin in the next 7 days</p></div><button class="btn sm ghost" data-act="go" data-page="admin">All →</button></div>' +
@@ -1244,9 +1284,9 @@ function viewHome() {
         (month.budget ? '<div class="mt-s"><div class="meter ' + meterClass(month.out / month.budget) + '"><span style="width:' + clamp(month.out / month.budget * 100, 0, 100) + '%"></span></div><div class="small muted mt-s">' + Math.round(month.out / month.budget * 100) + '% of your ' + money(month.budget, 0) + ' budget used</div></div>' : '') + '</div>' +
       '<div class="card calm"><div class="card-head"><div><h2>Moving this week</h2><p>From Strava and your own log</p></div><button class="btn sm ghost" data-act="go" data-page="health">Health →</button></div>' +
         '<div class="grid g2"><div class="stat"><span class="label">Distance</span><span class="value">' + num(sum(acts, function (a) { return a.distance; }), 1) + ' km</span></div><div class="stat"><span class="label">Active time</span><span class="value">' + hrs(sum(acts, function (a) { return a.minutes; }) / 60) + '</span></div></div>' +
-        '<div class="mt-s"><div class="progress"><span style="width:' + clamp(sum(acts, function (a) { return a.distance; }) / (S.settings.distanceGoal || 1) * 100, 0, 100) + '%"></span></div><div class="small muted mt-s">' + acts.length + ' activities · goal ' + S.settings.distanceGoal + ' km</div></div></div>' +
+        '<div class="mt-s"><div class="progress"><span style="width:' + clamp(sum(acts, function (a) { return a.distance; }) / (S.settings.distanceGoal || 1) * 100, 0, 100) + '%"></span></div><div class="small muted mt-s">' + (acts.length === 1 ? '1 activity' : acts.length + ' activities') + ' · goal ' + S.settings.distanceGoal + ' km</div></div></div>' +
     '</div>' +
-    (idea ? '<div class="card mt tint"><div class="row between"><div><span class="pill plain">💡 Content idea waiting · ' + esc(idea.platform) + '</span><h3 class="mt-s">' + esc(idea.title) + '</h3><p class="small muted">' + esc(idea.hook || '') + '</p></div><button class="btn sm" data-act="go" data-page="content">Open content ideas →</button></div></div>' : '');
+    (idea ? '<div class="card mt tint"><div class="row between"><div><span class="pill plain">💡 Content idea waiting · ' + esc(idea.platform) + '</span><h3 class="mt-s">' + esc(idea.title) + '</h3><p class="small muted">' + esc(idea.hook || '') + '</p></div><button class="btn sm" data-act="go" data-page="content">Open the Content hub →</button></div></div>' : '');
 }
 function homeProductivity() {
   var t = dayStats(new Date()), tr = dayTrendText(t.score, usualScore()), tips = dailyTips().slice(0, 2);
@@ -2935,7 +2975,8 @@ function act(a, d, el) {
   d = d || {};
   var t;
   switch (a) {
-    case 'nav': go(d.id); break;
+    case 'nav': if ($('#modal').innerHTML) closeModal(); go(d.id); break;
+    case 'more-open': openMore(); break;
     case 'go': if (d.page === 'adhd' && d.tab === 'score') inlineDraft = null; go(d.page, d.tab); break;
     case 'start': S.started = true; save(); go('adhd', 'checkin'); break;
     case 'start-demo':
