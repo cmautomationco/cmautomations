@@ -699,9 +699,10 @@ function merge(base, s) {
   });
   return base;
 }
-function save() {
+function localSave() {
   try { localStorage.setItem(KEY, JSON.stringify(S)); saveOk = true; } catch (e) { saveOk = false; }
 }
+function save() { localSave(); syncSchedule(); } // saved here straight away, then synced to your other devices
 
 /* =====================================================================
    The formula
@@ -1162,7 +1163,7 @@ window.addEventListener('hashchange', function () { if ($('#modal').innerHTML) c
 function renderNav() {
   $('#nav').innerHTML = '<div class="brand"><div class="brand-mark">L</div><div><b>' + esc(S.settings.name ? S.settings.name + '\'s life' : 'Life Dashboard') + '</b><small>Personal side, sorted</small></div></div>' +
     NAV.map(function (n) { return (n.group ? '<div class="nav-label">' + n.group + '</div>' : '') + '<button class="' + (route.page === n.id || (n.id === 'adhd' && route.page === 'mind') ? 'on' : '') + '" data-act="nav" data-id="' + n.id + '"><span class="ico">' + n.ico + '</span>' + n.name + (n.tag ? '<span class="tag">' + n.tag + '</span>' : '') + '</button>'; }).join('') +
-    '<div class="nav-foot">Saved in this browser. Back it up in Settings.</div>';
+    '<div class="nav-foot">' + esc(syncStatusText()) + '</div>';
 }
 function render() {
   applyTheme();
@@ -1191,7 +1192,7 @@ function viewWelcome() {
   return '<div class="welcome"><div class="brand-mark">L</div><h1>Your life, on one calm screen</h1>' +
     '<p>Check in with how you\'re doing, score every task or idea before it takes over your head, get three clear things to do each day, and see what you\'ve saved and solved every week. Finance, content, socials, health and Strava sit alongside it.</p>' +
     '<div class="row" style="justify-content:center"><button class="btn primary" data-act="start">Start fresh</button><button class="btn" data-act="start-demo">Explore with example data</button></div>' +
-    '<p class="small muted mt">Everything is saved in this browser only. You can export a backup at any time.</p></div>';
+    '<p class="small muted mt">Everything is saved on this device, and syncs to your phone and laptop once you sign in.</p>' + (syncPossible() ? '<div style="text-align:left">' + syncCard(true) + '</div>' : '') + '</div>';
 }
 
 function greeting() { var h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; }
@@ -1831,7 +1832,7 @@ function viewSocials() {
       return '<div class="card' + (S.socials.indexOf(s) % 2 ? ' calm' : '') + '"><div class="card-head"><div><h2>' + esc(s.platform) + '</h2><p>' + esc(s.handle) + '</p></div><button class="icon-btn" data-act="social-del" data-id="' + s.id + '" aria-label="Remove channel">✕</button></div>' +
         '<div class="row between"><div class="stat"><span class="label">Followers</span><span class="value">' + compact(cur) + '</span><span class="delta ' + (gain > 0 ? 'up' : gain < 0 ? 'down' : '') + '">' + (gain ? (gain > 0 ? '▲ ' : '▼ ') + compact(Math.abs(gain)) + ' in 30 days' : 'No change yet') + '</span></div>' + sparkline(h.slice(-12).map(function (x) { return x.count; })) + '</div>' +
         '<div class="row mt small muted"><span>Posted this week: <b style="color:var(--ink)">' + posts + '</b></span>' + (s.url ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">Open ↗</a>' : '') + '</div>' +
-        '<div class="row mt-s"><input type="number" placeholder="New follower count" id="f-' + s.id + '" style="flex:1"><button class="btn sm" data-act="social-update" data-id="' + s.id + '">Update</button></div></div>';
+        '<div class="row mt-s"><input type="number" placeholder="New follower count" id="f-' + s.id + '" style="flex:1"><button class="btn sm" data-act="social-update" data-id="' + s.id + '">Update</button></div>' + hubLinkHTML(s) + '</div>';
     }).join('') + '</div>' : '<div class="card"><div class="empty">Add your first channel below.</div></div>') +
     '<div class="mt">' + taskManager('socials', { areas: ['social'], def: 'social', title: '🎯 Social task manager', blurb: 'Replies, bio updates, collabs and account admin.', placeholder: 'e.g. Reply to comments on yesterday\'s video' }) + '</div>' +
     '<div class="card calm mt"><div class="card-head"><div><h2>Add a channel</h2></div></div><div class="form-row">' +
@@ -1840,7 +1841,7 @@ function viewSocials() {
       '<label class="field">Followers now<input type="number" id="s-count" placeholder="0"></label>' +
       '<label class="field">Profile link (optional)<input type="text" id="s-url" placeholder="https://"></label>' +
       '<button class="btn primary" data-act="social-add">Add channel</button></div>' +
-      '<p class="small muted mt">Live follower counts need each platform\'s API, which can be added through the CM Automations server later. For now, a quick weekly update keeps the trend accurate.</p></div>';
+      '<p class="small muted mt">Link a channel to its stream in your API hub and follower counts stay in step both ways — update here or in the hub, and your phone and laptop see the same figures. TikTok and Instagram don\'t share follower counts with other apps, so a quick weekly update (here or in the hub) keeps the trend accurate.</p></div>';
 }
 
 /* ---------- Health ---------- */
@@ -1911,7 +1912,7 @@ function importStrava(text) {
 /* ---------- Settings ---------- */
 function viewSettings() {
   var s = S.settings, w = s.weights;
-  return '<div class="page-head"><div><h1>⚙️ Settings</h1><p>Make it yours.</p></div></div>' +
+  return '<div class="page-head"><div><h1>⚙️ Settings</h1><p>Make it yours.</p></div></div>' + syncCard() + '<div class="mt"></div>' +
     '<div class="grid g2"><div class="card"><div class="card-head"><h2>You</h2></div><div class="form-row">' +
       '<label class="field">Your first name<input type="text" id="set-name" value="' + esc(s.name) + '"></label>' +
       '<label class="field">Theme<select id="set-theme">' + [['system', 'Match my device'], ['light', 'Light'], ['dark', 'Dark']].map(function (o) { return '<option value="' + o[0] + '"' + (s.theme === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label>' +
@@ -2627,8 +2628,239 @@ function act2(a, d, el) {
       if (typeof Notification === 'undefined') return toast('This browser doesn\'t support notifications — use the calendar file instead.');
       Notification.requestPermission().then(function () { render(); }); break;
     case 'rem-test': notify('Test reminder', 'This is how your nudges will look.'); break;
+    case 'sync-connect': syncConnect(); break;
+    case 'sync-now': SY.err = null; syncPull().then(function () { syncPush(); render(); toast('☁️ Synced.'); }); break;
+    case 'sync-signout': syncSignOut(); break;
+    case 'sync-choice': syncChoose(d.v); break;
+    case 'hub-unlink': var hc = S.socials.filter(function (x) { return x.id === d.id; })[0]; if (hc) { delete hc.streamId; delete hc.hubMissing; save(); render(); toast('Unlinked from the API hub.'); } break;
   }
 }
+
+/* =====================================================================
+   ☁️ Sync — phone ↔ laptop through your CM Automations server
+   The browser copy is always the working copy (so it works offline).
+   Changes are sent ~1.5s after you stop; other devices' changes are pulled
+   every 45s and whenever you come back to the tab. If both devices changed
+   things while apart, the two are merged record by record (3-way merge
+   against the last synced copy), so nothing is lost.
+   ===================================================================== */
+var SYNC_KEY = 'life-dashboard-sync', BASE_KEY = 'life-dashboard-sync-base';
+var SY = loadSync();
+function loadSync() {
+  var d = { token: null, email: '', name: '', device: guessDevice(), version: 0, lastSync: null, err: null };
+  try { var raw = localStorage.getItem(SYNC_KEY); if (raw) d = Object.assign(d, JSON.parse(raw)); } catch (e) { /* ignore */ }
+  d.busy = false; d.timer = null; d.again = false;
+  return d;
+}
+function storeSync() { try { localStorage.setItem(SYNC_KEY, JSON.stringify({ token: SY.token, email: SY.email, name: SY.name, device: SY.device, version: SY.version, lastSync: SY.lastSync, err: SY.err })); } catch (e) { /* ignore */ } }
+function getBase() { try { var b = localStorage.getItem(BASE_KEY); return b ? JSON.parse(b) : null; } catch (e) { return null; } }
+function setBase(data) { try { localStorage.setItem(BASE_KEY, JSON.stringify(data)); } catch (e) { /* storage full: next merge treats everything as new, which is still safe */ } }
+function guessDevice() {
+  var ua = navigator.userAgent || '';
+  return /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? (/Mobile/.test(ua) ? 'Android phone' : 'Android tablet') : /Mac/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows laptop' : 'This device';
+}
+function syncPossible() { return /^https?:$/.test(location.protocol); }
+function syncOn() { return syncPossible() && !!SY.token; }
+function apiCall(method, path, body) {
+  return fetch(location.origin + path, { method: method, headers: Object.assign({ 'content-type': 'application/json' }, SY.token ? { authorization: 'Bearer ' + SY.token } : {}), body: body ? JSON.stringify(body) : undefined })
+    .then(function (res) { return res.json().catch(function () { return {}; }).then(function (b) { return { status: res.status, body: b }; }); });
+}
+
+/* ---------- 3-way merge ---------- */
+function same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+function isObj(x) { return x && typeof x === 'object' && !Array.isArray(x); }
+function recKey(x) { return isObj(x) ? (x.id != null ? 'id:' + x.id : (x.date != null && Object.keys(x).length <= 4 ? 'date:' + x.date : null)) : null; }
+function merge3(base, local, remote) {
+  if (same(local, remote)) return local;
+  if (base !== undefined && same(base, local)) return remote;
+  if (base !== undefined && same(base, remote)) return local;
+  if (Array.isArray(local) && Array.isArray(remote)) {
+    var keyed = local.concat(remote).every(function (x) { return recKey(x); });
+    return keyed ? mergeRecords(Array.isArray(base) ? base : [], local, remote) : local;
+  }
+  if (isObj(local) && isObj(remote)) {
+    var b = isObj(base) ? base : {}, out = {}, keys = {};
+    Object.keys(local).concat(Object.keys(remote)).forEach(function (k) { keys[k] = 1; });
+    Object.keys(keys).forEach(function (k) {
+      var inL = k in local, inR = k in remote, inB = k in b;
+      if (inL && inR) out[k] = merge3(inB ? b[k] : undefined, local[k], remote[k]);
+      else if (inL) { if (!(inB && same(b[k], local[k]))) out[k] = local[k]; } // else: deleted on the other device
+      else if (!(inB && same(b[k], remote[k]))) out[k] = remote[k];         // else: deleted on this device
+    });
+    return out;
+  }
+  return local; // both changed the same simple value: this device wins
+}
+function mergeRecords(base, local, remote) {
+  var map = function (arr) { var m = {}; arr.forEach(function (x) { var k = recKey(x); if (k) m[k] = x; }); return m; };
+  var bm = map(base), rm = map(remote), seen = {}, out = [];
+  local.forEach(function (x) { var k = recKey(x); seen[k] = 1; if (k in rm) out.push(merge3(bm[k], x, rm[k])); else if (!(k in bm && same(bm[k], x))) out.push(x); });
+  remote.forEach(function (x) { var k = recKey(x); if (seen[k]) return; if (!(k in bm && same(bm[k], x))) out.push(x); });
+  return out;
+}
+
+/* ---------- push & pull ---------- */
+function syncSchedule() {
+  if (!syncOn()) return;
+  clearTimeout(SY.timer);
+  SY.timer = setTimeout(syncPush, 1500);
+}
+function syncPush() {
+  if (!syncOn()) return;
+  if (SY.busy) { SY.again = true; return; }
+  if (SY.version > 0 && same(S, getBase())) return; // nothing new
+  SY.busy = true;
+  apiCall('PUT', '/api/life/state', { data: S, base_version: SY.version, device: SY.device }).then(function (r) {
+    if (r.status === 200) { SY.version = r.body.version; setBase(S); SY.lastSync = Date.now(); SY.err = null; }
+    else if (r.status === 409) applyRemote(r.body);
+    else if (r.status === 401) { SY.token = null; SY.err = 'Signed out — sign in again in Settings to keep syncing.'; }
+    else SY.err = r.body.error || 'Sync failed (' + r.status + ')';
+  }).catch(function () { SY.err = 'Offline — your changes are saved here and will sync when you\'re back online.'; })
+    .then(function () { SY.busy = false; storeSync(); syncBadge(); if (SY.again) { SY.again = false; syncSchedule(); } });
+}
+function syncPull() {
+  if (!syncOn() || SY.busy) return Promise.resolve();
+  SY.busy = true;
+  return apiCall('GET', '/api/life/state').then(function (r) {
+    if (r.status === 200) {
+      SY.lastSync = Date.now(); SY.err = null;
+      if (r.body.version && r.body.version !== SY.version) applyRemote(r.body);
+      else if (!r.body.version) { SY.version = 0; SY.busy = false; syncPush(); }
+    } else if (r.status === 401) { SY.token = null; SY.err = 'Signed out — sign in again in Settings to keep syncing.'; }
+  }).catch(function () { SY.err = 'Offline — your changes are saved here and will sync when you\'re back online.'; })
+    .then(function () { SY.busy = false; storeSync(); syncBadge(); return syncSocials(); });
+}
+function applyRemote(remote, baseOverride) {
+  var merged = merge3(baseOverride !== undefined ? baseOverride : getBase(), S, remote.data);
+  merged.started = !!(S.started || (remote.data && remote.data.started)); // once set up on any device, it's set up
+  var needPush = !same(merged, remote.data);
+  SY.version = remote.version; setBase(remote.data);
+  S = merge(blank(), merged); migrate(); localSave();
+  if (needPush) syncSchedule();
+  renderSoon();
+}
+var pendingRender = false;
+function renderSoon() {
+  var a = document.activeElement;
+  if ($('#modal').innerHTML || (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) { pendingRender = true; return; }
+  pendingRender = false; render();
+}
+document.addEventListener('focusout', function () { if (pendingRender) setTimeout(function () { if (pendingRender) renderSoon(); }, 300); });
+setInterval(function () { if (document.visibilityState === 'visible') syncPull(); }, 45000);
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') syncPull(); });
+window.addEventListener('online', function () { syncPull().then(syncPush); });
+
+/* ---------- connecting a device ---------- */
+var syncChoice = null;
+function syncConnect() {
+  var email = val('sy-email'), pw = $('#sy-pass') ? $('#sy-pass').value : '', dev = val('sy-device') || guessDevice();
+  if (!email) return toast('Enter the email you use for CM Automations.');
+  SY.err = null; syncBadge();
+  apiCall('POST', '/api/auth/login', { email: email, password: pw }).then(function (r) {
+    if (r.status !== 200 || !r.body.token) { toast(r.body.error || 'Couldn\'t sign in.'); return; }
+    SY.token = r.body.token; SY.email = email; SY.device = dev;
+    return apiCall('GET', '/api/me').then(function (m) { SY.name = (m.body.user || {}).name || ''; return apiCall('GET', '/api/life/state'); }).then(function (st) {
+      var remote = st.body, localHasData = S.started && (S.tasks.length || Object.keys(S.checkins).length || S.socials.length || S.finance.tx.length);
+      if (!remote.version) { SY.version = 0; storeSync(); syncPush(); toast('☁️ Sync is on. This device\'s dashboard is now saved to your account.'); render(); return; }
+      if (!localHasData) { S = merge(blank(), remote.data); migrate(); localSave(); SY.version = remote.version; setBase(remote.data); SY.lastSync = Date.now(); storeSync(); toast('☁️ Signed in — your dashboard from ' + (remote.device || 'your other device') + ' is here.'); render(); syncSocials(); return; }
+      syncChoice = remote; storeSync(); openSyncChoice();
+    });
+  }).catch(function () { toast('Couldn\'t reach the server. Check you\'re online.'); });
+}
+function openSyncChoice() {
+  var r = syncChoice;
+  $('#modal').innerHTML = '<div class="overlay"><div class="modal flow" role="dialog" aria-modal="true" aria-label="Both have data"><div class="modal-head"><h2>☁️ Both have a dashboard</h2></div>' +
+    '<p>Your account already has a dashboard (last saved from <b>' + esc(r.device || 'another device') + '</b>' + (r.updated_at ? ' on ' + fmtDay(r.updated_at) : '') + '), and this device has its own. What should happen?</p>' +
+    '<div class="stack mt" style="gap:8px"><button class="opt" data-act="sync-choice" data-v="merge"><b>Merge both</b> (recommended)<br><span class="small muted">Keeps everything from both — tasks, check-ins, money, socials…</span></button>' +
+    '<button class="opt" data-act="sync-choice" data-v="remote"><b>Use my account\'s dashboard</b><br><span class="small muted">Replaces what\'s on this device</span></button>' +
+    '<button class="opt" data-act="sync-choice" data-v="local"><b>Use this device\'s dashboard</b><br><span class="small muted">Replaces what\'s on your account (and so on your other devices)</span></button></div></div></div>';
+}
+function syncChoose(v) {
+  var r = syncChoice; syncChoice = null; closeModal();
+  if (!r) return;
+  if (v === 'merge') { applyRemote(r, {}); toast('☁️ Merged — both devices now share everything.'); }
+  else if (v === 'remote') { SY.version = 0; S = merge(blank(), r.data); migrate(); localSave(); SY.version = r.version; setBase(r.data); toast('☁️ Using your account\'s dashboard.'); }
+  else { SY.version = r.version; setBase(r.data); syncPush(); toast('☁️ This device\'s dashboard is now on your account.'); }
+  SY.lastSync = Date.now(); storeSync(); render();
+}
+function syncSignOut() {
+  if (!confirm('Stop syncing on this device? Your dashboard stays here; it just won\'t update from your other devices.')) return;
+  var t = SY.token; SY.token = null; SY.version = 0; SY.err = null; storeSync();
+  try { localStorage.removeItem(BASE_KEY); } catch (e) { /* ignore */ }
+  if (t) fetch(location.origin + '/api/auth/logout', { method: 'POST', headers: { authorization: 'Bearer ' + t } }).catch(function () { /* ignore */ });
+  render();
+}
+function ago(ts) { if (!ts) return 'never'; var s = Math.round((Date.now() - ts) / 1000); return s < 60 ? 'just now' : s < 3600 ? Math.round(s / 60) + ' min ago' : s < 86400 ? Math.round(s / 3600) + 'h ago' : fmtDay(new Date(ts)); }
+function syncStatusText() {
+  if (!syncPossible()) return 'Saved in this browser. Back it up in Settings.';
+  if (!SY.token) return 'Saved on this device only. Turn on sync in Settings.';
+  if (SY.err) return '⚠️ ' + SY.err;
+  return '☁️ Synced ' + ago(SY.lastSync) + ' · ' + SY.device;
+}
+function syncBadge() { var f = $('.nav-foot'); if (f) f.textContent = syncStatusText(); }
+function syncCard(inWelcome) {
+  if (!syncPossible()) return '<div class="card' + (inWelcome ? ' mt' : ' mt calm') + '"><div class="card-head"><div><h2>☁️ Sync your phone and laptop</h2><p>Open the dashboard from your server address on both devices to sync</p></div></div>' +
+    '<p class="small">Right now it\'s opened as a file, so it can only save in this browser. Open <b>https://your-cm-automations-address/life</b> on your phone and your laptop, sign in once on each, and they\'ll stay in step.</p></div>';
+  if (!SY.token) return '<div class="card' + (inWelcome ? ' mt' : ' mt calm') + '"><div class="card-head"><div><h2>☁️ ' + (inWelcome ? 'Already using it on another device?' : 'Sync your phone and laptop') + '</h2><p>Sign in with your CM Automations account. Your dashboard is private to you.</p></div></div>' +
+    '<div class="form-row"><label class="field">Email<input type="text" id="sy-email" autocomplete="username" value="' + esc(SY.email) + '"></label><label class="field">Password<input type="password" id="sy-pass" autocomplete="current-password"></label><label class="field">This device is my…<input type="text" id="sy-device" value="' + esc(SY.device) + '"></label></div>' +
+    '<div class="row mt"><button class="btn primary" data-act="sync-connect">Sign in and sync</button>' + (SY.err ? '<span class="small" style="color:var(--bad)">' + esc(SY.err) + '</span>' : '') + '</div>' +
+    '<p class="small muted mt">Everything still works offline. Changes sync when you\'re online, and if both devices changed things while apart, they\'re merged so nothing is lost.</p></div>';
+  return '<div class="card mt calm"><div class="card-head"><div><h2>☁️ Sync is on</h2><p>Signed in as ' + esc(SY.name || SY.email) + ' · this device: ' + esc(SY.device) + '</p></div><span class="pill ' + (SY.err ? 'warn' : 'good') + '">' + (SY.err ? '● Needs attention' : '✓ Synced ' + ago(SY.lastSync)) + '</span></div>' +
+    (SY.err ? '<p class="small">' + esc(SY.err) + '</p>' : '<p class="small muted">Changes go up about a second after you make them, and your other devices\' changes come in every 45 seconds or when you switch back to this tab.</p>') +
+    '<div class="row mt"><button class="btn primary" data-act="sync-now">↻ Sync now</button><button class="btn ghost" data-act="sync-signout">Stop syncing on this device</button></div></div>';
+}
+
+/* ---------- social channels ↔ API hub ---------- */
+var HUB = { list: null, at: 0, loading: false };
+function hubSocials(force) {
+  if (!syncOn()) return Promise.resolve([]);
+  if (!force && HUB.list && Date.now() - HUB.at < 60000) return Promise.resolve(HUB.list);
+  HUB.loading = true;
+  return apiCall('GET', '/api/life/socials').then(function (r) { if (r.status === 200) { HUB.list = r.body; HUB.at = Date.now(); } HUB.loading = false; return HUB.list || []; })
+    .catch(function () { HUB.loading = false; return HUB.list || []; });
+}
+function syncSocials() {
+  var linked = S.socials.filter(function (c) { return c.streamId; });
+  if (!syncOn() || !linked.length) return Promise.resolve();
+  return hubSocials(true).then(function (list) {
+    var changed = false, sends = [];
+    linked.forEach(function (ch) {
+      var hub = list.filter(function (x) { return x.id === ch.streamId; })[0];
+      if (!hub) { if (!ch.hubMissing) { ch.hubMissing = true; changed = true; } return; }
+      if (ch.hubMissing) { ch.hubMissing = false; changed = true; }
+      ch.history = ch.history || [];
+      var byDate = {}; ch.history.forEach(function (p) { byDate[p.date] = p; });
+      hub.points.forEach(function (p) {
+        var mine = byDate[p.date];
+        if (!mine) { ch.history.push({ date: p.date, count: p.value, src: 'hub' }); changed = true; }
+        else if (mine.src !== 'me' && mine.count !== p.value) { mine.count = p.value; mine.src = 'hub'; changed = true; }
+      });
+      ch.history.forEach(function (p) {
+        if (p.src !== 'me') return;
+        sends.push(apiCall('POST', '/api/life/socials/' + ch.streamId, { count: p.count, date: p.date }).then(function (r) { if (r.status === 201) { p.src = 'synced'; changed = true; } }).catch(function () { /* retried next sync */ }));
+      });
+      ch.history.sort(function (a, b) { return a.date.localeCompare(b.date); });
+    });
+    return Promise.all(sends).then(function () { if (changed) { save(); renderSoon(); } });
+  });
+}
+function hubLinkHTML(ch) {
+  if (!syncOn()) return '<p class="small muted mt-s">Turn on sync in Settings to link this channel to your API hub.</p>';
+  if (!HUB.list) { if (!HUB.loading) hubSocials().then(function () { renderSoon(); }); return '<p class="small muted mt-s">Checking your API hub…</p>'; }
+  if (ch.streamId) {
+    var hub = HUB.list.filter(function (x) { return x.id === ch.streamId; })[0];
+    return '<div class="row mt-s small"><span class="pill ' + (ch.hubMissing || !hub ? 'warn' : 'sky') + '">' + (ch.hubMissing || !hub ? '⚠ API hub stream not found' : '🔗 Linked to ' + esc(hub.icon + ' ' + hub.name) + ' in the API hub') + '</span><button class="btn sm ghost" data-act="hub-unlink" data-id="' + ch.id + '">Unlink</button></div>';
+  }
+  if (!HUB.list.length) return '<p class="small muted mt-s">No social streams in your API hub yet — add TikTok or YouTube there to link them.</p>';
+  return '<div class="row mt-s"><select data-hublink="' + ch.id + '" aria-label="Link to an API hub stream" style="flex:1"><option value="">🔗 Link to an API hub stream…</option>' + HUB.list.map(function (h) { return '<option value="' + h.id + '">' + esc(h.icon + ' ' + h.name + (h.handle ? ' (' + h.handle + ')' : '')) + '</option>'; }).join('') + '</select></div>';
+}
+document.addEventListener('change', function (e) {
+  var el = e.target; if (!el.dataset || !el.dataset.hublink || !el.value) return;
+  var ch = S.socials.filter(function (c) { return c.id === el.dataset.hublink; })[0]; if (!ch) return;
+  ch.streamId = el.value; ch.hubMissing = false;
+  (ch.history || []).forEach(function (p) { if (!p.src) p.src = 'me'; }); // send what you've logged so far
+  save(); toast('🔗 Linked — follower counts now stay in step with the API hub.'); syncSocials().then(function () { render(); });
+});
 
 var VIEWS = { mind: viewMind, planner: viewPlanner, routines: viewRoutines, energy: viewEnergy, goals: viewGoals, home: viewHome, adhd: viewADHD, admin: viewAdmin, money: viewMoney, content: viewContent, socials: viewSocials, health: viewHealth, settings: viewSettings };
 
@@ -2707,7 +2939,7 @@ function act(a, d, el) {
     case 'go': if (d.page === 'adhd' && d.tab === 'score') inlineDraft = null; go(d.page, d.tab); break;
     case 'start': S.started = true; save(); go('adhd', 'checkin'); break;
     case 'start-demo':
-      if (S.started && (S.tasks.length || Object.keys(S.checkins).length) && !confirm('Replace everything with example data?')) return;
+      if (S.started && (S.tasks.length || Object.keys(S.checkins).length) && !confirm(syncOn() ? 'Replace everything with example data? Sync is on, so this replaces it on your other devices too.' : 'Replace everything with example data?')) return;
       S = demoData(); migrate(); save(); go('home'); toast('Example data loaded — clear it any time in Settings.'); break;
     case 'add-task': openScorer(freshDraft({ area: d.area || (route.page === 'socials' ? 'social' : route.page === 'health' ? 'health' : route.page === 'money' ? 'finance' : route.page === 'content' ? 'content' : route.page === 'admin' ? 'admin' : 'personal') })); break;
     case 'edit-task': t = taskById(d.id); if (t) openScorer(freshDraft({ id: t.id, title: t.title, area: t.area, impact: t.impact, urgency: t.urgency, energy: t.energy, effort: t.effort, due: t.due, repeat: t.repeat }), true); break;
@@ -2800,7 +3032,7 @@ function act(a, d, el) {
     case 'idea-del': S.content.ideas = S.content.ideas.filter(function (x) { return x.id !== d.id; }); save(); render(); break;
     case 'social-add': S.socials.push({ id: uid(), platform: val('s-platform'), handle: val('s-handle'), url: val('s-url'), history: [{ date: dkey(), count: parseInt(val('s-count'), 10) || 0 }] }); save(); render(); break;
     case 'social-update': var so = S.socials.find(function (x) { return x.id === d.id; }); var cnt = parseInt(val('f-' + d.id), 10); if (isNaN(cnt)) return toast('Type the follower count first.');
-      so.history = so.history.filter(function (h) { return h.date !== dkey(); }); so.history.push({ date: dkey(), count: cnt }); save(); render(); toast('Updated ' + so.platform + '.'); break;
+      so.history = so.history.filter(function (h) { return h.date !== dkey(); }); so.history.push(so.streamId ? { date: dkey(), count: cnt, src: 'me' } : { date: dkey(), count: cnt }); save(); render(); toast('Updated ' + so.platform + (so.streamId ? ' — sending it to the API hub too.' : '.')); syncSocials(); break;
     case 'social-del': if (confirm('Remove this channel?')) { S.socials = S.socials.filter(function (x) { return x.id !== d.id; }); save(); render(); } break;
     case 'habit': var list = S.health.habits[d.d] = S.health.habits[d.d] || []; var hi = list.indexOf(d.h); if (hi >= 0) list.splice(hi, 1); else list.push(d.h); save(); render(); break;
     case 'act-add': var dist = parseFloat(val('a-dist')) || 0, mins = parseFloat(val('a-min')) || 0; if (!dist && !mins) return toast('Add a distance or a time.');
@@ -2825,7 +3057,7 @@ function act(a, d, el) {
     case 'export':
       var blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' }), aEl = document.createElement('a');
       aEl.href = URL.createObjectURL(blob); aEl.download = 'life-dashboard-backup-' + dkey() + '.json'; document.body.appendChild(aEl); aEl.click(); aEl.remove(); break;
-    case 'wipe': if (confirm('Delete everything in this dashboard? Export a backup first if you want to keep it.')) { S = blank(); save(); go('home'); } break;
+    case 'wipe': if (confirm((syncOn() ? 'Sync is on, so this clears it on your other devices too. ' : '') + 'Delete everything in this dashboard? Export a backup first if you want to keep it.')) { S = blank(); save(); go('home'); } break;
     default: act2(a, d, el);
   }
 }
@@ -2975,6 +3207,7 @@ function demoData() {
    Boot
    ===================================================================== */
 readHash();
+if (syncOn()) syncPull();
 var resizeT; window.addEventListener('resize', function () { clearTimeout(resizeT); resizeT = setTimeout(function () { if (!$('#modal').innerHTML) render(); }, 150); });
 render();
 </script>

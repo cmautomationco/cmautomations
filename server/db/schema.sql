@@ -635,3 +635,14 @@ CREATE TABLE IF NOT EXISTS api_log (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_api_log ON api_log(org_id, created_at);
+
+-- Personal Life Dashboard (/life): one synced copy per person, shared by their
+-- phone and laptop. `version` goes up on every save; a save based on an older
+-- version is refused so the device can merge first instead of overwriting.
+CREATE TABLE IF NOT EXISTS life_state (
+  user_id    TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  data       TEXT NOT NULL,
+  version    INTEGER NOT NULL,
+  updated_at TEXT NOT NULL,
+  device     TEXT
+);

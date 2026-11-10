@@ -4,10 +4,43 @@ A personal dashboard that sits apart from the business system. It covers the ADH
 
 - **Open it:** `/life` on the running server (for example `http://localhost:3000/life`). You can also open `public/life/index.html` straight from your computer or phone.
 - **One file, no build:** everything is in `public/life/index.html`.
-- **Your data:** it's saved in the browser you use, on that device only. Use **Settings → Export backup** to keep a copy, and **Import backup** to move it to another device.
+- **Your data:** it's saved on the device you're using, so it works offline. Sign in under **Settings → Sync** (or from the welcome screen) and your phone and laptop share one copy. See [Sync](#-sync-between-phone-and-laptop). **Export backup** still works too.
 - **First run:** choose **Start fresh**, or **Explore with example data** to see it filled in. You can clear the example data from Settings.
 
 ![Today](screenshots/40-life-today.png)
+
+## ☁️ Sync between phone and laptop
+
+Open the dashboard from your server address (e.g. `https://your-app.onrender.com/life`) on each device. Then sign in once with your CM Automations email and password. The welcome screen has a sign-in box, or use **Settings → Sync**.
+
+**How it works**
+- **The device is the working copy.** Everything still works offline.
+- **Changes go up** about 1.5 seconds after you make them.
+- **Your other devices' changes come in** every 45 seconds, when you switch back to the tab, and when you come back online.
+- **If both devices changed things while apart,** they're merged record by record against the last synced copy. A task added on each device keeps both, a delete on one removes it on the other, and an edit on one shows on the other. If both changed exactly the same thing, the device saving last wins.
+- **Signing in a device that already has its own dashboard** asks what to do: **Merge both** (recommended), **Use my account's dashboard**, or **Use this device's dashboard**. A brand-new device just takes your account's dashboard.
+- **The sidebar shows the sync status:** "Synced 2 min ago · iPhone", or an offline or signed-out warning.
+- **Private to you:** the dashboard belongs to you (your user), not the business, so nobody else on the business account can see it.
+- **Clearing everything or loading example data** while sync is on also changes your other devices. The confirm message says so.
+
+**Social channels ↔ API hub**
+- On each channel in **Social channels**, pick its TikTok, YouTube or other stream from **🔗 Link to an API hub stream**.
+- Follower or subscriber counts then stay in step both ways. A count you update in the dashboard is recorded in the API hub, and figures added in the hub (by hand, by CSV or through its web address) come into the dashboard on your phone and laptop.
+- TikTok and Instagram don't share follower counts with other apps, so the count still comes from you or from an automation. It just only needs entering once.
+
+**On the server:**
+
+| Route | What it does |
+|---|---|
+| `GET` / `PUT /api/life/state` | The synced copy and its version. A save from a device that's behind gets `409` and the latest copy to merge. |
+| `GET /api/life/socials` | Follower history from the API hub |
+| `POST /api/life/socials/:streamId` | Records a count in the hub |
+
+The data is stored in the `life_state` table, one row per user, with a limit of 8 MB.
+
+| Sync on | Signing in a device that already has data |
+|---|---|
+| ![Sync on](screenshots/64-life-sync-on.png) | ![Choice](screenshots/63-life-sync-choice.png) |
 
 ## 🎯 Task manager with a 1–5 importance bar
 
@@ -246,9 +279,8 @@ How they reach you:
 
 ## Next steps
 
-1. **Sync across devices.** Save the data to the CM Automations server behind a personal sign-in, so your phone and laptop share it.
-2. **Live Strava.** Strava's secure sign-in needs a server, so add it to the server with an automatic weekly import.
-3. **Live follower counts.** Take them from the API hub's TikTok, Instagram and YouTube connections.
-4. **Bank feed.** Use open banking, or import a bank CSV, so you don't have to type in what you spend.
-5. **AI content ideas.** Use the assistant (the same Claude set-up as Content Studio) for ideas written in your own voice.
-6. **Claude notifications.** Once it's live, push reminders and summaries (Today's 3 in the morning, weekly wins on Sunday) can replace the calendar file.
+1. **Live Strava.** Strava's secure sign-in needs a server, so add it to the server with an automatic weekly import.
+2. **Automatic follower counts.** Feed the API hub from a Metricool or Zapier automation, so linked channels update with no typing.
+3. **Bank feed.** Use open banking, or import a bank CSV, so you don't have to type in what you spend.
+4. **AI content ideas.** Use the assistant (the same Claude set-up as Content Studio) for ideas written in your own voice.
+5. **Claude notifications.** Once it's live, push reminders and summaries (Today's 3 in the morning, weekly wins on Sunday) can replace the calendar file.

@@ -20,6 +20,7 @@ import { hookRoutes } from './modules/hooks/routes.js';
 import { integrationRoutes } from './modules/integrations/routes.js';
 import { streamHookRoutes, streamRoutes } from './modules/streams/routes.js';
 import { apiKeyRoutes, publicApiRoutes } from './modules/api/routes.js';
+import { lifeRoutes } from './modules/life/routes.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -34,6 +35,8 @@ export function createApp(db) {
   app.set('trust proxy', 1);
   // Keep the raw body: Stripe and Twilio sign their webhooks over it.
   const keepRaw = (req, _res, buf) => { req.rawBody = buf.toString('utf8'); };
+  // The personal Life Dashboard syncs its whole state, so it gets a bigger body limit than the rest of the API.
+  app.use('/api/life', express.json({ limit: '10mb' }), lifeRoutes(ctx));
   app.use(express.json({ limit: '1mb', verify: keepRaw }));
   app.use(express.urlencoded({ extended: false, limit: '1mb', verify: keepRaw }));
 
