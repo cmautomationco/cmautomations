@@ -29,9 +29,27 @@ Every section except Finance has its own ranked task manager:
 
 ![Admin task manager](screenshots/49-life-admin-task-manager.png)
 
+## How it's laid out
+
+| Group | Sections |
+|---|---|
+| **Daily** | Today · 🧠 ADHD hub (with 🌿 Mind & reset inside it) · 🗓️ Weekly planner · 🔁 Routines |
+| **Grow** | ⚡ Focus & energy · 🏆 Goals & rewards |
+| **Life** | Life admin · Finance |
+| **Create & move** | Content hub · Social channels · Health & Strava |
+| **You** | Settings, including reminders |
+
+**Consistency is the thread through all of it.**
+- A **😵‍💫 Got distracted? Back on track** button sits on the Today page, on the pinned Today's 3 and in Focus & energy.
+- It asks how long you were away and what pulled you off, with no guilt.
+- Then you pick the task you were on and a 2-minute next step, and it starts a 10-minute restart.
+- Every comeback is logged, earns 10 points, and feeds the "what pulls you away" patterns.
+
 ## 🧠 ADHD hub (the core)
 
-It has eight tabs, kept separate:
+A switch at the top flips between the **ADHD hub** and its subsection **🌿 Mind & reset**. **Today's 3 is pinned at the top of both**, with tick boxes, a focus button for each task, Re-pick, and Back on track.
+
+The ADHD hub has seven tabs, kept separate:
 
 | Tab | What it does |
 |---|---|
@@ -39,10 +57,22 @@ It has eight tabs, kept separate:
 | **Productivity** | Your daily score out of 100 and how it's made up, time saved today and this week, up or down compared with your usual and last week, and tips to boost today and this week. |
 | **Score & sort** | Score a task or idea *before* you add it. The formula is shown at the top. Four sliders (Impact, Urgency, Energy fit, Effort) show the sum (e.g. `4 × 3 × 4 ÷ 4`), a live score and a verdict: **Do it now**, **Schedule it** or **Park it**. Below it are the three buckets, where you can tick tasks off, move them or rescore them. |
 | **Task manager** | Every task from every area, ranked 5 → 1 with the importance bar. Filter by area. |
-| **Today's 3** | At least three tasks every day, with one always for your health. They're matched to today's check-in: on a low-energy day you get quick, gentle wins. If you haven't scored enough tasks, it suggests a simple health or admin task. |
-| **Deep focus** | A 15–90 minute timer linked to a task. It logs your deep-focus hours. If a distracting thought comes up mid-session, type it in and it goes to the brain dump. |
+| **Deep focus** | A 15–90 minute timer linked to a task. It logs your deep-focus hours. If a distracting thought comes up mid-session, type it in and it goes to the brain dump. Tap **📵 I got distracted** to count distractions during a session. |
 | **Weekly wins** | **Time saved**, **problems solved**, **deep focus hours** and **ideas parked, not chased**, each compared with last week. It also lists your wins and parked ideas, shows time saved week by week, and has a two-minute reflection. |
 | **Brain dump** | Get it out of your head now and score it later. You can also park an item in one tap. |
+
+**Today's 3** (pinned) gives at least three tasks every day, with one always for your health.
+- They're matched to today's check-in: on a low-energy day you get quick, gentle wins.
+- Your weekly priorities come up on their day.
+- The task you picked in last night's evening shutdown goes first.
+
+### 🌿 Mind & reset (inside the ADHD hub)
+
+| Tab | What it does |
+|---|---|
+| **SOS & back on track** | **Start a 2-minute reset** runs four steps. First, rate how overwhelmed you are (1–5). Second, breathe with a circle for 60 seconds. Third, empty your head into the brain dump. Fourth, pick one tiny task for a 10-minute go, or choose to rest. It then rates you again and shows how much the reset helps on average. **I'm back — get me on track** runs the comeback flow. Tiles show comebacks this week, the % back within 30 minutes, average time away and your biggest pull, with a tip for it. **What helps me reset** is your own list, with a "Pick one" button. |
+| **Mood, triggers & meds** | Log your mood (1–5) with triggers (poor sleep, too many tasks, money worry…) and see which triggers come up most and your average mood with each. **Medication:** log it in one tap and rate how well it worked later. Shows the days you took it this week, its average effect, and productivity on days you took it compared with days you didn't. This is tracking only: talk to your GP or prescriber about anything medical. |
+| **Wins jar** | Everything you've done, kept in one place: tasks, comebacks, routines, milestones and weekly resets, plus wins you add yourself. **Pull a random win** for when your head says you never get anything done. |
 
 ### The formula
 
@@ -93,6 +123,18 @@ The **ADHD hub → Productivity** tab, with a short version on the Today page, t
 
 ![Productivity](screenshots/52-life-adhd-productivity.png)
 
+| Mind & reset | Weekly reset |
+|---|---|
+| ![Mind & reset](screenshots/53-life-mind-reset.png) | ![Weekly reset](screenshots/55-life-weekly-reset.png) |
+
+| Routines | Focus & energy |
+|---|---|
+| ![Routines](screenshots/57-life-routines.png) | ![Focus & energy](screenshots/59-life-focus-energy.png) |
+
+| Goals | Rewards |
+|---|---|
+| ![Goals](screenshots/60-life-goals.png) | ![Rewards](screenshots/61-life-rewards.png) |
+
 ### How the weekly numbers are worked out
 
 - **Time saved:** two parts added together.
@@ -109,6 +151,67 @@ The **ADHD hub → Productivity** tab, with a short version on the Today page, t
 | Weekly wins | Deep focus |
 |---|---|
 | ![Weekly wins](screenshots/43-life-adhd-weekly-wins.png) | ![Deep focus](screenshots/44-life-adhd-deep-focus.png) |
+
+## 🗓️ Weekly planner
+
+**Weekly reset** is a guided 20-minute session in 5 steps. On Saturday and Sunday it plans next week; on Monday to Friday it plans the current week.
+1. **Look back:** last week's productivity, time saved, problems solved and wins, plus a 3-question reflection.
+2. **Clear the decks:** the brain dump count, overdue tasks (move them to next week or park them) and how full Do it now is.
+3. **Pick 3 priorities:** choose existing tasks or type new ones, and give each a day. They're ranked 5 and come up in Today's 3 on their day.
+4. **Plan the days:** a focus block for each day (e.g. `09:00–10:30`, with your best focus window suggested) and a note. Each day also shows its tasks due, bills and content pillar.
+5. **Check your reminders,** then **Finish** (+30 points). Finished resets build a weekly streak.
+
+**This week / Next week** shows the 3 priorities with tick boxes, and a 7-day grid with focus blocks, tasks, bills and pillars. Past days show their productivity score and check-in.
+
+The Today page shows a "plan your week" prompt until the current week's reset is done.
+
+## 🔁 Routines
+
+- **🌅 Morning launch and 🌙 Evening shutdown:**
+  - **Steps:** a checklist you can edit, with minutes for each step.
+  - **Guided mode:** one step at a time with a countdown.
+  - **Consistency:** a 14-day dot strip, a streak, and a "never miss twice" message.
+  - **Interactive steps:** check in, see Today's 3, start #1 for 25 minutes, add wins, brain-dump loose ends, and **pick tomorrow's first task** (Today's 3 puts it first tomorrow).
+  - **Points:** finishing a routine earns 15.
+- **Day timeline:** today hour by hour, with a "now" line. It shows your routines, the focus block from your weekly plan, reminders and your own blocks (gym, appointments), plus what you're in now and what's next. This helps with time blindness.
+- **Guess vs actual:** guess how long a task will take, then time it. It learns your real ratio (e.g. "tasks take 1.6× your guess") and tells you how long to plan for 30 minutes.
+
+## ⚡ Focus & energy
+
+- **Check-ins:** rate focus and energy (1–5) any time, in 3 seconds. Over 30 days this builds an **average focus by hour** chart and your **best 3-hour focus window**, which the planner suggests for focus blocks.
+- **Log a distraction:** one tap by cause (phone, social media, a new idea, noise, hungry or tired, boredom, stress). **What pulls you away** ranks the causes over 30 days and gives a tip for the biggest one.
+- **Hyperfocus guard:** nudges you every 45–120 minutes to drink, stretch and eat while you're locked in.
+
+## 🏆 Goals & rewards
+
+- **Goals:** a goal, why it matters, a deadline and milestones (each with an optional date). Push any milestone into your tasks with **→ Task**. Each milestone hit earns 50 points.
+- **Consistency:** "never miss twice" for your routines, check-in, Today's 3 and every daily basic. Each row has 14-day dots and a streak, and it flags anything you missed yesterday so today counts.
+- **Rewards:** your own reward menu (coffee out, gaming, takeaway, new trainers…), claimed with points. Points are worked out from what you've done:
+
+  | For | Points |
+  |---|---|
+  | Each task | 10, +5 if it's ranked 4 or 5 |
+  | All of Today's 3 | 20 bonus |
+  | Deep focus | 1 per 5 minutes |
+  | A finished routine | 15 |
+  | A comeback | 10 |
+  | A weekly reset | 30 |
+  | A milestone | 50 |
+
+## 🔔 Reminders
+
+**Settings → Reminders** has six nudges you can switch on or off, each with its own time and days:
+- morning launch;
+- medication (off by default);
+- "How's #1 going?";
+- afternoon reset;
+- evening shutdown;
+- the Sunday weekly reset.
+
+How they reach you:
+- **📲 Add to my phone's calendar** downloads a `.ics` file of repeating events with alerts. Open it on your phone and tap Add, and your phone buzzes even when the dashboard is closed. If you change the times, download it again and remove the old events.
+- **Browser notifications** (and a message on screen) also fire while the page is open.
+- Once the dashboard is live, Claude notifications can take over.
 
 ## The other sections
 
@@ -148,4 +251,4 @@ The **ADHD hub → Productivity** tab, with a short version on the Today page, t
 3. **Live follower counts.** Take them from the API hub's TikTok, Instagram and YouTube connections.
 4. **Bank feed.** Use open banking, or import a bank CSV, so you don't have to type in what you spend.
 5. **AI content ideas.** Use the assistant (the same Claude set-up as Content Studio) for ideas written in your own voice.
-6. **Reminders.** A morning text or WhatsApp with Today's 3, and a Sunday-evening weekly wins summary.
+6. **Claude notifications.** Once it's live, push reminders and summaries (Today's 3 in the morning, weekly wins on Sunday) can replace the calendar file.
