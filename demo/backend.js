@@ -21,6 +21,7 @@ import { integrationRoutes } from '../server/modules/integrations/routes.js';
 import { streamHookRoutes, streamRoutes } from '../server/modules/streams/routes.js';
 import { apiKeyRoutes, publicApiRoutes } from '../server/modules/api/routes.js';
 import { essentialsPublicRoutes, essentialsRoutes, socialHookRoutes } from '../server/modules/essentials/routes.js';
+import { seoRoutes } from '../server/modules/seo/routes.js';
 
 export function createBackend(db, { onWrite = () => {} } = {}) {
   const engine = createEngine(db);
@@ -52,6 +53,7 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
     // The social address too, so DM & comment replies can be tried in the browser.
     ['/api/hooks/social', socialHookRoutes(ctx)],
     ['/api/essentials', essentialsRoutes(ctx)],
+    ['/api/seo', seoRoutes(ctx)],
   ];
 
   async function request(method, url, headers = {}, rawBody) {

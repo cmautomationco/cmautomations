@@ -22,7 +22,7 @@ export const GUIDE = [
   },
   {
     title: 'API hub: every income stream in one place',
-    intro: 'Alex has four incomes besides the coaching business’s day-to-day: TikTok, a trading account, digital products and 1:1 coaching. Each has its own section with its own money in and out, figures and web address – kept separate, but all in one place.',
+    intro: 'Callum has four incomes besides the coaching business’s day-to-day: TikTok, a trading account, digital products and 1:1 coaching. Each has its own section with its own money in and out, figures and web address – kept separate, but all in one place.',
     steps: [
       ['Open the API hub. The top shows this month, last month, the tax year and what to put aside for tax across every stream. Each card is one income stream – click one to go into it.', '#/api'],
       ['Open Trading. Wins and losses, win rate, best and losing markets, fees, and deposits/withdrawals kept apart from profit. Hover the bars to see each month; a losing month shows in grey below the line.', '#/api'],
@@ -88,6 +88,18 @@ export const GUIDE = [
       ['Press New automation and build your own. Use {{contact.first_name}} style placeholders in text.', '#/automations'],
       ['Check the activity log and the time-saved chart to see everything it has done.', '#/automations'],
       ['Press “Watch the walkthrough” for the client presentation: the onboarding journey, how it works and live examples. Use ← → to move, Notes for what to say, Present for full screen.', '#/automations/presentation'],
+    ],
+  },
+  {
+    title: 'SEO – get found on Google',
+    intro: 'What SEO is, what a business gets from it, the jobs that matter (in the right order for each kind of business), the searches to aim for, and SEO packages to offer. Switch to Swift Plumbing & Heating to see one part-way through.',
+    steps: [
+      ['Open SEO. “Your plan” explains how your customers search, what you’ll get from SEO, quick wins, content ideas and your next jobs.', '#/seo'],
+      ['Press “Done” on one of the next jobs and watch the score go up, or “Task” to put it on your task list.', '#/seo'],
+      ['Checklist: about 40 jobs grouped by what matters most for your kind of business. Click a job to see how to do it. Ones marked “✓ In your system” were ticked automatically (e.g. review requests in Essentials).', '#/seo/checklist'],
+      ['Keywords: press “Suggest searches for my services”, tick a few and track them. Type a position to record where you rank – the arrow shows the change.', '#/seo/keywords'],
+      ['SEO explained: the full guide – what SEO is, what it does and doesn’t do, how Google decides, the seven areas in detail, month-by-month expectations, SEO vs ads vs social, and a jargon buster.', '#/seo/learn'],
+      ['What to offer: four SEO packages with what’s included, what the business gets and what you need from them.', '#/seo/offer'],
     ],
   },
   {

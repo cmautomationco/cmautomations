@@ -74,7 +74,7 @@ await shot('38-essentials-offer', '#/automations/essentials', { before: async ()
 await page.evaluate(() => document.querySelector('.drawer')?.remove());
 const offerToken = db.get(`SELECT o.token FROM automation_offers o JOIN organizations g ON g.id = o.org_id WHERE g.name = 'Glow Studio'`).token;
 await shot('39-essentials-offer-link', `#/essentials/${offerToken}`, { full: true });
-// API hub: Alex's income streams (Bright Path Coaching, the business Alex signs in to).
+// API hub: Callum's income streams (Bright Path Coaching, the business Callum signs in to).
 await shot('33-api-hub', '#/api', { full: true });
 const tradingId = db.get(`SELECT id FROM income_streams WHERE type = 'trading'`).id;
 await shot('34-api-hub-trading', `#/api/streams/${tradingId}`, { full: true });
@@ -99,6 +99,8 @@ const switchTo = async (name) => {
   await api('/api/auth/switch', { method: 'POST', headers: auth, body: JSON.stringify({ org_id: me.orgs.find((o) => o.name.startsWith(name)).id }) });
 };
 await switchTo('Swift');
+await shot('40-seo-plan', '#/seo', { full: true });
+await shot('41-seo-explained', '#/seo/learn');
 await shot('19-messages-whatsapp', '#/messages');
 await shot('20-missed-calls', '#/messages/calls');
 await shot('21-bookings-diary', '#/bookings', { full: true });

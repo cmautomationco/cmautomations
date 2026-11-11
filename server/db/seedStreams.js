@@ -3,7 +3,7 @@ import { id, publicToken, seededRandom } from '../lib/util.js';
 import { addLocalDays, localDate } from '../lib/time.js';
 
 /**
- * Demo data for the API hub: Alex (Bright Path Coaching) has four incomes –
+ * Demo data for the API hub: Callum (Bright Path Coaching) has four incomes –
  * TikTok, a trading account, digital products and 1:1 coaching – each with
  * about seven months of history, figures, and data arriving automatically.
  */

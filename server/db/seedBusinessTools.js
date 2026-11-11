@@ -275,14 +275,14 @@ export async function seedBusinessTools(db, engine, { owner, priya, user, client
     discovery: { goals: 'Stop losing jobs while I’m on the tools, and get my evenings back.', frustrations: 'Evenings doing quotes and invoices; calls I can’t answer under a sink.', tools: 'WhatsApp, paper diary, Xero', lead_sources: 'Phone, WhatsApp, Checkatrade, Facebook', enquiries_per_week: 25, missed_calls_per_week: 12, response_time: 'Same evening', avg_job_value: 240, no_shows_per_month: 4, unpaid_invoices: 3200 },
     tasks: suggestedTasks('local_services').map((t) => ({ ...t, per_week: t.key === 'missed_calls' ? 12 : t.per_week, pain: ['missed_calls', 'quotes', 'chasing'].includes(t.key) ? 5 : t.pain })),
   });
-  analyseAudit(db, agency, swiftAudit.id, { preparedBy: 'Alex Morgan' });
+  analyseAudit(db, agency, swiftAudit.id, { preparedBy: 'Callum' });
   const sparks = auditRow({
     client_name: 'Bright Sparks Electrical', contact_name: 'Gemma Lewis', contact_email: 'gemma@brightsparks-electrical.co.uk', contact_phone: '07700 900051', niche: 'local_services', team_size: 3, hourly_cost_pence: 4000,
     setup_fee_pence: 150000, monthly_fee_pence: 34900, status: 'proposal_sent', sent_at: addDays(now(), -2),
     discovery: { goals: 'Grow to 5 electricians without hiring an office manager.', frustrations: 'Chasing payments and juggling the diary on WhatsApp.', tools: 'WhatsApp, Google Calendar, QuickBooks', lead_sources: 'Google, Checkatrade, word of mouth', enquiries_per_week: 30, missed_calls_per_week: 15, response_time: 'Next morning', avg_job_value: 320, no_shows_per_month: 3, unpaid_invoices: 5400 },
     tasks: suggestedTasks('local_services').map((t) => ({ ...t, people: ['job_sheets', 'team_chasing'].includes(t.key) ? 2 : 1 })),
   });
-  analyseAudit(db, agency, sparks.id, { preparedBy: 'Alex Morgan' });
+  analyseAudit(db, agency, sparks.id, { preparedBy: 'Callum' });
   auditRow({ client_name: 'Harbour View Dental', contact_name: 'Dr Sam Patel', niche: 'beauty', setup_fee_pence: 180000, monthly_fee_pence: 39900, tasks: suggestedTasks('beauty') });
   const sent = await sendMessage(ctx, agency.id, { to: 'gemma@brightsparks-electrical.co.uk', channel: 'email', template: 'proposal_sent', vars: { first_name_spaced: ' Gemma', first_name: 'Gemma', doc_link: publicLink(`proposal/${sparks.public_token}`) }, force: true, related: { type: 'audit', id: sparks.id } });
   if (sent.message) backdate(db, 'messages', sent.message.id, addDays(now(), -2), ['created_at', 'sent_at']);

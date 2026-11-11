@@ -88,6 +88,11 @@ All screenshots come from the running app with the built-in demo business (`npm 
 |---|---|---|
 | ![Invoices](docs/screenshots/23-quotes-invoices.png) | ![Booking page](docs/screenshots/25-customer-booking-page.png) | ![Invoice](docs/screenshots/26-customer-invoice.png) |
 
+### SEO – get found on Google
+| Your plan: what SEO will do for this business and the next jobs, in order | SEO explained: the full guide in plain words |
+|---|---|
+| ![SEO plan](docs/screenshots/40-seo-plan.png) | ![SEO explained](docs/screenshots/41-seo-explained.png) |
+
 ### Automations → Essentials offer
 | The square Essentials tile on the Automations page | The offer: 17 automations in 5 sections, each switched on and tuned in place |
 |---|---|
@@ -387,11 +392,27 @@ The automations that keep a business running, presented as one simple offer that
   - Replies are either handed back in the response for the step to post, or posted to the business's own connection.
   - Replies typed in the inbox go out the same way.
 
-### 12. Lead forms
+### 12. SEO – get found on Google
+
+A section (Build → **SEO**) that explains what a business gets from SEO and walks it through the work, tailored to its kind of business:
+
+- **Your plan:** how its customers search, what SEO will bring it, the numbers to watch, quick wins, content ideas, the next 5 jobs and the seven areas in the order that matters for that niche. For trades, the Google Business Profile comes first; for a coach, helpful content does.
+- **Checklist:** 41 jobs across seven areas – Google Business Profile, reviews, website pages, technical health, content, links and citations, and measuring. Each has why it matters, how to do it, impact and effort.
+  - Jobs already handled in the system are ticked automatically, such as review requests, the booking link and lead source tagging.
+  - Any job becomes a task in one click, or press "Turn the next 5 jobs into tasks".
+- **Keywords:** suggests searches from the business's own services, town and areas, grouped by intent (urgent, ready to buy, comparing, researching), each with the page that should win it. Track positions from Search Console month by month; the arrows show the movement.
+- **SEO explained:**
+  - what SEO is, and what it does and doesn't do;
+  - do you need it, and how Google decides;
+  - each of the seven areas in depth: what to do, mistakes to avoid, how to measure it;
+  - what to expect month by month, SEO vs ads vs social, and a jargon buster.
+- **What to offer:** four SEO packages (Local Starter, Local Growth, Content & Authority, E-commerce), each with what's included, what the business gets, what it needs to provide, and a timeline.
+
+### 13. Lead forms
 
 Build a form in **CRM → Lead forms**, share the link or paste the embed code into a website. Submissions create or update the contact (tagged), send a thank-you, and run the new-lead automations. Spam is filtered with a hidden field and rate limits.
 
-### 13. Automation walkthrough presentation
+### 14. Automation walkthrough presentation
 
 Automations → **Watch the walkthrough** opens a 32-slide presentation for showing a client how an automation project works, from first conversation to results:
 
@@ -479,6 +500,7 @@ server/
     messaging/             templates, providers (Twilio, Resend, webhook, demo), WhatsApp templates, inbox, calls
     bookings/              services, availability, reminders, job sheet, calendar feed, WhatsApp booking assistant (chat.js)
     integrations/          each business's own Twilio, Stripe and email accounts (encrypted), checks and set-up
+    seo/                   SEO guide, checklist, niche plans, keyword ideas and packages (knowledge.js holds the content)
     essentials/            the Essentials offer: catalogue of 17 automations, offers, and the timed ones (birthdays, cold leads, unread replies)
     streams/               API hub income streams: types, entries, figures, totals, CSV import, web addresses
     api/                   API keys, the key-protected /api/v1 and the activity log
@@ -516,6 +538,7 @@ All endpoints are under `/api` and use `Authorization: Bearer <token>`, except t
 | Automations | `GET/POST /automations`, `PATCH/DELETE /automations/:id`, `POST /automations/:id/test`, `GET /automations/runs`, `GET /automations/impact`, `GET /automations/meta` |
 | Help Desk | `GET /helpdesk/meta`, `GET/POST /helpdesk/issues`, `GET/PATCH/DELETE /helpdesk/issues/:id`, `POST /helpdesk/issues/:id/comments`, `GET /helpdesk/stats` |
 | Assistant | `GET /assistant/meta`, `POST /assistant/chat`, `GET /assistant/insights` (owners/admins) |
+| SEO | `GET /seo`, `PUT /seo/profile`, `PUT /seo/items/:key`, `POST /seo/items/:key/task`, `POST /seo/plan`, `POST /seo/keywords/ideas`, `POST /seo/keywords`, `PATCH/DELETE /seo/keywords/:id` |
 | Essentials | `GET /essentials`, `POST /essentials/apply` (`{ changes: [{ key, on, options }] }`), `POST /essentials/offers`, public `GET /public/essentials/:token`, `POST /public/essentials/:token/accept`, `POST /hooks/social/:token` (Instagram/Facebook/TikTok DMs & comments from ManyChat, Make or Zapier) |
 | API hub (signed in) | `GET /streams`, `GET /streams/types`, `POST /streams`, `GET/PATCH/DELETE /streams/:id`, `POST /streams/:id/entries`, `PATCH/DELETE /streams/:id/entries/:entryId`, `DELETE /streams/:id/test-entries`, `POST /streams/:id/metrics`, `POST /streams/:id/import`, `POST /streams/:id/hook/rotate`, `PUT /streams/:id/hook/secret`, `POST /streams/:id/hook/test`, `GET/POST /api-keys`, `DELETE /api-keys/:id`, `GET /api-keys/activity` |
 | API (key) | `GET /v1`, `GET /v1/summary`, `GET /v1/streams`, `GET /v1/streams/:id`, `GET/POST /v1/streams/:id/entries`, `DELETE /v1/streams/:id/entries/:entryId`, `POST /v1/streams/:id/metrics`, `GET/POST /v1/contacts`, `POST /v1/tasks`, `GET /v1/bookings`, `GET /v1/invoices` – send `Authorization: Bearer cmk_…` |

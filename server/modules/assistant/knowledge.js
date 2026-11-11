@@ -39,6 +39,9 @@ export const PLACES = {
   branding: { hash: '#/settings/branding', label: 'Branding', words: ['branding', 'logo', 'brand colour', 'colours', 'colors'] },
   phone: { hash: '#/settings/phone', label: 'Phone & alerts settings', words: ['phone settings', 'business number', 'call forwarding', 'alert settings'] },
   whatsapp_settings: { hash: '#/settings/whatsapp', label: 'WhatsApp settings', words: ['whatsapp settings', 'booking assistant', 'whatsapp templates', 'book on whatsapp'] },
+  seo: { hash: '#/seo', label: 'SEO', words: ['seo', 'seo plan', 'search engine'] },
+  seo_learn: { hash: '#/seo/learn', label: 'SEO explained', words: ['seo explained', 'seo guide'] },
+  seo_keywords: { hash: '#/seo/keywords', label: 'SEO keywords', words: ['keywords', 'keyword planner', 'rankings'] },
   essentials: { hash: '#/automations/essentials', label: 'Essentials offer', words: ['essentials', 'essentials offer', 'starter automations', 'automation offer'] },
   apihub: { hash: '#/api', label: 'API hub', words: ['api hub', 'income streams', 'my incomes', 'side hustles', 'all my income'] },
   api_keys: { hash: '#/api/keys', label: 'API keys', words: ['api keys', 'api key'] },
@@ -372,6 +375,18 @@ export const TOPICS = [
     go: { place: 'connections' }, admin: true,
   },
   {
+    key: 'seo', title: 'Get found on Google (SEO)',
+    keywords: ['seo', 'google ranking', 'rank on google', 'found on google', 'get found', 'search engine', 'google maps', 'google business profile', 'show up on google', 'first page of google', 'local seo'],
+    answer: 'Open SEO. “Your plan” shows what SEO will do for your kind of business, your next jobs in the right order and quick wins; the Checklist has about 40 jobs (some ticked automatically from your system, like review requests); Keywords suggests the searches to aim for from your services and towns and tracks your position; “SEO explained” covers everything in plain words; “What to offer” has SEO packages for businesses. For local businesses, start with your Google Business Profile and reviews.',
+    go: { place: 'seo' },
+  },
+  {
+    key: 'seo_keywords', title: 'Which searches should I aim for?',
+    keywords: ['keyword', 'keywords', 'what to rank for', 'search terms', 'keyword research', 'track rankings', 'ranking position'],
+    answer: 'Go to SEO → Keywords and press “Suggest searches for my services”. Ideas are grouped by what the person wants – urgent, ready to buy, comparing, researching – each with the page that should win it. Track the ones that matter and copy your position from Google Search Console once a month.',
+    go: { place: 'seo_keywords' },
+  },
+  {
     key: 'essentials', title: 'Which automations should a business start with?',
     keywords: ['essentials', 'starter automations', 'what automations', 'which automations', 'automation offer', 'offer to a client', 'start with', 'must have automations', 'core automations'],
     answer: 'Open Automations and press the square Essentials tile. It lists the 17 automations that keep a business running, in five sections – never miss a lead, bookings that happen, looking after customers, winning the work & getting paid, and reviews & referrals. “Start” ones are what most businesses begin with; “Next” ones are the layer to add as they grow. Switch each on there, tune its options, or press “Send as an offer” to send a business a link – saying yes switches them on in their system.',
@@ -563,6 +578,7 @@ export const PAGE_HELP = {
   '/messages': 'Messages is one inbox for WhatsApp, texts, emails and calls. Missed calls are texted back automatically and emergencies are flagged.',
   '/bookings': 'Bookings is your diary: online bookings, reminders, today’s jobs with “On my way” and Done buttons, services and opening hours.',
   '/invoices': 'Quotes & invoices: send quotes customers accept online, invoices they pay by card, and let the system chase anything overdue.',
+  '/seo': 'SEO shows what Google search can do for this business, a checklist in the right order, the searches to aim for, the full guide in plain words, and SEO packages to offer.',
   '/api': 'The API hub keeps each income stream (TikTok, trading, digital products…) in its own section with its own figures and web address, shows the totals and tax set-aside across them all, and holds the API keys and docs.',
   '/agency': 'The Agency area shows every client in one place, runs audits and proposals, and builds each client’s monthly report.',
 };

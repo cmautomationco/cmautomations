@@ -12,6 +12,7 @@ import { openDatabase, parseJson } from './index.js';
 import { seedBusinessTools } from './seedBusinessTools.js';
 import { seedIncomeStreams } from './seedStreams.js';
 import { seedEssentials } from './seedEssentials.js';
+import { seedSeo } from './seedSeo.js';
 
 /**
  * Seeds a realistic demo business so every screen has something to show.
@@ -26,7 +27,7 @@ export async function seedDemo(db) {
     return u;
   };
 
-  const owner = user('Alex Morgan', 'demo@cmautomations.com');
+  const owner = user('Callum', 'demo@cmautomations.com');
   const priya = user('Priya Shah', 'priya@cmautomations.com');
   const jordan = user('Jordan Lee', 'jordan@cmautomations.com');
   const sam = user('Sam Taylor', 'sam@cmautomations.com');
@@ -50,18 +51,19 @@ export async function seedDemo(db) {
   seedTasks(db, org, [owner, priya, jordan, sam]);
   seedHistory(db, org, [owner, priya, jordan, sam]);
   seedHelpdesk(db, org, [owner, priya, jordan, sam]);
-  // Alex's other incomes – TikTok, trading, digital products, 1:1 coaching – in the API hub.
+  // Callum's other incomes – TikTok, trading, digital products, 1:1 coaching – in the API hub.
   seedIncomeStreams(db, org, owner);
   // The agency, its clients and a plumbing business on the phone and WhatsApp.
   const extra = await seedBusinessTools(db, engine, {
     owner, priya, user,
     clientOrgs: [
-      [org, { contact_name: 'Alex Morgan', email: 'demo@cmautomations.com', monthly_fee_pence: 19900, hourly_cost_pence: 6000 }],
+      [org, { contact_name: 'Callum', email: 'demo@cmautomations.com', monthly_fee_pence: 19900, hourly_cost_pence: 6000 }],
       [glow, { contact_name: 'Mia Roberts', email: 'mia@glowstudio.example', monthly_fee_pence: 14900, hourly_cost_pence: 3000 }],
     ],
   });
   // Automations → Essentials: what's on in each business, Instagram DMs answered, an offer waiting.
   await seedEssentials(db, engine, { owner });
+  seedSeo(db);
   // Let any messages still being handed to the (demo) provider finish.
   await new Promise((resolve) => setTimeout(resolve, 0));
   return { org, owner, ...extra };
@@ -72,14 +74,21 @@ export async function seedDemo(db) {
  * bookings or invoices. Adds them alongside what's there, keeping any changes.
  */
 export async function upgradeDemo(db) {
-  // Earlier test builds had no API hub: add Alex's income streams.
   let added = false;
-  const alex = db.get('SELECT * FROM users WHERE email = ?', 'demo@cmautomations.com');
+  // The demo owner is Callum (earlier test builds called them Alex Morgan).
+  if (db.run(`UPDATE users SET name = 'Callum' WHERE email = 'demo@cmautomations.com' AND name = 'Alex Morgan'`).changes) {
+    db.run(`UPDATE audits SET proposal = replace(proposal, 'Alex Morgan', 'Callum') WHERE proposal LIKE '%Alex Morgan%'`);
+    db.run(`UPDATE org_meta SET value = replace(value, 'Alex Morgan', 'Callum') WHERE value LIKE '%Alex Morgan%'`);
+    added = true;
+  }
+  // Earlier test builds had no API hub: add Callum's income streams.
+  const owner0 = db.get('SELECT * FROM users WHERE email = ?', 'demo@cmautomations.com');
   const brightPath = db.get('SELECT * FROM organizations WHERE name = ?', 'Bright Path Coaching');
-  if (alex && brightPath && !db.get('SELECT 1 FROM income_streams LIMIT 1')) added = seedIncomeStreams(db, brightPath, alex);
+  if (owner0 && brightPath && !db.get('SELECT 1 FROM income_streams LIMIT 1')) added = seedIncomeStreams(db, brightPath, owner0) || added;
   // Earlier test builds had no Essentials offer.
   if (db.get(`SELECT 1 FROM organizations WHERE kind = 'agency'`)) {
-    if (alex && (await seedEssentials(db, createEngine(db), { owner: alex }))) added = true;
+    if (owner0 && (await seedEssentials(db, createEngine(db), { owner: owner0 }))) added = true;
+    if (seedSeo(db)) added = true;
     return added;
   }
   const owner = db.get('SELECT * FROM users WHERE email = ?', 'demo@cmautomations.com');
@@ -97,11 +106,12 @@ export async function upgradeDemo(db) {
   await seedBusinessTools(db, createEngine(db), {
     owner, priya, user,
     clientOrgs: [
-      [bright, { contact_name: 'Alex Morgan', email: 'demo@cmautomations.com', monthly_fee_pence: 19900, hourly_cost_pence: 6000 }],
+      [bright, { contact_name: 'Callum', email: 'demo@cmautomations.com', monthly_fee_pence: 19900, hourly_cost_pence: 6000 }],
       [glow, { contact_name: 'Mia Roberts', email: 'mia@glowstudio.example', monthly_fee_pence: 14900, hourly_cost_pence: 3000 }],
     ],
   });
   await seedEssentials(db, createEngine(db), { owner });
+  seedSeo(db);
   await new Promise((resolve) => setTimeout(resolve, 0));
   return true;
 }
@@ -253,7 +263,7 @@ function seedHistory(db, org, [owner, priya, jordan, sam]) {
   db.insert('kudos', { id: id('kdo'), org_id: org.id, from_user: owner.id, to_user: priya.id, message: 'Brilliant job on the webinar – 14 new leads! 🙌', created_at: addDays(now(), -1) });
   db.insert('kudos', { id: id('kdo'), org_id: org.id, from_user: jordan.id, to_user: sam.id, message: 'Thanks for covering the client calls on Friday.', created_at: addDays(now(), -2) });
   for (const [title, body, link] of [
-    ['🎉 Deal won: Career Clarity Intensive – Daniel', 'Alex closed a new deal worth £650.', '#/crm'],
+    ['🎉 Deal won: Career Clarity Intensive – Daniel', 'Callum closed a new deal worth £650.', '#/crm'],
     ['Ready to schedule: new Reel', 'Finalised by Priya. Pick a time slot in the calendar.', '#/content/calendar'],
     ['☀️ Your plan for today', '3 tasks due · 2 follow-ups · 1 post going out today', '#/tasks'],
   ]) {

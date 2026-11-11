@@ -13,6 +13,7 @@ import * as bookings from './pages/bookings.js';
 import * as invoices from './pages/invoices.js';
 import * as agency from './pages/agency.js';
 import * as apihub from './pages/apihub.js';
+import * as seo from './pages/seo.js';
 import { PUBLIC_PAGES, renderPublic } from './public.js';
 import { setAssistantVisible } from './assistant.js';
 
@@ -27,6 +28,7 @@ const NAV = [
   { section: 'Build' },
   { path: '/funnel', label: 'Build Funnel', icon: 'rocket', page: funnel },
   { path: '/content', label: 'Content Studio', icon: 'sparkles', page: content },
+  { path: '/seo', label: 'SEO', icon: 'search', page: seo },
   { section: 'Run' },
   { path: '/messages', label: 'Messages', icon: 'inbox', page: messages, badge: 'messages' },
   { path: '/bookings', label: 'Bookings', icon: 'calendar', page: bookings },

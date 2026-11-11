@@ -6,8 +6,6 @@ export async function render(el) {
   const [d, kudos, team, hub] = await Promise.all([get('/dashboard'), get('/kudos'), get('/team'), get('/streams').catch(() => null)]);
   const { kpis } = d;
   const first = state.me.user.name.split(' ')[0];
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   const kpi = (label, value, sub, ic, cls = '') => h('div', { class: `card kpi ${cls}` },
     h('div', { class: 'label' }, icon(ic), label), h('div', { class: `value ${cls ? '' : 'blue'}` }, value), h('div', { class: 'sub' }, sub));
@@ -26,7 +24,7 @@ export async function render(el) {
   mount(el,
     h('div', { class: 'page-head' },
       h('div', h('div', { class: 'eyebrow' }, new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })),
-        h('h1', { style: { marginTop: '6px' } }, `${greeting}, `, h('span', { class: 'blue' }, first), ' 👋'),
+        h('h1', { style: { marginTop: '6px' } }, 'Hello, ', h('span', { class: 'blue' }, first), ' 👋'),
         h('p', 'Here’s everything happening across ', h('b', state.me.org.name), ' today. Automations have handled the admin – you focus on the work that matters.')),
       h('div', { class: 'row' },
         h('a', { class: 'btn soft', href: '#/content/ideas' }, icon('wand'), 'Generate ideas'),

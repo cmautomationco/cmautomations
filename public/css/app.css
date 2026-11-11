@@ -813,3 +813,47 @@ a.hbar-row:hover .hbar-fill { filter: brightness(1.15); }
   /* On a phone the Essentials tile comes first, so it's the first thing you see. */
   .auto-top .ess-tile { order: -1; min-height: 0; }
 }
+
+/* ───────── SEO ───────── */
+.seo-list { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.seo-focus { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); color: var(--ink); text-decoration: none; }
+.seo-focus:last-child { border-bottom: none; }
+.seo-focus:hover { text-decoration: none; }
+.seo-focus:hover b { color: var(--blue-600); }
+.seo-focus .progress { margin-top: 6px; height: 6px; }
+.seo-rank { width: 28px; height: 28px; flex: none; border-radius: 50%; border: 2px solid var(--blue-500); color: var(--blue-600); font-weight: 800; display: grid; place-items: center; font-size: 13px; }
+.seo-item { padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+.seo-item:last-child { border-bottom: none; }
+.seo-item.done .seo-title { color: var(--muted); }
+.seo-item.skip { opacity: 0.6; }
+.seo-item-main { display: flex; gap: 12px; align-items: flex-start; }
+.seo-title { background: none; border: none; padding: 0; font: inherit; font-weight: 700; color: var(--ink); text-align: left; cursor: pointer; }
+.seo-title:hover { color: var(--blue-600); }
+.seo-how { margin-top: 6px; padding-left: 10px; border-left: 3px solid var(--blue-200); }
+.seo-idea { align-items: flex-start; padding: 6px 0; }
+.seo-idea input { margin-top: 3px; }
+.seo-learn { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 16px; align-items: start; }
+.seo-toc { position: sticky; top: 16px; }
+.seo-toc ol { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 13px; }
+.seo-article h2 { font-size: 20px; }
+.seo-article h4 { margin: 4px 0 0; font-size: 14px; }
+.seo-article p { line-height: 1.6; }
+.seo-box { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.seo-box p { margin-top: 4px; }
+.seo-glossary { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 8px 16px; margin: 0; }
+.seo-glossary dt { font-weight: 700; }
+.seo-glossary dd { margin: 0; color: var(--ink-2); }
+.seo-table-wrap { overflow-x: auto; }
+.seo-table td { vertical-align: middle; }
+@media (max-width: 900px) {
+  .seo-learn { grid-template-columns: minmax(0, 1fr); }
+  .seo-article, .seo-article > section { min-width: 0; }
+  .seo-toc { position: static; }
+}
+@media (max-width: 720px) {
+  .seo-item-main { flex-direction: column; }
+  .seo-glossary { grid-template-columns: 1fr; gap: 2px; }
+  .seo-glossary dd { margin-bottom: 8px; }
+  .seo-table th:nth-child(2), .seo-table td:nth-child(2), .seo-table th:nth-child(3), .seo-table td:nth-child(3) { display: none; }
+}
+.seo-focus .grow { flex: 1; min-width: 0; }
