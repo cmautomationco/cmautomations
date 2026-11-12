@@ -21,6 +21,7 @@ import { runEssentials } from '../modules/essentials/runner.js';
  *   9. builds last month's client reports on the 1st (agencies)
  *  10. early each month, a task for any income stream with nothing recorded last month
  *  11. Essentials: birthday/occasion messages, cold lead check-ins, unread replies to automatic messages
+ *  12. CRM dialer: follow-up sequences, call back reminders, and enriching any lead not done yet
  */
 export function createScheduler(ctx, { intervalSeconds = 30, digestHourUtc = 7 } = {}) {
   let timer = null;
@@ -77,6 +78,11 @@ export function createScheduler(ctx, { intervalSeconds = 30, digestHourUtc = 7 }
       summary.reports = await step('reports', () => runMonthlyReports(ctx, at));
       summary.streams = await step('income streams', () => remindMissingMonths(ctx, at));
       summary.essentials = await step('essentials', () => runEssentials(ctx, at));
+      summary.dialer = await step('dialer', async () => {
+        const d = await import('../modules/dialer/service.js');
+        const { enrichPending } = await import('../modules/crm/enrich.js');
+        return { sequences: await d.runSequences(ctx, at), callbacks: await d.runCallbacks(ctx, at), enriched: enrichPending(db, 100) };
+      });
       summary.unfinished = await step('unfinished bookings', async () => (await import('../modules/bookings/chat.js')).followUpAbandoned(ctx, at));
     } finally {
       running = false;

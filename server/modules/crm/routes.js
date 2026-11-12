@@ -3,6 +3,7 @@ import { parseJson } from '../../db/index.js';
 import { requireAuth } from '../../lib/auth.js';
 import { toE164 } from '../../lib/phone.js';
 import { cleanDay, cleanSocials, createContact } from './service.js';
+import { enrichContact } from './enrich.js';
 import { badRequest, id, notFound, now, pick } from '../../lib/util.js';
 
 export const DEAL_STAGES = ['new', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
@@ -15,6 +16,7 @@ const contactSchema = {
   preferred_channel: { enum: ['auto', 'email', 'sms', 'whatsapp'] }, whatsapp_opt_in: { type: 'boolean' },
   sms_opt_out: { type: 'boolean' }, email_opt_out: { type: 'boolean' },
   birthday: { max: 10 }, special_date: { max: 10 }, special_date_label: { max: 60 }, socials: { type: 'object' },
+  timezone: { max: 60 }, call_pref: { enum: ['call', 'text'] }, qualification: { type: 'object' },
 };
 
 /** Tidies the Essentials fields: dates to 2026-10-09 or 10-09 (no year), handles without the @. */
@@ -31,7 +33,7 @@ function cleanExtras(body) {
 }
 
 function getContact(db, orgId, contactId) {
-  const c = parseJson(db.get('SELECT * FROM contacts WHERE id = ? AND org_id = ?', contactId, orgId), 'tags', 'socials');
+  const c = parseJson(db.get('SELECT * FROM contacts WHERE id = ? AND org_id = ?', contactId, orgId), 'tags', 'socials', 'enrichment', 'qualification');
   if (!c) throw notFound('Contact');
   return c;
 }
@@ -102,7 +104,20 @@ export function crmRoutes({ db, engine }) {
     assertMember(db, req.org.id, patch.owner_id);
     if (patch.phone !== undefined) patch.phone_e164 = toE164(patch.phone);
     if (patch.postcode) patch.postcode = patch.postcode.toUpperCase();
+    if (patch.timezone) {
+      try { new Intl.DateTimeFormat('en-GB', { timeZone: patch.timezone }); } catch { throw badRequest('Unknown time zone'); }
+    }
+    if (patch.qualification) {
+      const current = JSON.parse(db.get('SELECT qualification FROM contacts WHERE id = ?', req.params.id).qualification || '{}');
+      patch.qualification = { ...current, ...patch.qualification };
+    }
     db.update('contacts', req.params.id, { ...patch, updated_at: now() });
+    // A time zone set by hand is kept; everything else is worked out again.
+    if (patch.timezone !== undefined) {
+      const c = db.get('SELECT enrichment FROM contacts WHERE id = ?', req.params.id);
+      db.update('contacts', req.params.id, { enrichment: { ...JSON.parse(c.enrichment || '{}'), timezone_source: patch.timezone ? 'manual' : null } });
+    }
+    enrichContact(db, req.params.id);
     res.json(getContact(db, req.org.id, req.params.id));
   });
 

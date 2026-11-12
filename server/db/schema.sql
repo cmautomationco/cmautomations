@@ -650,3 +650,84 @@ CREATE TABLE IF NOT EXISTS automation_offers (
   accepted_at  TEXT,
   accepted_by  TEXT
 );
+
+-- ───────────────────────── CRM dialer ─────────────────────────
+-- Outbound calls made from the CRM dialer, with notes, transcript and what was learnt.
+CREATE TABLE IF NOT EXISTS dial_calls (
+  id               TEXT PRIMARY KEY,
+  org_id           TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  contact_id       TEXT REFERENCES contacts(id) ON DELETE SET NULL,
+  user_id          TEXT REFERENCES users(id) ON DELETE SET NULL,
+  mode             TEXT NOT NULL DEFAULT 'phone' CHECK (mode IN ('bridge','phone','demo')),
+  status           TEXT NOT NULL DEFAULT 'live' CHECK (status IN ('live','ended')),
+  outcome          TEXT,
+  opener_key       TEXT,
+  opener_text      TEXT,
+  notes            TEXT,
+  transcript       TEXT NOT NULL DEFAULT '',
+  analysis         TEXT NOT NULL DEFAULT '{}',
+  duration_seconds INTEGER,
+  provider_id      TEXT,
+  recording_url    TEXT,
+  started_at       TEXT NOT NULL,
+  ended_at         TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_dial_calls ON dial_calls(org_id, started_at);
+
+-- Follow-up sequences made for each lead after a call, and their steps.
+CREATE TABLE IF NOT EXISTS sequences (
+  id             TEXT PRIMARY KEY,
+  org_id         TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  contact_id     TEXT NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  call_id        TEXT,
+  kind           TEXT NOT NULL,
+  name           TEXT NOT NULL,
+  status         TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','stopped','done')),
+  stopped_reason TEXT,
+  created_at     TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sequence_steps (
+  id          TEXT PRIMARY KEY,
+  sequence_id TEXT NOT NULL REFERENCES sequences(id) ON DELETE CASCADE,
+  org_id      TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  contact_id  TEXT NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  step_no     INTEGER NOT NULL,
+  type        TEXT NOT NULL CHECK (type IN ('message','call')),
+  label       TEXT NOT NULL,
+  body        TEXT,
+  due_at      TEXT NOT NULL,
+  status      TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','done','skipped')),
+  result      TEXT,
+  done_at     TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_sequence_steps_due ON sequence_steps(status, due_at);
+
+-- Call backs and text backs booked in the CRM calendar (by the team or by the lead).
+CREATE TABLE IF NOT EXISTS callbacks (
+  id         TEXT PRIMARY KEY,
+  org_id     TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  contact_id TEXT NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  due_at     TEXT NOT NULL,
+  mode       TEXT NOT NULL DEFAULT 'call' CHECK (mode IN ('call','text')),
+  status     TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','done','cancelled')),
+  topic      TEXT,
+  source     TEXT NOT NULL DEFAULT 'dialer',
+  notified   INTEGER NOT NULL DEFAULT 0,
+  created_by TEXT,
+  created_at TEXT NOT NULL,
+  done_at    TEXT
+);
+
+-- Personal pages made for each lead: their demo, booking confirmation, and call-back picker.
+CREATE TABLE IF NOT EXISTS lead_pages (
+  id         TEXT PRIMARY KEY,
+  org_id     TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  contact_id TEXT REFERENCES contacts(id) ON DELETE CASCADE,
+  kind       TEXT NOT NULL CHECK (kind IN ('demo','confirmation','callback')),
+  token      TEXT NOT NULL UNIQUE,
+  data       TEXT NOT NULL DEFAULT '{}',
+  booking_id TEXT,
+  callback_id TEXT,
+  created_at TEXT NOT NULL,
+  viewed_at  TEXT
+);

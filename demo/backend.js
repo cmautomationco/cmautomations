@@ -22,6 +22,7 @@ import { streamHookRoutes, streamRoutes } from '../server/modules/streams/routes
 import { apiKeyRoutes, publicApiRoutes } from '../server/modules/api/routes.js';
 import { essentialsPublicRoutes, essentialsRoutes, socialHookRoutes } from '../server/modules/essentials/routes.js';
 import { seoRoutes } from '../server/modules/seo/routes.js';
+import { dialerPublicRoutes, dialerRoutes } from '../server/modules/dialer/routes.js';
 
 export function createBackend(db, { onWrite = () => {} } = {}) {
   const engine = createEngine(db);
@@ -43,6 +44,7 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
     ['/api/invoices', billingRoutes(ctx)],
     ['/api/agency', agencyRoutes(ctx)],
     ['/api/public/essentials', essentialsPublicRoutes(ctx)],
+    ['/api/public/dialer', dialerPublicRoutes(ctx)],
     ['/api/public', publicRoutes(ctx)],
     ['/api/integrations', integrationRoutes(ctx)],
     ['/api/streams', streamRoutes(ctx)],
@@ -54,6 +56,7 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
     ['/api/hooks/social', socialHookRoutes(ctx)],
     ['/api/essentials', essentialsRoutes(ctx)],
     ['/api/seo', seoRoutes(ctx)],
+    ['/api/dialer', dialerRoutes(ctx)],
   ];
 
   async function request(method, url, headers = {}, rawBody) {

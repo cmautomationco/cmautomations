@@ -3,6 +3,7 @@ import { id, now } from '../../lib/util.js';
 import { toE164 } from '../../lib/phone.js';
 import { getSetting } from '../../lib/settings.js';
 import { welcomeOrThank } from '../messaging/service.js';
+import { enrichContact } from './enrich.js';
 
 /** Where a lead came from, in plain words – used for the “Source: …” tag (Essentials → Lead source tagging). */
 export function sourceLabel(raw) {
@@ -47,6 +48,8 @@ export function createContact({ db, engine }, orgId, data, { actorId = null, emi
   if (data.birthday) contact.birthday = data.birthday;
   if (data.special_date) { contact.special_date = data.special_date; contact.special_date_label = data.special_date_label || null; }
   db.insert('contacts', contact);
+  // Every lead is enriched the moment it arrives (location, time zone, company, score…).
+  enrichContact(db, contact.id);
   const automations = emit && engine ? engine.emit(orgId, 'contact.created', { contact }, { actorId }) : [];
   return { contact: getContactRow(db, contact.id), automations };
 }
@@ -75,7 +78,7 @@ export function upsertContact(ctx, orgId, data, opts = {}) {
   if (patch.phone) patch.phone_e164 = toE164(patch.phone);
   if (data.whatsapp_opt_in && !existing.whatsapp_opt_in) patch.whatsapp_opt_in = 1;
   if (data.first_name && /^(new contact|caller|whatsapp enquiry|text enquiry)/i.test(existing.first_name)) patch.first_name = data.first_name;
-  if (Object.keys(patch).length) ctx.db.update('contacts', existing.id, { ...patch, updated_at: now() });
+  if (Object.keys(patch).length) { ctx.db.update('contacts', existing.id, { ...patch, updated_at: now() }); enrichContact(ctx.db, existing.id); }
   return { contact: getContactRow(ctx.db, existing.id), automations: [], created: false };
 }
 

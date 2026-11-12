@@ -24,6 +24,16 @@ const COLUMNS = {
     ['birthday', 'TEXT'],
     ['special_date', 'TEXT'],
     ['special_date_label', 'TEXT'],
+    // CRM dialer: where they are, what we've worked out about them, and where they are in the calling.
+    ['timezone', 'TEXT'],
+    ['enrichment', "TEXT NOT NULL DEFAULT '{}'"],
+    ['qualification', "TEXT NOT NULL DEFAULT '{}'"],
+    ['lead_score', 'INTEGER'],
+    ['call_pref', 'TEXT'],
+    ['dial_status', "TEXT NOT NULL DEFAULT 'new'"],
+    ['dial_attempts', 'INTEGER NOT NULL DEFAULT 0'],
+    ['last_dialed_at', 'TEXT'],
+    ['next_dial_at', 'TEXT'],
   ],
 };
 

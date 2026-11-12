@@ -22,6 +22,7 @@ import { streamHookRoutes, streamRoutes } from './modules/streams/routes.js';
 import { apiKeyRoutes, publicApiRoutes } from './modules/api/routes.js';
 import { essentialsPublicRoutes, essentialsRoutes, socialHookRoutes } from './modules/essentials/routes.js';
 import { seoRoutes } from './modules/seo/routes.js';
+import { dialerHookRoutes, dialerPublicRoutes, dialerRoutes } from './modules/dialer/routes.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -54,9 +55,11 @@ export function createApp(db) {
   app.use('/api/invoices', billingRoutes(ctx));
   app.use('/api/agency', agencyRoutes(ctx));
   app.use('/api/public/essentials', essentialsPublicRoutes(ctx));
+  app.use('/api/public/dialer', dialerPublicRoutes(ctx));
   app.use('/api/public', publicRoutes(ctx));
   app.use('/api/hooks/stream', streamHookRoutes(ctx));
   app.use('/api/hooks/social', socialHookRoutes(ctx));
+  app.use('/api/hooks/dialer', dialerHookRoutes(ctx));
   app.use('/api/hooks', hookRoutes(ctx));
   app.use('/api/integrations', integrationRoutes(ctx));
   app.use('/api/streams', streamRoutes(ctx));
@@ -64,6 +67,7 @@ export function createApp(db) {
   app.use('/api/v1', publicApiRoutes(ctx));
   app.use('/api/essentials', essentialsRoutes(ctx));
   app.use('/api/seo', seoRoutes(ctx));
+  app.use('/api/dialer', dialerRoutes(ctx));
 
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 

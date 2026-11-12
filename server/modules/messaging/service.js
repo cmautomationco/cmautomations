@@ -425,6 +425,17 @@ export async function handleInbound(ctx, orgId, { channel, from, to, body, provi
     return result;
   }
 
+  // “CALL” / “TEXT” replies to a dialer text: book the call back or text back.
+  if (channel !== 'email') {
+    const { dialerReply } = await import('../dialer/service.js');
+    const dial = await dialerReply(ctx, org, contact, channel, text);
+    if (dial) {
+      db.update('messages', message.id, { read: 1, related_type: 'callback', related_id: dial.callback.id });
+      result.handled = dial.handled;
+      return result;
+    }
+  }
+
   const booking = channel !== 'email' ? nextBooking(db, orgId, contact.id) : null;
   // Describing the job while booking ("old radiator leaking") isn't an emergency call for help.
   const describing = db.get(`SELECT 1 FROM conversations WHERE org_id = ? AND contact_id = ? AND step IN ('name','address','notes')`, orgId, contact.id);
