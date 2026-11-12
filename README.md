@@ -408,11 +408,37 @@ A section (Build → **SEO**) that explains what a business gets from SEO and wa
   - what to expect month by month, SEO vs ads vs social, and a jargon buster.
 - **What to offer:** four SEO packages (Local Starter, Local Growth, Content & Authority, E-commerce), each with what's included, what the business gets, what it needs to provide, and a timeline.
 
-### 13. Lead forms
+### 13. CRM dialer, calendar & scripts
+
+Inside the CRM (tabs **Dialer**, **Calendar**, **Scripts**, plus a full profile for every lead):
+
+- **Lead enrichment:** every lead (forms, calls, WhatsApp, DMs, bookings, imports, the API) is filled out as it arrives.
+  - It records the country, region and time zone from the phone number or UK postcode, and whether the number is a mobile or a landline.
+  - It works out the company and website from a work email.
+  - It counts engagement and gives a 0–100 lead score with the reasons.
+  - Everything is worked out from data already in the system; nothing is sent to a paid data provider.
+- **Time-zone call list:**
+  - Leads are ranked by what time it is for them. People in their best pick-up window (10:00–11:30 and 16:00–17:30 their time) come first, and new leads go straight to the top.
+  - Anyone outside their calling hours waits in "Later" with the time it opens, in your time and theirs.
+  - Call backs that are due always come first.
+- **Openers:** 3–5 opening lines written for each lead from their form answers, messages, missed calls, quotes, source and last call. They are ranked by how often each one has booked a call for you.
+- **Calls:**
+  - With Twilio connected and your phone in Dialer settings, your phone rings first and is then connected to the lead from the business number. Twilio transcribes both sides and can record the call (optional).
+  - Without Twilio, the Call button opens your phone's dialler. In the test build it's a practice call.
+  - Browser transcription (Chrome/Edge microphone) and pasting a transcript also work. Live coaching shows the answer to each objection as it comes up.
+- **Outcomes** (booked, interested, call back, not interested, no answer, voicemail, wrong number, do not call) update the lead's record: notes, transcript, problems, objections, budget, timeline and who decides. Then:
+  - **Booked:** the meeting is booked and a custom confirmation page is made, showing the time in their time zone, an agenda built from their problems, prep, add-to-calendar and a demo preview.
+  - **Interested:** a personal demo page is made, matching each problem they mentioned to its fix, and a follow-up sequence starts.
+  - **No answer:** they get a text offering a call back or a text back. Replying CALL or TEXT books it, and the next try is set for a good time in their day.
+  - Sequences stop by themselves when the lead replies, books or opts out.
+- **Calendar:** bookings, call backs, text backs and every follow-up step in one week view. Leads can pick their own call back time on their call-back page (`#/callback/<business>`), shown in their own time zone, and choose a call, a text or WhatsApp.
+- **Scripts:** a call script that rebuilds itself from your calls. It shows the best openers, objections ranked with the exact words that turned them into bookings, the problems and questions you hear most, and a version history of what changed.
+
+### 14. Lead forms
 
 Build a form in **CRM → Lead forms**, share the link or paste the embed code into a website. Submissions create or update the contact (tagged), send a thank-you, and run the new-lead automations. Spam is filtered with a hidden field and rate limits.
 
-### 14. Automation walkthrough presentation
+### 15. Automation walkthrough presentation
 
 Automations → **Watch the walkthrough** opens a 32-slide presentation for showing a client how an automation project works, from first conversation to results:
 

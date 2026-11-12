@@ -39,6 +39,9 @@ export const PLACES = {
   branding: { hash: '#/settings/branding', label: 'Branding', words: ['branding', 'logo', 'brand colour', 'colours', 'colors'] },
   phone: { hash: '#/settings/phone', label: 'Phone & alerts settings', words: ['phone settings', 'business number', 'call forwarding', 'alert settings'] },
   whatsapp_settings: { hash: '#/settings/whatsapp', label: 'WhatsApp settings', words: ['whatsapp settings', 'booking assistant', 'whatsapp templates', 'book on whatsapp'] },
+  dialer: { hash: '#/crm/dialer', label: 'CRM dialer', words: ['dialer', 'dialler', 'power dialer', 'call list', 'cold call', 'call leads'] },
+  crm_calendar: { hash: '#/crm/calendar', label: 'CRM calendar', words: ['crm calendar', 'call backs', 'callbacks', 'call back calendar'] },
+  scripts: { hash: '#/crm/scripts', label: 'Call scripts', words: ['call script', 'sales script', 'scripts', 'objection handling'] },
   seo: { hash: '#/seo', label: 'SEO', words: ['seo', 'seo plan', 'search engine'] },
   seo_learn: { hash: '#/seo/learn', label: 'SEO explained', words: ['seo explained', 'seo guide'] },
   seo_keywords: { hash: '#/seo/keywords', label: 'SEO keywords', words: ['keywords', 'keyword planner', 'rankings'] },
@@ -373,6 +376,18 @@ export const TOPICS = [
     keywords: ['go live with messages', 'go live with real', 'go live with texts', 'go live with whatsapp', 'connect twilio', 'connect stripe', 'connect resend', 'real texts', 'real whatsapp', 'send for real', 'api key', 'not actually sent', 'demo not sent'],
     answer: 'Go to Settings → Connections. Paste your Twilio Account SID and Auth Token (calls, texts and WhatsApp), your Stripe secret key (card payments) and your Resend API key (email). Each card has a Test button that checks it against the real service and explains any problem in plain English, plus “Send a test message” to your own phone. Keys are stored encrypted and each business uses its own accounts.',
     go: { place: 'connections' }, admin: true,
+  },
+  {
+    key: 'dialer', title: 'Calling leads with the dialer',
+    keywords: ['dialer', 'dialler', 'call leads', 'cold call', 'calling leads', 'who should i call', 'best time to call', 'time zone', 'call list', 'opening line', 'opener'],
+    answer: 'Open CRM → Dialer. Leads are enriched as they arrive (location, time zone, company, lead score) and ordered by what time it is for them – people in their best pick-up window first, new leads straight away, and anyone outside their calling hours in “Later” with the time it opens in your time and theirs. Click a lead for openers written from what they told you, press Call now, then log what happened: booked, interested, call back, no answer and so on. The dialer then books the meeting, makes their demo and confirmation pages, sends a text back offering a call back or text back, and starts the follow-up sequence. With Twilio connected and your phone number in Dialer settings, your phone rings first and connects the lead, with live transcription.',
+    go: { place: 'dialer' },
+  },
+  {
+    key: 'call_script', title: 'Call scripts and transcripts',
+    keywords: ['script', 'call script', 'sales script', 'transcript', 'transcribe', 'objection', 'objections', 'what to say on a call'],
+    answer: 'CRM → Scripts is built from your own calls: the opener that books the most, the objections you hear most with the answer that worked on calls that booked, the questions people ask and tips on how much you talk. It updates after every call with a transcript. Transcripts come from Twilio on bridged calls, or from your browser’s microphone with “Start live transcription”, or you can paste one in.',
+    go: { place: 'scripts' },
   },
   {
     key: 'seo', title: 'Get found on Google (SEO)',

@@ -2,27 +2,43 @@ import { del, get, patch, post } from '../api.js';
 import { CHANNEL_LABELS, contactName, ago, announce, avatar, channelIcon, confirmDialog, copyText, date, dateTime, field, formData, h, icon, modal, money, mount, pounds, relative, select, showError, titleCase, toast } from '../ui.js';
 import { bookingModal } from './bookings.js';
 import { documentModal } from './invoices.js';
+import { clock, renderCalendar, renderDialer, renderLeadProfile, renderScripts } from './dialer.js';
 
 const STAGES = [['new', 'New'], ['qualified', 'Qualified'], ['proposal', 'Proposal'], ['negotiation', 'Negotiation'], ['won', 'Won'], ['lost', 'Lost']];
 const LIFE = { lead: 'blue', prospect: 'amber', customer: 'green', churned: '' };
+
+const TABS = [['pipeline', 'Pipeline'], ['contacts', 'Contacts'], ['dialer', 'Dialer'], ['calendar', 'Calendar'], ['scripts', 'Scripts'], ['forms', 'Lead forms']];
+const HEADS = {
+  dialer: ['Call the right lead at the ', 'right time', 'Every lead is enriched as it arrives and ranked by what time it is where they are. Pick an opener written for them, call, and the outcome books the meeting, sends their personal pages and starts the follow-ups.'],
+  calendar: ['Bookings, call backs & ', 'follow-ups', 'One calendar for everything: meetings booked on calls, call backs and text backs leads chose themselves, and every step of your follow-up sequences.'],
+  scripts: ['A script that ', 'learns', 'Built from your own calls and transcripts – the openers that book, the objections you hear and the answers that worked.'],
+};
 
 export async function render(el, route) {
   const tab = route.parts[1] || 'pipeline';
   const team = await get('/team');
   const body = h('div');
+  const head = HEADS[tab] || ['Every lead, deal & ', 'follow-up', 'Add a lead and the system books the welcome call, sets the follow-up and chases proposals for you. Move a deal to Won and onboarding starts automatically.'];
+  if (tab === 'lead' && route.parts[2]) {
+    mount(el, body);
+    return renderLeadProfile(body, route.parts[2]);
+  }
   mount(el,
     h('div', { class: 'page-head' },
       h('div', h('div', { class: 'eyebrow' }, 'CRM'),
-        h('h1', { style: { marginTop: '6px' } }, 'Every lead, deal & ', h('span', { class: 'blue' }, 'follow-up')),
-        h('p', 'Add a lead and the system books the welcome call, sets the follow-up and chases proposals for you. Move a deal to Won and onboarding starts automatically.')),
+        h('h1', { style: { marginTop: '6px' } }, head[0], h('span', { class: 'blue' }, head[1])),
+        h('p', head[2])),
       h('div', { class: 'row' },
         h('button', { class: 'btn soft', onclick: () => dealModal(null, team, () => render(el, route)) }, icon('plus'), 'New deal'),
         h('button', { class: 'btn primary', onclick: () => contactModal(team, () => render(el, route)) }, icon('plus'), 'Add lead'))),
-    h('div', { class: 'tabs' }, [['pipeline', 'Pipeline'], ['contacts', 'Contacts'], ['forms', 'Lead forms']].map(([k, l]) => h('a', { href: `#/crm/${k}`, class: tab === k ? 'active' : '' }, l))),
+    h('div', { class: 'tabs' }, TABS.map(([k, l]) => h('a', { href: `#/crm/${k}`, class: tab === k ? 'active' : '' }, l))),
     body);
   if (route.query.new) contactModal(team, () => { location.hash = '#/crm/contacts'; }, route.query);
   if (route.query.open) contactDrawer(route.query.open, team, () => {});
   if (tab === 'forms') return renderForms(body);
+  if (tab === 'dialer') return renderDialer(body, route.query);
+  if (tab === 'calendar') return renderCalendar(body, route.query);
+  if (tab === 'scripts') return renderScripts(body);
   if (tab === 'contacts') return renderContacts(body, route.query, team);
   return renderPipeline(body, team);
 }
@@ -81,13 +97,15 @@ async function renderContacts(el, query, team) {
     h('div', { class: 'row', style: { marginBottom: '14px', justifyContent: 'space-between' } },
       h('div', { class: 'row' }, [['', 'All'], ['lead', 'Leads'], ['prospect', 'Prospects'], ['customer', 'Customers'], ['churned', 'Churned']].map(([k, l]) => h('a', { class: `chip ${(query.lifecycle || '') === k ? 'active' : ''}`, href: `#/crm/contacts${k ? `?lifecycle=${k}` : ''}` }, l))),
       search),
-    h('div', { class: 'card', style: { overflow: 'hidden' } },
+    h('div', { class: 'card', style: { overflowX: 'auto' } },
       h('table', { class: 'table' },
-        h('thead', h('tr', ['Name', 'Company', 'Stage', 'Source', 'Open value', 'Next follow-up', 'Owner'].map((c) => h('th', c)))),
+        h('thead', h('tr', ['Name', 'Company', 'Stage', 'Score', 'Their time', 'Source', 'Open value', 'Next follow-up', 'Owner'].map((c) => h('th', c)))),
         h('tbody', contacts.map((c) => h('tr', { onclick: () => contactDrawer(c.id, team, () => renderContacts(el, query, team)) },
           h('td', h('div', { class: 'row', style: { gap: '10px' } }, avatar(contactName(c)), h('div', h('div', { style: { fontWeight: 700 } }, contactName(c)), h('div', { class: 'small muted' }, c.email)))),
           h('td', c.company || '–'),
           h('td', h('span', { class: `badge ${LIFE[c.lifecycle]}` }, titleCase(c.lifecycle))),
+          h('td', c.lead_score != null ? h('b', { class: 'blue' }, c.lead_score) : h('span', { class: 'muted' }, '–')),
+          h('td', { class: 'small', title: c.timezone || '' }, c.timezone ? `${clock(new Date().toISOString(), c.timezone)} ${c.timezone.split('/').pop().replace(/_/g, ' ')}` : h('span', { class: 'muted' }, '–')),
           h('td', { class: 'muted' }, c.source || '–'),
           h('td', h('b', { class: 'blue' }, c.open_value ? money(c.open_value) : '–')),
           h('td', c.next_follow_up_at ? h('span', { class: 'badge blue' }, relative(c.next_follow_up_at)) : h('span', { class: 'muted' }, '–')),
@@ -128,7 +146,8 @@ async function contactDrawer(id, team, reload) {
         c.last_contacted_at ? h('span', { class: 'badge' }, `Last contact ${ago(c.last_contacted_at)}`) : null),
       h('div', { class: 'row' },
         h('a', { class: 'btn sm primary', href: `#/messages/${c.id}`, onclick: close }, icon('chat'), 'Message'),
-        c.phone_e164 ? h('a', { class: 'btn sm', href: `tel:${c.phone_e164}` }, icon('phone'), 'Call') : null,
+        c.phone_e164 ? h('a', { class: 'btn sm', href: `#/crm/dialer?lead=${c.id}`, onclick: close }, icon('phone'), 'Call in dialer') : null,
+        h('a', { class: 'btn sm', href: `#/crm/lead/${c.id}`, onclick: close }, 'Full profile'),
         h('button', { class: 'btn sm', onclick: () => bookingModal({ contact: c, onDone: () => contactDrawer(id, team, reload) }) }, icon('calendar'), 'Book'),
         h('button', { class: 'btn sm', onclick: () => documentModal({ kind: 'quote', contact_id: c.id }) }, icon('receipt'), 'Quote'),
         h('button', { class: 'btn sm ghost', onclick: () => editContact(c, () => { contactDrawer(id, team, reload); reload(); }) }, icon('edit'), 'Edit')),

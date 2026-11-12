@@ -6,7 +6,7 @@ import { applyBrandColor, field, h, icon, mount, paybackLabel, pounds, showError
  * their own booking, lead forms, quotes & invoices, proposals and reports.
  * Each one wears the business's own name, logo and colour.
  */
-export const PUBLIC_PAGES = ['book', 'booking', 'form', 'doc', 'proposal', 'report', 'essentials'];
+export const PUBLIC_PAGES = ['book', 'booking', 'form', 'doc', 'proposal', 'report', 'essentials', 'demo', 'confirmed', 'callback'];
 
 export async function renderPublic(root, route) {
   const [page, key] = route.parts;
@@ -22,6 +22,9 @@ export async function renderPublic(root, route) {
     if (page === 'proposal') return await proposalPage(shell, key);
     if (page === 'report') return await reportPage(shell, key);
     if (page === 'essentials') return await essentialsPage(shell, key);
+    if (page === 'demo') return await demoPage(shell, key);
+    if (page === 'confirmed') return await confirmedPage(shell, key);
+    if (page === 'callback') return await callbackPickPage(shell, key);
   } catch (err) {
     mount(shell, h('div', { class: 'pub-card pub-empty' }, h('h2', 'This link isn’t working'), h('p', err.status === 404 ? 'It may have expired or been replaced. Please contact the business that sent it.' : err.message)));
   }
@@ -383,4 +386,104 @@ async function reportPage(shell, token) {
       d.top_automations.length ? [h('h2', 'Hardest-working ', h('span', { class: 'blue' }, 'automations')), h('table', { class: 'table' }, h('thead', h('tr', h('th', 'Automation'), h('th', 'Times run'), h('th', 'Time saved'))), h('tbody', d.top_automations.map((a) => h('tr', { style: { cursor: 'default' } }, h('td', a.name), h('td', a.runs), h('td', `${Math.round((a.minutes / 60) * 10) / 10}h`)))))] : null,
       d.previous?.hours_saved != null ? h('p', { class: 'small muted' }, `${d.previous.label}: ${d.previous.hours_saved} hours saved, ${d.previous.leads} new enquiries, ${pounds(d.previous.payments_pence)} collected.`) : null,
       r.agency ? h('p', { class: 'small muted' }, `Prepared by ${r.agency.name}.`) : null)), footer(b));
+}
+
+// ───────────────────────── Lead pages (from the CRM dialer) ─────────────────────────
+
+const myZone = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return ''; } };
+const localWhen = (iso, opts = {}) => new Date(iso).toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit', hour12: true, ...opts });
+const localClock = (iso) => new Date(iso).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true }).replace(' ', '').toLowerCase();
+
+/** A demo made for one person: the problems they told us about and exactly how each gets fixed. */
+async function demoPage(shell, token) {
+  const d = await get(`/public/dialer/lead/${token}`);
+  const b = d.business;
+  mount(shell, header(b), h('main', { class: 'pub-main wide' },
+    h('div', { class: 'pub-card stack lp-hero' },
+      h('div', { class: 'eyebrow' }, `Made for ${d.first_name || 'you'}${d.company ? ` at ${d.company}` : ''}`),
+      h('h1', d.pain ? h('span', 'How we’d fix ', h('span', { class: 'blue' }, d.pain.toLowerCase())) : h('span', 'Your personal ', h('span', { class: 'blue' }, 'demo'))),
+      h('p', { class: 'muted' }, `${d.first_name ? `${d.first_name}, here’s` : 'Here’s'} a quick look at what we talked about – the problems you mentioned, and exactly what would take care of each one.`),
+      d.their_words.length ? h('div', { class: 'stack', style: { gap: '6px' } }, h('div', { class: 'small muted' }, 'What you told us'), d.their_words.map((q) => h('div', { class: 'lp-quote' }, `“${q}”`))) : null),
+    d.solutions.map((s, i) => h('div', { class: 'pub-card stack lp-fix' },
+      h('div', { class: 'small muted' }, `Problem ${i + 1}`),
+      h('h3', s.problem),
+      h('p', s.fix),
+      s.items.map((it) => h('div', { class: 'lp-auto' }, h('b', it.name), it.does ? h('div', { class: 'small' }, it.does) : null, it.result ? h('div', { class: 'small muted' }, it.result) : null)))),
+    h('div', { class: 'pub-card stack' },
+      h('h2', 'Want to see it ', h('span', { class: 'blue' }, 'working for you?')),
+      h('p', { class: 'muted' }, 'Pick a time for a short call and we’ll show you this set up for your business.'),
+      h('div', { class: 'row' },
+        d.book_link ? h('a', { class: 'btn primary', href: d.book_link.slice(d.book_link.indexOf('#')) }, icon('calendar'), 'Book a time') : null,
+        d.callback_link ? h('a', { class: 'btn', href: d.callback_link.slice(d.callback_link.indexOf('#')) }, icon('phone'), 'Ask for a call back or a text') : null))), footer(b));
+}
+
+/** Their booking, in their own time zone, with what we'll cover and how to get ready. */
+async function confirmedPage(shell, token) {
+  const d = await get(`/public/dialer/lead/${token}`);
+  const b = d.business;
+  const bk = d.booking;
+  const ics = bk ? (() => {
+    const f = (iso) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const text = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//CM Automations//Lead page//EN', 'BEGIN:VEVENT', `UID:${token}@cm`, `DTSTAMP:${f(new Date().toISOString())}`, `DTSTART:${f(bk.starts_at)}`, `DTEND:${f(bk.ends_at || bk.starts_at)}`, `SUMMARY:${bk.service || 'Call'} with ${b.name}`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+    return `data:text/calendar;charset=utf-8,${encodeURIComponent(text)}`;
+  })() : null;
+  const gcal = bk ? `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`${bk.service || 'Call'} with ${b.name}`)}&dates=${new Date(bk.starts_at).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}/${new Date(bk.ends_at || bk.starts_at).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}` : null;
+  mount(shell, header(b), h('main', { class: 'pub-main' },
+    h('div', { class: 'pub-card stack' },
+      h('div', { class: 'pub-success' }, icon('tick'), h('div', h('b', `You’re booked in${d.first_name ? `, ${d.first_name}` : ''}!`), h('div', { class: 'small' }, 'Everything you need for our call is on this page.'))),
+      bk ? h('div', { class: 'stack', style: { gap: '4px' } },
+        h('div', { class: 'small muted' }, bk.service || 'Your call'),
+        h('div', { class: 'lp-time' }, localWhen(bk.starts_at)),
+        h('div', { class: 'small muted' }, `Shown in your time zone (${myZone().replace(/_/g, ' ') || 'local time'})${bk.duration_min ? ` · ${bk.duration_min} minutes` : ''}`),
+        bk.status === 'cancelled' ? h('div', { class: 'small', style: { color: 'var(--red)' } }, 'This booking was cancelled.') : null) : h('p', 'We’ll confirm the time with you shortly.'),
+      bk ? h('div', { class: 'row' },
+        h('a', { class: 'btn sm', href: ics, download: 'booking.ics' }, icon('calendar'), 'Add to calendar'),
+        h('a', { class: 'btn sm', href: gcal, target: '_blank', rel: 'noopener' }, 'Google Calendar'),
+        h('a', { class: 'btn sm ghost', href: bk.manage_link.slice(bk.manage_link.indexOf('#')) }, 'Change or cancel')) : null),
+    h('div', { class: 'pub-card stack' }, h('h2', 'What we’ll ', h('span', { class: 'blue' }, 'cover')),
+      h('div', { class: 'lp-agenda' }, d.agenda.map((a) => h('div', h('b', `${a.minutes} min`), h('span', a.item))))),
+    h('div', { class: 'pub-card stack' }, h('h2', 'To get the most from it'), h('ul', d.prep.map((p) => h('li', p)))),
+    d.demo_link ? h('div', { class: 'pub-card stack' }, h('h2', 'A sneak ', h('span', { class: 'blue' }, 'preview')), h('p', { class: 'muted' }, 'We put together a page showing how we’d fix what you told us about.'),
+      h('a', { class: 'btn primary', href: d.demo_link.slice(d.demo_link.indexOf('#')) }, 'See your preview')) : null), footer(b));
+}
+
+/** Pick a time for a call back – or a text back – shown in the visitor's own time zone. */
+async function callbackPickPage(shell, key) {
+  let d;
+  try { d = await get(`/public/dialer/lead/${key}`); } catch (err) { if (err.status !== 404) throw err; d = await get(`/public/dialer/callback/${key}`); }
+  const b = d.business;
+  const zone = myZone();
+  const state = { day: null, slot: null, mode: d.modes[0] };
+  const byDay = {};
+  for (const s of d.slots) { const k = new Date(s).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); (byDay[k] ||= []).push(s); }
+  const dayKeys = Object.keys(byDay);
+  state.day = dayKeys[0] || null;
+  const days = h('div', { class: 'lp-days' });
+  const slots = h('div', { class: 'lp-slots' });
+  const modes = h('div', { class: 'lp-modes' });
+  const done = h('div');
+  const labels = { call: ['phone', 'Call me back'], text: ['chat', 'Text me instead'], whatsapp: ['whatsapp', 'WhatsApp me'] };
+  const drawModes = () => mount(modes, d.modes.map((m) => h('button', { class: `pub-option ${state.mode === m ? 'chosen' : ''}`, style: state.mode === m ? { borderColor: 'var(--blue-500)', boxShadow: '0 0 0 1px var(--blue-500)' } : {}, onclick: () => { state.mode = m; drawModes(); } }, icon(labels[m][0]), h('b', labels[m][1]))));
+  const drawDays = () => mount(days, dayKeys.map((k) => h('button', { class: `chip ${state.day === k ? 'active' : ''}`, onclick: () => { state.day = k; state.slot = null; drawDays(); drawSlots(); } }, k)));
+  const drawSlots = () => mount(slots, state.day ? byDay[state.day].map((s) => h('button', { class: `chip ${state.slot === s ? 'active' : ''}`, onclick: () => { state.slot = s; drawSlots(); } }, localClock(s))) : h('p', { class: 'muted' }, 'No times available right now – please call or message us.'));
+  const name = h('input', { placeholder: 'Your name', 'aria-label': 'Your name' });
+  const phone = h('input', { placeholder: 'Mobile number', type: 'tel', 'aria-label': 'Mobile number' });
+  const topic = h('input', { placeholder: 'What would you like to talk about? (optional)', 'aria-label': 'Topic' });
+  const send = h('button', { class: 'btn primary', onclick: async () => {
+    if (!state.slot) return toast('Pick a time', 'error');
+    if (d.general && (!name.value.trim() || !phone.value.trim())) return toast('Add your name and mobile number', 'error');
+    send.disabled = true;
+    try {
+      await post(`/public/dialer/callback/${key}`, { starts_at: state.slot, mode: state.mode, tz: zone, name: name.value, phone: phone.value, topic: topic.value });
+      mount(done, h('div', { class: 'pub-success' }, icon('tick'), h('div', h('b', state.mode === 'call' ? 'Call back booked!' : 'Got it – we’ll message you'), h('div', { class: 'small' }, `${localWhen(state.slot)} (your time). We’ve sent you a text to confirm.`))));
+      send.remove();
+    } catch (err) { showError(err); send.disabled = false; }
+  } }, icon('tick'), 'Confirm');
+  mount(shell, header(b), h('main', { class: 'pub-main' },
+    h('h1', d.first_name ? `${d.first_name}, when suits you?` : h('span', 'When suits ', h('span', { class: 'blue' }, 'you?'))),
+    h('p', { class: 'muted' }, `Pick a time and how you’d like ${b.name} to get back to you. Times are shown in your time zone${zone ? ` (${zone.replace(/_/g, ' ')})` : ''}.`),
+    h('div', { class: 'pub-card stack' }, h('h2', '1. Call or message?'), modes),
+    h('div', { class: 'pub-card stack' }, h('h2', '2. Pick a time'), days, slots),
+    h('div', { class: 'pub-card stack' }, h('h2', '3. Confirm'), d.general ? h('div', { class: 'stack' }, name, phone) : null, topic, send, done)), footer(b));
+  drawModes(); drawDays(); drawSlots();
 }

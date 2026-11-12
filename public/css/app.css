@@ -857,3 +857,92 @@ a.hbar-row:hover .hbar-fill { filter: brightness(1.15); }
   .seo-table th:nth-child(2), .seo-table td:nth-child(2), .seo-table th:nth-child(3), .seo-table td:nth-child(3) { display: none; }
 }
 .seo-focus .grow { flex: 1; min-width: 0; }
+
+/* ── CRM dialer, calendar, scripts and lead profile ──
+   Everything flows with the page so it scrolls with a wheel, trackpad or finger. */
+.dl-stats { margin-bottom: 14px; }
+.dl-mode { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--blue-200); border-radius: 12px; margin-bottom: 12px; font-size: 13px; }
+.dl-mode svg { width: 18px; height: 18px; color: var(--blue-500); flex: none; margin-top: 1px; }
+.dl-zones { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.dl-zone { border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; min-width: 130px; background: #fff; }
+.dl-zone b { font-size: 18px; color: var(--blue-600); display: block; }
+.dl-zone.me { border-color: var(--blue-300); }
+.dl-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; background: var(--line); }
+.dl-dot.best { background: var(--green); }
+.dl-dot.open { background: var(--blue-400); }
+.dl-dot.closed { background: #cbd5e1; }
+.dl-layout { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.dl-list { padding: 10px; }
+.dl-listtabs { display: flex; gap: 6px; flex-wrap: wrap; padding: 4px 4px 10px; border-bottom: 1px solid var(--line-soft); margin-bottom: 4px; }
+.dl-item { display: flex; gap: 10px; width: 100%; text-align: left; font: inherit; color: inherit; background: #fff; border: 1px solid transparent; border-radius: 10px; padding: 10px; cursor: pointer; align-items: flex-start; }
+.dl-item:hover { border-color: var(--blue-200); }
+.dl-item.active { border-color: var(--blue-500); }
+.dl-item .grow { flex: 1; min-width: 0; }
+.dl-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dl-why { margin-top: 2px; }
+.dl-score { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--blue-300); display: grid; place-items: center; font-weight: 800; font-size: 12px; color: var(--blue-600); flex: none; }
+.dl-work { display: grid; gap: 14px; min-width: 0; }
+.dl-head h2 { font-size: 20px; }
+.dl-bigscore { text-align: center; border: 2px solid var(--blue-300); border-radius: 14px; padding: 6px 12px; }
+.dl-bigscore b { display: block; font-size: 24px; color: var(--blue-600); line-height: 1.1; }
+.dl-panels { align-items: start; }
+.dl-section h3 { margin-bottom: 10px; }
+.dl-section > * + * { margin-top: 8px; }
+.dl-opener { display: block; width: 100%; text-align: left; font: inherit; color: inherit; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; }
+.dl-opener:hover { border-color: var(--blue-300); }
+.dl-opener.active { border-color: var(--blue-500); box-shadow: 0 0 0 1px var(--blue-500); }
+.dl-opener-text { margin: 6px 0 4px; font-size: 14px; }
+.dl-kvs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+.dl-kvs .span2, .dl-kvs details { grid-column: 1 / -1; }
+.dl-kv { min-width: 0; overflow-wrap: anywhere; font-size: 13px; }
+.dl-told { padding: 8px 0; border-bottom: 1px solid var(--line-soft); overflow-wrap: anywhere; }
+.dl-told:last-child { border-bottom: none; }
+.dl-ol { margin: 4px 0 10px; padding-left: 20px; display: grid; gap: 4px; }
+.dl-live { border-color: var(--blue-400); }
+.dl-live textarea { width: 100%; }
+.dl-coach { border-left: 3px solid var(--blue-500); padding: 6px 10px; font-size: 13px; }
+.dl-done .copy-row input { min-width: 0; }
+.dl-step { padding: 3px 0; }
+.dl-step.skipped { color: var(--muted); text-decoration: line-through; }
+.dl-step.done { color: var(--muted); }
+.dl-slots { display: flex; flex-wrap: wrap; gap: 6px; }
+.dl-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+.dl-day { padding: 10px; min-height: 120px; }
+.dl-day.today { border-color: var(--blue-400); }
+.dl-day-head { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; padding-bottom: 6px; border-bottom: 1px solid var(--line-soft); margin-bottom: 4px; }
+.dl-cal-item { padding: 8px 0; border-bottom: 1px solid var(--line-soft); overflow-wrap: anywhere; }
+.dl-cal-item:last-child { border-bottom: none; }
+.dl-cal-item.done { opacity: 0.6; }
+.dl-call { padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+.dl-call summary { cursor: pointer; font-size: 13px; }
+.dl-call > * + * { margin-top: 6px; }
+.dl-transcript { white-space: pre-wrap; font: 13px/1.5 inherit; font-family: inherit; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin: 6px 0 0; overflow-wrap: anywhere; }
+@media (max-width: 1100px) {
+  .dl-cal { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .dl-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .dl-panels, .dl-live-grid { grid-template-columns: minmax(0, 1fr); }
+  .dl-cal { grid-template-columns: minmax(0, 1fr); }
+  .dl-kvs { grid-template-columns: minmax(0, 1fr); }
+  .dl-zone { min-width: 0; flex: 1 1 40%; }
+  .dl-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .dl-stats .kpi .value { font-size: 22px; }
+}
+
+/* Lead pages: personal demo, booking confirmation, call-back picker */
+.lp-hero { display: grid; gap: 8px; }
+.lp-fix { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; }
+.lp-fix h3 { font-size: 16px; color: var(--blue-600); }
+.lp-auto { font-size: 13px; padding-left: 12px; border-left: 3px solid var(--blue-300); }
+.lp-quote { font-style: italic; border-left: 3px solid var(--blue-500); padding: 4px 12px; }
+.lp-time { font-size: 26px; font-weight: 800; color: var(--blue-600); }
+.lp-agenda { display: grid; gap: 6px; }
+.lp-agenda div { display: flex; gap: 10px; }
+.lp-agenda b { color: var(--blue-600); min-width: 52px; }
+.lp-days { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.lp-slots { display: flex; flex-wrap: wrap; gap: 6px; }
+.lp-modes svg { width: 22px; height: 22px; flex: none; color: var(--blue-500); }
+.lp-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }

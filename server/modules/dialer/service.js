@@ -11,7 +11,7 @@ import { enrichContact, leadProfile } from '../crm/enrich.js';
 import { zoneName } from '../crm/geo.js';
 import { getCredentials } from '../integrations/service.js';
 import { businessName, getMessagingSettings, sendInBackground } from '../messaging/service.js';
-import { analyseTranscript } from './analyse.js';
+import { PAINS, analyseTranscript } from './analyse.js';
 import { buildOpeners, recordScriptVersion } from './scripts.js';
 import { painsOf, solutionsFor } from './solutions.js';
 
@@ -112,7 +112,8 @@ export function nextGoodTime(tz, settings, afterHours, at = new Date()) {
   const target = new Date(at.getTime() + afterHours * 3600_000);
   const w = callWindow(tz, settings, target);
   if (w.status === 'best') return target.toISOString();
-  const best = w.next_best_at && new Date(w.next_best_at) - target < 12 * 3600_000 ? w.next_best_at : null;
+  // A best pick-up window within a day beats an OK-but-marginal time (like 7:45pm theirs).
+  const best = w.next_best_at && new Date(w.next_best_at) - target < 24 * 3600_000 ? w.next_best_at : null;
   return best || w.next_open_at || target.toISOString();
 }
 
@@ -304,7 +305,8 @@ export function createPage(db, org, contact, kind, extra = {}) {
   const data = { ...extra };
   if (kind === 'demo') {
     data.solutions = solutionsFor(db, org, painsOf(c), { mainPain: c.qualification.pain });
-    data.their_words = (extra.highlights || []).slice(0, 3);
+    // Their own words about their problems (not their objections) – shown back to them on their page.
+    data.their_words = (extra.highlights || []).filter((l) => PAINS.some((p) => p.words.some((w) => l.toLowerCase().includes(w))) && !/cost|price|expensive|afford|not interested/i.test(l)).slice(0, 3);
     data.pain = c.qualification.pain || data.solutions[0]?.problem || null;
   }
   const page = { id: id('lpg'), org_id: org.id, contact_id: contact.id, kind, token: publicToken(), data: JSON.stringify(data), booking_id: extra.booking_id || null, callback_id: extra.callback_id || null, created_at: now(), viewed_at: null };

@@ -91,6 +91,20 @@ export const GUIDE = [
     ],
   },
   {
+    title: 'CRM dialer – call the right lead at the right time',
+    intro: 'Switch to CM Automations (top bar) to see it full of UK and US leads. Every lead is enriched as it comes in, ranked by what time it is where they are, and every call updates their record, books meetings, makes their personal pages and starts the follow-ups. In the test build calls are practice calls – nothing is dialled.',
+    steps: [
+      ['Open CRM → Dialer. The clocks show your time and each lead’s. “Call now” has people inside their calling hours (best pick-up times first, new leads straight away); “Later” shows when each one opens, in your time and theirs.', '#/crm/dialer'],
+      ['Click a lead: see what we know (location, time zone, company, website, lead score and why), what they told us, and opening lines written for them – the one that books most for you is marked ★.', '#/crm/dialer'],
+      ['Press Call now. Take notes, press “Start live transcription” (Chrome/Edge, allow the microphone) or paste a transcript – live coaching picks out problems and objections and shows the answer that has worked on your calls.', '#/crm/dialer'],
+      ['Log “Interested”: their personal demo page and a follow-up sequence are made. Log “No answer”: a text goes out offering a call back or a text back, and the next try is set for a good time in their day.', '#/crm/dialer'],
+      ['Log “Booked” and pick a time (shown in your time and theirs): the booking, a custom confirmation page and the demo preview are made.', '#/crm/dialer'],
+      ['CRM → Calendar: bookings, call backs, text backs and every follow-up step in one week view. Add a call back or book a meeting from here.', '#/crm/calendar'],
+      ['CRM → Scripts: the script built from your own calls – best openers, objections ranked with the answers that booked, the questions people ask, and the version history.', '#/crm/scripts'],
+      ['Open any lead’s full profile (Contacts → a lead → Full profile): every detail, calls with transcripts, sequences, call backs and their pages. Open “Call-back page” to see what the lead sees.', '#/crm/contacts'],
+    ],
+  },
+  {
     title: 'SEO – get found on Google',
     intro: 'What SEO is, what a business gets from it, the jobs that matter (in the right order for each kind of business), the searches to aim for, and SEO packages to offer. Switch to Swift Plumbing & Heating to see one part-way through.',
     steps: [
