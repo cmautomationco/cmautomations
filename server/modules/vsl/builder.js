@@ -97,28 +97,42 @@ export function buildScript({ pack: rawPack, packKey = null, format = 'faceless'
 
 export const wordCount = (t) => (String(t || '').match(/[\p{L}\p{N}’'£]+/gu) || []).length;
 
-/** Splits a line into on-screen cards of a readable size, at sentence then comma breaks. */
+const SMALL = new Set(['a', 'an', 'the', 'to', 'of', 'is', 'and', 'or', 'in', 'on', 'for', 'at', 'your', 'you', 'that', 'with', 'it']);
+
+/**
+ * Splits a line into on-screen cards of a readable size: at sentence breaks,
+ * then commas and dashes, and a long phrase into even pieces, so no card is
+ * left holding a single orphaned word.
+ */
 export function splitCards(text, max = 9) {
   const sentences = String(text).match(/[^.!?]+[.!?]*\s*/g) || [String(text)];
+  const even = (phrase) => {
+    const w = phrase.split(/\s+/).filter(Boolean);
+    if (w.length <= max) return [phrase];
+    const n = Math.ceil(w.length / max);
+    const size = Math.ceil(w.length / n);
+    const out = [];
+    for (let i = 0; i < w.length; i += size) out.push(w.slice(i, i + size));
+    // Don't end a card on a little word ("a", "to", "the"): it moves to the next card.
+    for (let i = 0; i < out.length - 1; i++) {
+      while (out[i].length > 1 && out[i + 1].length < max && SMALL.has(out[i][out[i].length - 1].toLowerCase())) out[i + 1].unshift(out[i].pop());
+    }
+    return out.map((x) => x.join(' '));
+  };
   const out = [];
   for (const s of sentences.map((x) => x.trim()).filter(Boolean)) {
     if (wordCount(s) <= max) { out.push(s); continue; }
-    const parts = s.split(/(?<=,|–|—|:)\s+/);
+    const parts = s.split(/(?<=,|\u2013|\u2014|:)\s+/).flatMap(even);
     let cur = '';
     for (const p of parts) {
       const next = cur ? `${cur} ${p}` : p;
-      if (wordCount(next) <= max) cur = next;
-      else {
-        if (cur) out.push(cur);
-        if (wordCount(p) <= max) cur = p;
-        else {
-          const w = p.split(/\s+/);
-          for (let i = 0; i < w.length; i += max) out.push(w.slice(i, i + max).join(' '));
-          cur = '';
-        }
-      }
+      if (cur && wordCount(next) > max) { out.push(cur); cur = p; } else cur = next;
     }
-    if (cur) out.push(cur);
+    if (cur) {
+      // A short tail joins the card before it when that still fits.
+      if (out.length && wordCount(cur) <= 2 && wordCount(`${out[out.length - 1]} ${cur}`) <= max + 2) out[out.length - 1] += ` ${cur}`;
+      else out.push(cur);
+    }
   }
   return out;
 }

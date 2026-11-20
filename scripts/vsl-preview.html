@@ -1,0 +1,518 @@
+<title>Faceless VSL Cut</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+@font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 400 800; font-display: block; src: /*__FONT__*/; }
+/* Layout: one 16:9 video stage, the page button under it (as on the real landing page), then transport and the script it plays. */
+:root {
+  --bg: #f6f9fc; --surface: #ffffff; --fg: #0b1220; --fg-2: #334155; --muted: #5b6b80; --line: #dbe5ee;
+  --accent: #1e6a9e; --accent-strong: #154b71; --accent-soft: #e1edf6; --warn: #b45309; --warn-soft: #fef3c7;
+  --font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0a121c; --surface: #101b28; --fg: #e8eef5; --fg-2: #c3cfdc; --muted: #8fa1b5; --line: #22324a;
+  --accent: #6aa9d8; --accent-strong: #9cc8ea; --accent-soft: #142a40; --warn: #f0b45b; --warn-soft: #3a2a10; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0a121c; --surface: #101b28; --fg: #e8eef5; --fg-2: #c3cfdc; --muted: #8fa1b5; --line: #22324a;
+  --accent: #6aa9d8; --accent-strong: #9cc8ea; --accent-soft: #142a40; --warn: #f0b45b; --warn-soft: #3a2a10; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.02em; color: var(--accent-strong); text-wrap: balance; }
+.sub { margin: 4px 0 0; color: var(--muted); max-width: 62ch; }
+.niches { display: flex; flex-wrap: wrap; gap: 6px; }
+.niches button { font: inherit; font-size: 0.85rem; font-weight: 600; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg-2); cursor: pointer; }
+.niches button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.niches button:focus-visible, .ctrl:focus-visible, .scrub:focus-visible, .script li button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── The video: a single fixed look, the same in light and dark, like the exported MP4. ── */
+.frame { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: #f2f7fb; box-shadow: 0 10px 40px rgba(21, 75, 113, 0.18); cursor: pointer; }
+#stage { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; overflow: hidden;
+  background: radial-gradient(1200px 700px at 85% 10%, #e1edf6 0%, #f2f7fb 55%, #ffffff 100%); color: #0b1220; font-family: var(--font); }
+.scene { position: absolute; inset: 0; opacity: 0; transition: opacity .45s ease; pointer-events: none; }
+.scene.on { opacity: 1; }
+.tag { position: absolute; top: 28px; right: 32px; font-size: 15px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #b45309; background: #fef3c7; padding: 6px 12px; border-radius: 8px; }
+.kicker { font-size: 18px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #1e6a9e; }
+
+/* Caption card: big centred for title moments, left column beside a visual otherwise. */
+#card { position: absolute; z-index: 5; font-weight: 800; letter-spacing: -0.025em; color: #0b1220; transition: opacity .25s ease, transform .35s cubic-bezier(.2,.7,.2,1); text-wrap: balance; }
+#card.center { left: 120px; right: 120px; top: 50%; transform: translateY(-50%); text-align: center; font-size: 66px; line-height: 1.12; }
+#card.left { left: 72px; width: 540px; top: 50%; transform: translateY(-50%); font-size: 50px; line-height: 1.14; }
+#card.swap { opacity: 0; }
+#card.center.swap { transform: translateY(calc(-50% + 14px)); }
+#card.left.swap { transform: translateY(calc(-50% + 14px)); }
+#card.placeholder { color: #b45309; font-size: 34px; font-weight: 700; border: 3px dashed #e8b46a; border-radius: 18px; padding: 24px 28px; background: #fffbeb; }
+#sectionChip { position: absolute; left: 72px; top: 34px; z-index: 6; font-size: 15px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #1e6a9e; opacity: .9; }
+#bigPlay { position: absolute; inset: 0; z-index: 9; display: grid; place-items: center; background: rgba(242, 247, 251, .55); transition: opacity .3s; }
+#bigPlay span { width: 120px; height: 120px; border-radius: 50%; background: #1e6a9e; display: grid; place-items: center; box-shadow: 0 10px 40px rgba(21,75,113,.35); }
+#bigPlay span::after { content: ""; margin-left: 10px; border-left: 40px solid #fff; border-top: 26px solid transparent; border-bottom: 26px solid transparent; }
+.playing #bigPlay { opacity: 0; pointer-events: none; }
+
+/* Phone */
+.phone { position: absolute; width: 330px; height: 600px; border-radius: 46px; background: #0b1220; padding: 14px; box-shadow: 0 30px 60px rgba(11,18,32,.25); }
+.phone .screen { width: 100%; height: 100%; border-radius: 34px; background: #ffffff; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+.phone .bar { padding: 18px 20px 12px; border-bottom: 1px solid #e2e8f0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+.phone .bar i { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #86b5d8, #1e6a9e); display: inline-block; }
+.phone .bar small { display: block; font-size: 12px; font-weight: 600; color: #64748b; }
+.thread { flex: 1; padding: 16px 14px; display: flex; flex-direction: column; gap: 10px; justify-content: flex-end; }
+.bubble { max-width: 84%; padding: 11px 14px; border-radius: 20px; font-size: 16px; line-height: 1.35; font-weight: 500; opacity: 0; transform: translateY(10px) scale(.98); transition: opacity .35s, transform .35s; }
+.bubble.on { opacity: 1; transform: none; }
+.bubble.in { align-self: flex-start; background: #f1f5f9; color: #0b1220; border-bottom-left-radius: 6px; }
+.bubble.out { align-self: flex-end; background: #1e6a9e; color: #fff; border-bottom-right-radius: 6px; }
+.bubble.robot { align-self: flex-end; background: #e2e8f0; color: #475569; font-family: var(--mono); font-size: 14px; border-bottom-right-radius: 6px; }
+.meta { font-size: 12px; font-weight: 700; color: #64748b; opacity: 0; transition: opacity .3s; }
+.meta.on { opacity: 1; }
+.meta.right { align-self: flex-end; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #dcfce7; color: #166534; }
+
+/* Notifications (hook) */
+.notes { position: absolute; left: 14px; right: 14px; top: 70px; display: flex; flex-direction: column; gap: 10px; }
+.note { background: rgba(241,245,249,.96); border-radius: 18px; padding: 12px 14px; font-size: 15px; box-shadow: 0 4px 14px rgba(11,18,32,.08); opacity: 0; transform: translateY(-14px); transition: opacity .3s, transform .3s; }
+.note.on { opacity: 1; transform: none; }
+.note b { display: block; font-size: 13px; color: #1e6a9e; letter-spacing: .02em; }
+.badge { position: absolute; top: -14px; right: -14px; min-width: 56px; height: 56px; border-radius: 28px; background: #dc2626; color: #fff; font-size: 26px; font-weight: 800; display: grid; place-items: center; padding: 0 14px; box-shadow: 0 6px 18px rgba(220,38,38,.4); font-variant-numeric: tabular-nums; }
+.buzz { animation: buzz 1.6s infinite; }
+@keyframes buzz { 0%, 70%, 100% { transform: rotate(0); } 74% { transform: rotate(-3deg); } 78% { transform: rotate(3deg); } 82% { transform: rotate(-2deg); } 86% { transform: rotate(2deg); } }
+
+/* Day schedule */
+.day { position: absolute; right: 90px; top: 110px; width: 470px; display: grid; gap: 10px; }
+.slot { display: grid; grid-template-columns: 70px 1fr; gap: 14px; align-items: center; opacity: 0; transform: translateX(20px); transition: opacity .35s, transform .35s; }
+.slot.on { opacity: 1; transform: none; }
+.slot time { font-size: 17px; font-weight: 700; color: #64748b; font-variant-numeric: tabular-nums; }
+.slot div { background: #ffffff; border-left: 6px solid #1e6a9e; border-radius: 10px; padding: 12px 16px; font-size: 19px; font-weight: 700; box-shadow: 0 2px 10px rgba(21,75,113,.08); }
+.mini-phone { position: absolute; right: 70px; bottom: 60px; width: 150px; height: 90px; border-radius: 22px; background: #0b1220; color: #fff; display: grid; place-items: center; font-size: 17px; font-weight: 700; }
+
+/* Clock */
+.clock { position: absolute; left: 640px; top: 90px; font-size: 72px; font-weight: 800; color: #154b71; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.clock small { display: block; font-size: 20px; letter-spacing: .1em; color: #64748b; text-transform: uppercase; }
+
+/* Race */
+.race { position: absolute; right: 70px; top: 150px; width: 560px; display: grid; gap: 22px; }
+.lane { display: grid; gap: 8px; }
+.lane span { font-size: 19px; font-weight: 700; display: flex; justify-content: space-between; }
+.lane span em { font-style: normal; color: #64748b; font-weight: 600; }
+.track { height: 22px; background: #e1edf6; border-radius: 12px; overflow: hidden; }
+.track i { display: block; height: 100%; width: 0; background: #86b5d8; border-radius: 12px; transition: width 2.6s cubic-bezier(.3,.6,.3,1); }
+.lane.win .track i { background: #1e6a9e; }
+.lane.you .track i { background: #cbd5e1; transition-duration: 6s; }
+.scene.on .lane .track i { width: var(--w); }
+.winner { font-size: 16px; font-weight: 800; color: #1e6a9e; opacity: 0; transition: opacity .3s 2.4s; }
+.scene.on .winner { opacity: 1; }
+
+/* Cost */
+.chain { position: absolute; right: 70px; top: 200px; width: 560px; display: flex; flex-wrap: wrap; gap: 14px; }
+.chain div { flex: 1 1 160px; height: 150px; border-radius: 16px; background: #fff; box-shadow: 0 2px 10px rgba(21,75,113,.08); display: grid; place-items: center; text-align: center; font-size: 19px; font-weight: 700; position: relative; opacity: 0; transition: opacity .4s; padding: 12px; }
+.chain div.on { opacity: 1; }
+.chain div::after { content: ""; position: absolute; left: 14px; right: 14px; top: 50%; height: 5px; background: #dc2626; border-radius: 3px; transform: scaleX(0); transform-origin: left; transition: transform .4s .3s; }
+.chain div.on::after { transform: scaleX(1); }
+.chain div.fade { color: #64748b; }
+
+/* Demo panel */
+.panel { position: absolute; right: 60px; top: 110px; width: 600px; height: 540px; }
+.panel > * { position: absolute; inset: 0; opacity: 0; transition: opacity .4s; }
+.panel > .on { opacity: 1; }
+.steps { display: grid; gap: 14px; align-content: center; }
+.step { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 14px; background: #fff; border-radius: 14px; padding: 16px 18px; font-size: 21px; font-weight: 700; box-shadow: 0 2px 10px rgba(21,75,113,.08); opacity: .35; transition: opacity .35s; }
+.step.on { opacity: 1; }
+.step b { width: 34px; height: 34px; border-radius: 50%; background: #e1edf6; color: #1e6a9e; display: grid; place-items: center; font-size: 16px; }
+.step.on b { background: #1e6a9e; color: #fff; }
+.step small { font-size: 15px; color: #64748b; font-weight: 600; }
+.step.quiet { background: #f1f5f9; }
+.sheet { align-self: center; height: max-content; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 10px rgba(21,75,113,.1); font-size: 16px; top: 80px; bottom: auto; }
+.sheet table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.sheet th { background: #154b71; color: #fff; text-align: left; padding: 10px 12px; font-size: 14px; letter-spacing: .04em; }
+.sheet td { padding: 11px 12px; border-bottom: 1px solid #e2e8f0; color: #64748b; }
+.sheet tr.new td { color: #0b1220; font-weight: 700; background: #f2f7fb; }
+.sheet tr.new { opacity: 0; transition: opacity .4s .5s; }
+.on .sheet tr.new, .sheet.on tr.new { opacity: 1; }
+.report { background: #fff; border-radius: 18px; padding: 26px; box-shadow: 0 10px 30px rgba(21,75,113,.12); height: max-content; top: 40px; bottom: auto; }
+.report h3 { margin: 0 0 4px; font-size: 26px; color: #154b71; }
+.report p { margin: 0 0 18px; color: #b45309; font-weight: 700; font-size: 15px; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tiles div { background: #f2f7fb; border-radius: 12px; padding: 16px; }
+.tiles strong { display: block; font-size: 40px; color: #0b1220; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.tiles span { font-size: 15px; font-weight: 600; color: #64748b; }
+
+/* Add-ons, doors, shots */
+.addons { position: absolute; right: 80px; top: 190px; width: 520px; display: grid; gap: 14px; }
+.addons div { background: #fff; border-radius: 14px; padding: 20px 22px; font-size: 24px; font-weight: 700; box-shadow: 0 2px 10px rgba(21,75,113,.08); border-left: 6px solid #86b5d8; }
+.addons small { font-size: 16px; color: #64748b; font-weight: 600; }
+.doors { position: absolute; right: 70px; top: 150px; width: 560px; display: grid; gap: 16px; }
+.door { display: grid; grid-template-columns: 1fr 40px 1fr; align-items: center; gap: 10px; }
+.door div { background: #fff; border-radius: 14px; padding: 16px; font-size: 19px; font-weight: 700; box-shadow: 0 2px 10px rgba(21,75,113,.08); }
+.door div small { display: block; font-size: 14px; color: #64748b; font-weight: 600; }
+.door em { font-style: normal; font-size: 30px; color: #1e6a9e; text-align: center; }
+.door.yours div:last-child { border: 3px solid #1e6a9e; }
+.shots { position: absolute; right: 70px; top: 130px; width: 560px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.shot { height: 300px; border-radius: 14px; background: #fff; box-shadow: 0 2px 10px rgba(21,75,113,.1); padding: 16px; display: grid; grid-template-rows: auto 1fr; gap: 10px; }
+.shot b { font-size: 16px; color: #154b71; }
+.shot .rows { display: grid; gap: 8px; align-content: start; filter: blur(3px); }
+.shot .rows i { display: block; height: 14px; border-radius: 7px; background: #cbd5e1; }
+.shot .rows i:nth-child(3n) { width: 70%; }
+.quote-slot { grid-column: 1 / -1; border: 3px dashed #e8b46a; border-radius: 14px; padding: 18px; font-size: 19px; font-weight: 700; color: #b45309; background: #fffbeb; text-align: center; }
+
+/* CTA */
+.arrow { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); display: grid; justify-items: center; gap: 8px; color: #1e6a9e; font-size: 22px; font-weight: 800; }
+.arrow svg { width: 70px; height: 70px; animation: bob 1.4s ease-in-out infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(12px); } }
+#watermark { position: absolute; right: 32px; bottom: 24px; font-size: 14px; font-weight: 700; color: #86b5d8; letter-spacing: .06em; z-index: 6; }
+
+/* ── Page around the video ── */
+.under { display: grid; justify-items: center; gap: 6px; }
+.cta-btn { font: inherit; font-weight: 800; font-size: 1.05rem; padding: 14px 26px; border-radius: 12px; border: 0; background: var(--accent); color: #fff; box-shadow: 0 6px 20px rgba(21,75,113,.25); }
+:root[data-theme="dark"] .cta-btn { color: #0a121c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cta-btn { color: #0a121c; } }
+.under small { color: var(--muted); }
+.transport { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; }
+.ctrl { font: inherit; font-weight: 700; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; cursor: pointer; display: grid; place-items: center; }
+.ctrl svg { width: 18px; height: 18px; fill: currentColor; }
+.time { font-family: var(--mono); font-size: .9rem; color: var(--fg-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.scrub { position: relative; height: 46px; cursor: pointer; min-width: 0; }
+.segs { position: absolute; left: 0; right: 0; top: 6px; height: 10px; display: flex; gap: 3px; }
+.segs div { height: 100%; border-radius: 5px; background: var(--accent-soft); position: relative; overflow: hidden; }
+.segs div i { position: absolute; inset: 0; width: 0; background: var(--accent); }
+.labels { position: absolute; left: 0; right: 0; top: 22px; display: flex; gap: 3px; font-size: .72rem; font-weight: 600; color: var(--muted); }
+.labels span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 18px; align-items: start; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } .labels { display: none; } }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; min-width: 0; }
+.box h2 { margin: 0 0 10px; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.now h3 { margin: 0; font-size: 1.15rem; color: var(--accent-strong); }
+.now .win { font-family: var(--mono); font-size: .85rem; color: var(--muted); }
+.now dl { margin: 12px 0 0; display: grid; gap: 10px; }
+.now dt { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.now dd { margin: 2px 0 0; color: var(--fg-2); }
+.notes-list { margin: 14px 0 0; padding: 12px 14px; border-radius: 10px; background: var(--warn-soft); color: var(--warn); font-size: .88rem; display: grid; gap: 6px; }
+.script { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 540px; overflow-y: auto; }
+.script li.sec { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); padding: 12px 8px 4px; }
+.script li button { font: inherit; text-align: left; width: 100%; border: 0; background: transparent; color: var(--fg-2); padding: 7px 8px; border-radius: 8px; cursor: pointer; display: grid; grid-template-columns: 44px 1fr; gap: 8px; }
+.script li button span:first-child { font-family: var(--mono); font-size: .8rem; color: var(--muted); padding-top: 2px; }
+.script li button.cur { background: var(--accent-soft); color: var(--fg); }
+.script li button.ph { color: var(--warn); }
+@media (prefers-reduced-motion: reduce) { .buzz, .arrow svg { animation: none; } .scene, #card, .bubble, .note, .slot { transition-duration: .01s !important; } }
+
+/* Recording mode: just the stage, 1280×720, for the MP4 export. */
+.rec body, body.rec { margin: 0; background: #fff; }
+body.rec .wrap { padding: 0; max-width: none; display: block; }
+body.rec header, body.rec .under, body.rec .transport, body.rec .cols { display: none; }
+body.rec .frame { width: 1280px; height: 720px; border-radius: 0; box-shadow: none; }
+body.rec #bigPlay { display: none; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Faceless VSL cut</h1>
+      <p class="sub">The VSL as it plays right now, built from the script in your VSL back end. Pick a niche and the whole video changes to fit that business.</p>
+    </div>
+    <div class="niches" id="niches" role="group" aria-label="Niche"></div>
+  </header>
+
+  <div class="frame" id="frame" role="button" tabindex="0" aria-label="Play or pause the VSL">
+    <div id="stage">
+      <div id="sectionChip"></div>
+      <div id="card" class="center"></div>
+      <div id="scenes"></div>
+      <div id="watermark">CM Automations</div>
+      <div id="bigPlay"><span></span></div>
+    </div>
+  </div>
+
+  <div class="under">
+    <button class="cta-btn" id="ctaBtn" type="button">Watch the full breakdown</button>
+    <small>The button under the video uses the same words as the CTA.</small>
+  </div>
+
+  <div class="transport">
+    <button class="ctrl" id="playBtn" type="button" aria-label="Play"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Position in the video" aria-valuemin="0">
+      <div class="segs" id="segs"></div>
+      <div class="labels" id="labels"></div>
+    </div>
+    <div class="time" id="time">0:00 / 3:30</div>
+  </div>
+
+  <div class="cols">
+    <section class="box now" aria-live="polite">
+      <h2>On screen now</h2>
+      <h3 id="nowTitle"></h3>
+      <div class="win" id="nowWin"></div>
+      <dl>
+        <div><dt>Line</dt><dd id="nowLine"></dd></div>
+        <div><dt>Visual</dt><dd id="nowVisual"></dd></div>
+        <div><dt>Direction (faceless)</dt><dd id="nowDir"></dd></div>
+      </dl>
+      <div class="notes-list" id="nowNotes"></div>
+    </section>
+    <section class="box">
+      <h2>Script</h2>
+      <ol class="script" id="script"></ol>
+    </section>
+  </div>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const $ = (id) => document.getElementById(id);
+const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// Demo-account details per niche. These are what the mock-up shows; the real cut uses your screen recording.
+const DEMO = {
+  aesthetics_clinic: { win: 'booking', name: 'Sophie', block: 'Treatment', notify: 'New DM', incoming: 'Hi! How much is lip filler, and have you got anything this week?', reply: 'Hi Sophie, thanks for your message! We have a few spaces this week. Want me to send you the booking link?', nudge: 'Just checking you saw this, Sophie. Here’s the link whenever you’re ready.', channel: 'Instagram', robot: 'Thank you for your message. We will respond within 48 hours.' },
+  trades: { win: 'job', name: 'Mark', block: 'Job', notify: 'Missed call', incoming: 'Missed call · 07700 900123', reply: 'Sorry I missed your call, I’m on a job. What do you need doing? I’ll get back to you today.', nudge: 'Just following up on your call earlier. Still need a hand?', channel: 'Phone', robot: 'The person you are calling is not available. Please leave a message after the tone.' },
+  gym: { win: 'membership', name: 'Jordan', block: 'Class', notify: 'New enquiry', incoming: 'How much is membership? Do you do a trial?', reply: 'Hi Jordan, thanks for asking! Want me to send you the prices and a link to book a trial session?', nudge: 'Just checking you saw this, Jordan. Here’s the trial link whenever you’re ready.', channel: 'Website', robot: 'Thank you for contacting us. A member of staff will be in touch.' },
+  personal_trainer: { win: 'client', name: 'Alex', block: 'Session', notify: 'New DM', incoming: 'Have you got space for a new client? Looking to start in January.', reply: 'Hi Alex, thanks for reaching out! I do. Want to book a quick call to chat about your goals?', nudge: 'Just checking you saw this, Alex. Here’s the link whenever suits.', channel: 'Instagram', robot: 'Thanks for your message! I’ll reply as soon as I can.' },
+  online_coach: { win: 'call', name: 'Sam', block: 'Client call', notify: 'New DM', incoming: 'Info', reply: 'Hey Sam! Here’s how the programme works, and a link to book a call if it sounds right for you.', nudge: 'Just checking you saw this, Sam. Any questions, just ask.', channel: 'Instagram', robot: 'Hi! Thanks for your interest. Someone will reply soon.' },
+};
+
+const sceneOf = (key) => {
+  if (key === 'hook.line') return 'hook';
+  if (key === 'problem.day') return 'day';
+  if (key === 'problem.tried') return 'tried';
+  if (key === 'problem.why_failing') return 'race';
+  if (key === 'problem.cost') return 'cost';
+  if (key.startsWith('solution.demo.')) return 'demo';
+  if (key === 'solution.add_ons') return 'addons';
+  if (key === 'proof.framing') return 'doors';
+  if (key.startsWith('proof.')) return 'shots';
+  if (key === 'cta.line') return 'cta';
+  return 'title';
+};
+const CENTER = new Set(['title', 'cta']);
+const DEMO_STEPS = ['test_dm', 'instant_reply', 'nudge', 'spreadsheet', 'report'];
+
+let pack = null; let t = 0; let playing = false; let last = 0; let curCard = -1; let lines = [];
+
+function scenesHtml(p) {
+  const d = DEMO[p.key] || DEMO.aesthetics_clinic;
+  const v = p.vars;
+  const isCall = v.message === 'call';
+  const slots = ['9:00', '10:00', '11:30', '12:30', '14:00', '15:30', '17:00'];
+  const phone = (body, extra = '') => `<div class="phone" style="${extra}"><div class="screen"><div class="bar"><i></i><div>${esc(d.name)}<small>${esc(isCall ? 'Text message' : d.channel)}</small></div></div>${body}</div></div>`;
+  return `
+  <div class="scene" data-scene="hook">
+    <div class="phone buzz" style="right:70px;top:60px;"><div class="screen" style="background:linear-gradient(180deg,#154b71,#1e6a9e)">
+      <div class="notes">${[0, 1, 2, 3, 4].map((i) => `<div class="note" data-i="${i}"><b>${esc(d.notify)}</b>${esc(['Sophie M.', 'Unknown number', 'Hannah', 'Priya', 'Unknown number'][i])}</div>`).join('')}</div>
+    </div><div class="badge" id="badge">1</div></div>
+  </div>
+  <div class="scene" data-scene="day">
+    <div class="day">${slots.map((s, i) => `<div class="slot" data-i="${i}"><time>${s}</time><div>${esc(d.block)}</div></div>`).join('')}</div>
+  </div>
+  <div class="scene" data-scene="tried">
+    <div class="clock">10:47<small>pm</small></div>
+    ${phone(`<div class="thread"><div class="bubble in on">${esc(d.incoming)}</div><div class="meta on">Yesterday, 2:14pm</div><div class="bubble robot on">${esc(d.robot)}</div><div class="meta right on">Auto-reply</div></div>`, 'right:70px;top:60px;')}
+  </div>
+  <div class="scene" data-scene="race">
+    <div class="race">
+      <div class="lane win" style="--w:100%"><span>Another ${esc(v.business)} <em>replies in 2 min</em></span><div class="track"><i></i></div></div>
+      <div class="lane" style="--w:70%"><span>Another ${esc(v.business)} <em>replies in an hour</em></span><div class="track"><i></i></div></div>
+      <div class="lane you" style="--w:32%"><span>You <em>replies tonight</em></span><div class="track"><i></i></div></div>
+      <div class="winner">First reply usually gets the ${esc(d.win)}</div>
+    </div>
+  </div>
+  <div class="scene" data-scene="cost">
+    <div class="chain"><div data-i="0">The ${esc(d.block.toLowerCase())}</div><div data-i="1" class="fade">The rebooking</div><div data-i="2" class="fade">The one after that</div></div>
+  </div>
+  <div class="scene" data-scene="title"></div>
+  <div class="scene" data-scene="demo">
+    <div class="tag">Mock-up · swap in your screen recording</div>
+    ${phone(`<div class="thread">
+      <div class="meta" data-step="0">Today, 11:02am · demo ${esc(v.business)} account</div>
+      <div class="bubble in" data-step="0">${esc(d.incoming)}</div>
+      <div class="bubble out" data-step="1">${esc(d.reply)}</div>
+      <div class="meta right" data-step="1"><span class="chip">Replied in 4 seconds</span></div>
+      <div class="bubble out" data-step="2">${esc(d.nudge)}</div>
+      <div class="meta right" data-step="2">Follow-up · 11:32am</div>
+    </div>`, 'left:640px;top:70px;transform:scale(.92);transform-origin:top left;')}
+    <div class="panel" style="right:28px;width:290px;">
+      <div class="steps" data-pane="2">
+        <div class="step" data-n="0"><b>1</b><span>30 minutes</span><small>nudge</small></div>
+        <div class="step" data-n="1"><b>2</b><span>Midday</span><small>nudge</small></div>
+        <div class="step" data-n="2"><b>3</b><span>5pm sweep</span><small>nudge</small></div>
+        <div class="step quiet" data-n="3"><b>☾</b><span>After 7pm</span><small>quiet</small></div>
+      </div>
+    </div>
+  </div>
+  <div class="scene" data-scene="sheet">
+    <div class="tag">Mock-up · swap in your screen recording</div>
+    <div class="panel" style="width:600px;right:60px;"><div class="sheet on"><table>
+      <thead><tr><th>Time</th><th>Name</th><th>Channel</th><th>Replied in</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>09:14</td><td>Demo enquiry</td><td>${esc(d.channel)}</td><td>3s</td><td>Booked</td></tr>
+        <tr><td>10:20</td><td>Demo enquiry</td><td>${esc(d.channel)}</td><td>5s</td><td>Nudged</td></tr>
+        <tr class="new"><td>11:02</td><td>${esc(d.name)} (demo)</td><td>${esc(d.channel)}</td><td>4s</td><td>Nudged</td></tr>
+      </tbody></table></div></div>
+  </div>
+  <div class="scene" data-scene="report">
+    <div class="tag">Mock-up · swap in your screen recording</div>
+    <div class="panel" style="width:560px;"><div class="report on">
+      <h3>Weekly report</h3><p>Demo data, not a real result</p>
+      <div class="tiles">
+        <div><strong>14</strong><span>Enquiries</span></div>
+        <div><strong>14</strong><span>Answered in seconds</span></div>
+        <div><strong>5</strong><span>Recovered</span></div>
+        <div><strong>£610</strong><span>Estimated value</span></div>
+      </div></div></div>
+  </div>
+  <div class="scene" data-scene="addons">
+    <div class="addons"><div>Cancellation fill</div><div>Rebooking nudges</div><div>Appointment reminders</div><small>The details are in the breakdown.</small></div>
+  </div>
+  <div class="scene" data-scene="doors">
+    <div class="doors">
+      <div class="door"><div>Plumber<small>Built and tested</small></div><em>→</em><div>Missed calls and messages</div></div>
+      <div class="door"><div>Internet connections company<small>Built and tested</small></div><em>→</em><div>Missed calls and messages</div></div>
+      <div class="door yours"><div>A ${esc(v.business)}<small>Same system</small></div><em>→</em><div>${esc(v.front_door.charAt(0).toUpperCase() + v.front_door.slice(1))}</div></div>
+    </div>
+  </div>
+  <div class="scene" data-scene="shots">
+    <div class="shots">
+      <div class="shot"><b>Log sheet · customer details blurred</b><div class="rows">${'<i></i>'.repeat(9)}</div></div>
+      <div class="shot"><b>Weekly report · customer details blurred</b><div class="rows">${'<i></i>'.repeat(9)}</div></div>
+      <div class="quote-slot">Owner’s two-line quote or 15–20 second clip goes here</div>
+    </div>
+  </div>
+  <div class="scene" data-scene="cta">
+    <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v15M5 12l7 7 7-7"/></svg>${esc(DATA.button)}</div>
+  </div>`;
+}
+
+function selectPack(key, keepTime = false) {
+  pack = DATA.packs.find((p) => p.key === key) || DATA.packs[0];
+  lines = pack.sections.flatMap((s) => s.lines.map((l) => ({ ...l, section: s })));
+  $('scenes').innerHTML = scenesHtml(pack);
+  for (const b of $('niches').children) b.setAttribute('aria-pressed', String(b.dataset.key === pack.key));
+  // Scrubber segments, sized to each section's real share of the timeline.
+  const bounds = pack.sections.map((s, i) => {
+    const first = pack.cards.find((c) => c.section === s.key);
+    const next = pack.sections[i + 1] && pack.cards.find((c) => c.section === pack.sections[i + 1].key);
+    return { s, from: first ? Math.min(first.start, s.start) : s.start, to: next ? next.start : pack.total };
+  });
+  bounds[0].from = 0;
+  pack.bounds = bounds;
+  $('segs').innerHTML = bounds.map((b) => `<div style="flex:${b.to - b.from}"><i></i></div>`).join('');
+  $('labels').innerHTML = bounds.map((b) => `<span style="flex:${b.to - b.from}">${b.s.number}. ${esc(b.s.title)}</span>`).join('');
+  $('scrub').setAttribute('aria-valuemax', String(Math.round(pack.total)));
+  $('script').innerHTML = pack.sections.map((s) => `<li class="sec">${s.number}. ${esc(s.title)} · ${s.window}</li>` + s.lines.map((l) => `<li><button type="button" data-at="${l.at ?? s.start}" data-key="${esc(l.key)}" class="${l.placeholder ? 'ph' : ''}"><span>${clock(l.at ?? s.start)}</span><span>${esc(l.kind === 'demo' ? `[${l.step}] ${l.text}` : l.text)}</span></button></li>`).join('')).join('');
+  curCard = -1;
+  seek(keepTime ? Math.min(t, pack.total) : 0);
+  try { localStorage.setItem('vsl-niche', pack.key); } catch { /* not available */ }
+}
+
+function seek(to) { t = Math.max(0, Math.min(to, pack.total)); render(true); }
+
+function lineAt(time) {
+  let cur = lines[0];
+  for (const l of lines) if (l.at !== null && l.at <= time) cur = l;
+  return cur;
+}
+
+function render(force = false) {
+  const idx = pack.cards.findIndex((c) => t >= c.start && t < c.end);
+  const card = pack.cards[idx] || (t >= pack.total ? pack.cards[pack.cards.length - 1] : pack.cards[0]);
+  const line = lineAt(t);
+  const scene = (() => {
+    const s = sceneOf(line.key);
+    if (s !== 'demo') return s;
+    const step = line.key.split('.').pop();
+    return step === 'spreadsheet' ? 'sheet' : step === 'report' ? 'report' : 'demo';
+  })();
+  const placeholder = line.placeholder;
+  const cardEl = $('card');
+  const layout = placeholder ? 'left' : CENTER.has(sceneOf(line.key)) ? 'center' : 'left';
+  if (idx !== curCard || force) {
+    const first = curCard === -1 && t < 0.05;
+    curCard = idx;
+    const apply = () => {
+      cardEl.className = `${layout}${placeholder ? ' placeholder' : ''}`;
+      cardEl.textContent = card ? card.text : '';
+    };
+    // The first word is on the first frame: no fade on the opening card.
+    if (first || force) apply();
+    else { cardEl.classList.add('swap'); setTimeout(apply, 180); }
+  }
+  for (const el of $('scenes').children) el.classList.toggle('on', el.dataset.scene === scene);
+  $('sectionChip').textContent = `${line.section.number}. ${line.section.title}`;
+
+  // Scene details that move with time.
+  const since = (key) => { const l = lines.find((x) => x.key === key); return l && l.at !== null ? t - l.at : -1; };
+  const hookT = t;
+  document.querySelectorAll('[data-scene="hook"] .note').forEach((n) => n.classList.toggle('on', hookT >= Number(n.dataset.i) * 1.1));
+  const badge = $('badge'); if (badge) badge.textContent = String(1 + Math.min(11, Math.floor(hookT / 0.7)));
+  const dayT = since('problem.day');
+  document.querySelectorAll('[data-scene="day"] .slot').forEach((n) => n.classList.toggle('on', dayT >= Number(n.dataset.i) * 0.6));
+  const costT = since('problem.cost');
+  document.querySelectorAll('[data-scene="cost"] .chain div').forEach((n) => n.classList.toggle('on', costT >= Number(n.dataset.i) * 1.2));
+  const stepIdx = DEMO_STEPS.reduce((m, k, i) => (since(`solution.demo.${k}`) >= 0 ? i : m), -1);
+  document.querySelectorAll('[data-scene="demo"] [data-step]').forEach((n) => n.classList.toggle('on', stepIdx >= Number(n.dataset.step)));
+  const nudgeT = since('solution.demo.nudge');
+  document.querySelectorAll('[data-scene="demo"] .step').forEach((n) => n.classList.toggle('on', nudgeT >= Number(n.dataset.n) * 1.4));
+  document.querySelectorAll('[data-scene="demo"] [data-pane]').forEach((n) => n.classList.toggle('on', stepIdx >= 2));
+
+  // Page panels.
+  const pct = t / pack.total;
+  pack.bounds.forEach((b, i) => { const seg = $('segs').children[i].firstElementChild; seg.style.width = `${Math.max(0, Math.min(1, (t - b.from) / (b.to - b.from))) * 100}%`; });
+  $('scrub').setAttribute('aria-valuenow', String(Math.round(t)));
+  $('time').textContent = `${clock(t)} / ${clock(pack.total)}`;
+  $('nowTitle').textContent = `${line.section.number}. ${line.section.title}`;
+  $('nowWin').textContent = `Window ${line.section.window} · now ${clock(t)}`;
+  $('nowLine').textContent = line.kind === 'demo' ? `[${line.step}] ${line.text}` : line.text;
+  $('nowVisual').textContent = line.visual || '';
+  $('nowDir').textContent = line.section.direction;
+  const notes = [];
+  if (scene === 'demo' || scene === 'sheet' || scene === 'report') notes.push('This is a mock-up of the demo. The real cut uses your screen recording of the demo account, as the foundation says.');
+  if (placeholder || scene === 'shots') notes.push('No real results are recorded yet, so the proof stays a placeholder. Add the plumber and internet company numbers in the VSL back end.');
+  if (pack.status === 'draft') notes.push(`${pack.label} wording is a starter draft. Check it before you use it.`);
+  $('nowNotes').innerHTML = notes.map((n) => `<div>${esc(n)}</div>`).join('');
+  $('nowNotes').hidden = !notes.length;
+  document.querySelectorAll('#script button').forEach((b) => b.classList.toggle('cur', b.dataset.key === line.key));
+  void pct;
+}
+
+function tick(now) {
+  if (!playing) return;
+  t += (now - last) / 1000; last = now;
+  if (t >= pack.total) { t = pack.total; setPlaying(false); }
+  render();
+  if (playing) requestAnimationFrame(tick);
+}
+function setPlaying(on) {
+  if (on && t >= pack.total) seek(0);
+  playing = on;
+  document.body.classList.toggle('playing', on);
+  $('playBtn').setAttribute('aria-label', on ? 'Pause' : 'Play');
+  $('playBtn').innerHTML = on ? '<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>';
+  if (on) { last = performance.now(); requestAnimationFrame(tick); }
+}
+
+function fit() {
+  const w = $('frame').clientWidth;
+  $('stage').style.transform = `scale(${w / 1280})`;
+}
+
+$('niches').innerHTML = DATA.packs.map((p) => `<button type="button" data-key="${p.key}" aria-pressed="false">${esc(p.label.replace(/ \(.*\)/, ''))}${p.status === 'v1' ? ' · v1' : ''}</button>`).join('');
+$('niches').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) selectPack(b.dataset.key, true); });
+$('frame').addEventListener('click', () => setPlaying(!playing));
+$('frame').addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setPlaying(!playing); } });
+$('playBtn').addEventListener('click', () => setPlaying(!playing));
+$('ctaBtn').addEventListener('click', () => { const l = lines.find((x) => x.key === 'cta.line'); if (l) seek(l.at); });
+const scrubTo = (e) => { const r = $('scrub').getBoundingClientRect(); seek(((e.clientX - r.left) / r.width) * pack.total); };
+$('scrub').addEventListener('pointerdown', (e) => { scrubTo(e); const move = (ev) => scrubTo(ev); window.addEventListener('pointermove', move); window.addEventListener('pointerup', () => window.removeEventListener('pointermove', move), { once: true }); });
+$('scrub').addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') seek(t + 5); if (e.key === 'ArrowLeft') seek(t - 5); });
+$('script').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) seek(Number(b.dataset.at)); });
+new ResizeObserver(fit).observe($('frame'));
+window.__seek = (x) => { setPlaying(false); seek(x); };
+
+const params = new URLSearchParams(location.search);
+let start = params.get('niche');
+if (!start) { try { start = localStorage.getItem('vsl-niche'); } catch { start = null; } }
+selectPack(start || 'aesthetics_clinic');
+fit();
+if (params.has('record')) {
+  document.body.classList.add('rec');
+  fit();
+  // The recorder calls this once the page is ready, so the clip starts on the hook's first frame.
+  window.__go = () => { seek(0); setPlaying(true); return pack.total; };
+}
+</script>

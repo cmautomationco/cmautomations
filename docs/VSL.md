@@ -116,3 +116,12 @@ All under `/api/vsl` (signed in; changes need owner or admin).
 Public (no sign-in): `GET /api/public/vsl/:slug?visitor=&share=` and `POST /api/public/vsl/:slug/events`.
 
 Line keys for `overrides`: `hook.line`, `problem.day`, `problem.tried`, `problem.why_failing`, `problem.cost`, `problem.sample`, `solution.method`, `solution.demo.test_dm`, `solution.demo.instant_reply`, `solution.demo.nudge`, `solution.demo.spreadsheet`, `solution.demo.report`, `solution.add_ons`, `solution.what_changes`, `proof.framing`, `proof.numbers.<proof id>`, `cta.line`.
+
+## The faceless preview (video)
+
+`npm run build:vsl-preview` builds `dist/vsl-preview.html` from the back end: every niche pack, the faceless format and the card timings. It plays the full 3:30 cut in your brand colours, with a scrubber split into the five sections, a niche switcher, and the line, visual and direction for whatever is on screen. Change a pack or the foundation, rebuild, and the video follows.
+
+- Each section's cards are stretched to fill that section's window, because the b-roll and screen recording hold the time between lines. A section that runs long pushes the next one back.
+- The demo in section 3 is a **mock-up**, marked on screen. The real cut uses your screen recording of the demo account.
+- The proof section stays a **placeholder** until real results are added. The video never makes numbers up.
+- Open it with `?record&niche=<pack>` for a bare 1280×720 stage. That's what the MP4 export records.
