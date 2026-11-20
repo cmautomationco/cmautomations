@@ -731,3 +731,115 @@ CREATE TABLE IF NOT EXISTS lead_pages (
   created_at TEXT NOT NULL,
   viewed_at  TEXT
 );
+
+-- ───────────────────────── VSL (video sales letters) ─────────────────────────
+-- Niche packs made for this business (the built-in packs live in code).
+CREATE TABLE IF NOT EXISTS vsl_packs (
+  id         TEXT PRIMARY KEY,
+  org_id     TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  key        TEXT NOT NULL,
+  label      TEXT NOT NULL,
+  based_on   TEXT,
+  data       TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE (org_id, key)
+);
+
+-- Real results for the proof section. Numbers are kept exactly as measured.
+CREATE TABLE IF NOT EXISTS vsl_proofs (
+  id            TEXT PRIMARY KEY,
+  org_id        TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  business_name TEXT NOT NULL,
+  short_name    TEXT,
+  owner_name    TEXT,
+  kind          TEXT,
+  paid          INTEGER,
+  front_door    TEXT,
+  period_start  TEXT,
+  period_end    TEXT,
+  period_label  TEXT,
+  numbers       TEXT NOT NULL DEFAULT '{}',
+  value_basis   TEXT,
+  quote         TEXT,
+  clip_url      TEXT,
+  clip_seconds  REAL,
+  screenshots   TEXT NOT NULL DEFAULT '[]',
+  permission    INTEGER NOT NULL DEFAULT 0,
+  use_in_vsl    INTEGER NOT NULL DEFAULT 1,
+  line_override TEXT,
+  created_at    TEXT NOT NULL,
+  updated_at    TEXT NOT NULL
+);
+
+-- One script = foundation + niche pack + format + hook + line changes.
+CREATE TABLE IF NOT EXISTS vsl_scripts (
+  id         TEXT PRIMARY KEY,
+  org_id     TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  name       TEXT NOT NULL,
+  niche_key  TEXT NOT NULL,
+  format     TEXT NOT NULL DEFAULT 'faceless' CHECK (format IN ('faceless','voiceover','on_camera')),
+  hook       TEXT NOT NULL DEFAULT '0',
+  vars       TEXT NOT NULL DEFAULT '{}',
+  overrides  TEXT NOT NULL DEFAULT '{}',
+  proof_ids  TEXT,
+  status     TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','ready','filmed','live')),
+  video_url  TEXT,
+  notes      TEXT,
+  parent_id  TEXT,
+  created_by TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+-- The page around the video: one or more hook variants, the button and the breakdown video.
+CREATE TABLE IF NOT EXISTS vsl_pages (
+  id                  TEXT PRIMARY KEY,
+  org_id              TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  slug                TEXT NOT NULL UNIQUE,
+  name                TEXT NOT NULL,
+  headline            TEXT,
+  variants            TEXT NOT NULL DEFAULT '[]',
+  button_text         TEXT,
+  breakdown_video_url TEXT,
+  breakdown_cta       TEXT,
+  status              TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','live','paused')),
+  created_at          TEXT NOT NULL,
+  updated_at          TEXT NOT NULL
+);
+
+-- A personal link for one prospect (brand, business or creator), so you know who watched.
+CREATE TABLE IF NOT EXISTS vsl_shares (
+  id              TEXT PRIMARY KEY,
+  org_id          TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  page_id         TEXT NOT NULL REFERENCES vsl_pages(id) ON DELETE CASCADE,
+  token           TEXT NOT NULL UNIQUE,
+  label           TEXT NOT NULL,
+  contact_id      TEXT REFERENCES contacts(id) ON DELETE SET NULL,
+  variant_key     TEXT,
+  created_by      TEXT,
+  created_at      TEXT NOT NULL,
+  first_viewed_at TEXT,
+  clicked_at      TEXT
+);
+
+-- One row per visitor per page: how far they watched and what they clicked.
+CREATE TABLE IF NOT EXISTS vsl_views (
+  id                     TEXT PRIMARY KEY,
+  org_id                 TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  page_id                TEXT NOT NULL REFERENCES vsl_pages(id) ON DELETE CASCADE,
+  share_id               TEXT REFERENCES vsl_shares(id) ON DELETE SET NULL,
+  visitor                TEXT NOT NULL,
+  variant_key            TEXT NOT NULL,
+  first_seen             TEXT NOT NULL,
+  last_seen              TEXT NOT NULL,
+  played                 INTEGER NOT NULL DEFAULT 0,
+  max_seconds            REAL NOT NULL DEFAULT 0,
+  cta_clicked_at         TEXT,
+  breakdown_played       INTEGER NOT NULL DEFAULT 0,
+  breakdown_max_seconds  REAL NOT NULL DEFAULT 0,
+  breakdown_completed_at TEXT,
+  booked_at              TEXT,
+  UNIQUE (page_id, visitor)
+);
+CREATE INDEX IF NOT EXISTS idx_vsl_views_page ON vsl_views(page_id, variant_key);

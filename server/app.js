@@ -23,6 +23,7 @@ import { apiKeyRoutes, publicApiRoutes } from './modules/api/routes.js';
 import { essentialsPublicRoutes, essentialsRoutes, socialHookRoutes } from './modules/essentials/routes.js';
 import { seoRoutes } from './modules/seo/routes.js';
 import { dialerHookRoutes, dialerPublicRoutes, dialerRoutes } from './modules/dialer/routes.js';
+import { vslPublicRoutes, vslRoutes } from './modules/vsl/routes.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -56,6 +57,7 @@ export function createApp(db) {
   app.use('/api/agency', agencyRoutes(ctx));
   app.use('/api/public/essentials', essentialsPublicRoutes(ctx));
   app.use('/api/public/dialer', dialerPublicRoutes(ctx));
+  app.use('/api/public/vsl', vslPublicRoutes(ctx));
   app.use('/api/public', publicRoutes(ctx));
   app.use('/api/hooks/stream', streamHookRoutes(ctx));
   app.use('/api/hooks/social', socialHookRoutes(ctx));
@@ -68,6 +70,7 @@ export function createApp(db) {
   app.use('/api/essentials', essentialsRoutes(ctx));
   app.use('/api/seo', seoRoutes(ctx));
   app.use('/api/dialer', dialerRoutes(ctx));
+  app.use('/api/vsl', vslRoutes(ctx));
 
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 
