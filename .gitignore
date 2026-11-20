@@ -4,3 +4,4 @@ data/
 *.db-journal
 .env
 dist/
+vsl-video/
