@@ -153,7 +153,7 @@ h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.02em; color: var(--accent-
 .quote-slot { grid-column: 1 / -1; border: 3px dashed #e8b46a; border-radius: 14px; padding: 18px; font-size: 19px; font-weight: 700; color: #b45309; background: #fffbeb; text-align: center; }
 
 /* Wellness: the A→B→C→D path, the hire comparison and the monitoring alerts */
-.path { position: absolute; right: 70px; top: 120px; width: 560px; display: grid; gap: 0; }
+.path { position: absolute; right: 70px; top: 88px; width: 560px; display: grid; gap: 0; }
 .node { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 16px; background: #fff; border-radius: 16px; padding: 14px 18px; box-shadow: 0 2px 10px rgba(21,75,113,.08); }
 .node b { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; background: #e1edf6; color: #1e6a9e; transition: background .4s, color .4s; }
 .node strong { display: block; font-size: 22px; }
@@ -167,7 +167,7 @@ h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.02em; color: var(--accent-
 .path.connected .node b { background: #1e6a9e; color: #fff; }
 .path.connected .node em { opacity: 0; }
 .path.manual .node em, .path.broken .node em { opacity: 1; }
-.path .note-in { position: absolute; left: 0; right: 0; bottom: -64px; text-align: center; font-size: 18px; font-weight: 800; color: #1e6a9e; opacity: 0; transition: opacity .4s .6s; }
+.path .note-in { position: absolute; left: 0; right: 0; bottom: -46px; text-align: center; font-size: 18px; font-weight: 800; color: #1e6a9e; opacity: 0; transition: opacity .4s .6s; }
 .path.connected .note-in { opacity: 1; }
 .advert { position: absolute; right: 90px; top: 150px; width: 500px; background: #fff; border-radius: 18px; padding: 28px 30px; box-shadow: 0 10px 30px rgba(21,75,113,.12); display: grid; gap: 14px; }
 .advert h4 { margin: 0; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: #64748b; }
@@ -311,6 +311,11 @@ const DEMO = {
   personal_trainer: { win: 'client', name: 'Alex', block: 'Session', notify: 'New DM', incoming: 'Have you got space for a new client? Looking to start in January.', reply: 'Hi Alex, thanks for reaching out! I do. Want to book a quick call to chat about your goals?', nudge: 'Just checking you saw this, Alex. Here’s the link whenever suits.', channel: 'Instagram', robot: 'Thanks for your message! I’ll reply as soon as I can.' },
   wellness: { win: 'member', name: 'Jordan', block: 'Session', notify: 'New enquiry', incoming: 'Hi, how do I join? Do you do a trial session?', reply: 'Hi Jordan, thanks for getting in touch! Here’s the link to join and book your first session.', nudge: 'Just checking you saw this, Jordan. Your first-session link is here whenever you’re ready.', channel: 'Instagram', robot: 'Thank you for contacting us. A member of staff will be in touch.',
     chain: ['The membership', 'Next month’s fees', 'The month after'], statuses: ['Onboarded', 'Forms sent', 'Booked in'], tile3: 'Onboarded' },
+  coach_onboarding: { win: 'client', name: 'Sam', block: 'Client call', notify: 'New client', incoming: 'New client · Sam paid for 12-week coaching', reply: 'Welcome aboard, Sam! Here’s your intake form, and a link to book your kickoff call.', nudge: 'Hi Sam, just a reminder to fill in your intake form so we can get your programme ready.', channel: 'Checkout', robot: 'Thanks for signing up! We’ll be in touch soon.',
+    chain: ['The refund request', 'Month two', 'Month three'], statuses: ['Started', 'Call booked', 'Form sent'], tile3: 'Started', sheetHead: 'Stage',
+    hire: { title: 'Wanted: VA', items: ['Another wage, every month', 'Time spent training them', 'Only there for set hours'] },
+    names: ['Sam K.', 'Priya', 'Tom', 'Hannah', 'Leon'], tiles: ['New clients', 'Welcomed in seconds'],
+    addons: ['Missed check-in chasers', 'Rebooking nudges', 'Reminders before calls'], sheetCols: ['Welcomed in'], rowName: 'Demo client' },
   online_coach: { win: 'call', name: 'Sam', block: 'Client call', notify: 'New DM', incoming: 'Info', reply: 'Hey Sam! Here’s how the programme works, and a link to book a call if it sounds right for you.', nudge: 'Just checking you saw this, Sam. Any questions, just ask.', channel: 'Instagram', robot: 'Hi! Thanks for your interest. Someone will reply soon.' },
 };
 
@@ -350,7 +355,7 @@ function scenesHtml(p) {
   return `
   <div class="scene" data-scene="hook">
     <div class="phone buzz" style="right:70px;top:60px;"><div class="screen" style="background:linear-gradient(180deg,#154b71,#1e6a9e)">
-      <div class="notes">${[0, 1, 2, 3, 4].map((i) => `<div class="note" data-i="${i}"><b>${esc(d.notify)}</b>${esc(['Sophie M.', 'Unknown number', 'Hannah', 'Priya', 'Unknown number'][i])}</div>`).join('')}</div>
+      <div class="notes">${[0, 1, 2, 3, 4].map((i) => `<div class="note" data-i="${i}"><b>${esc(d.notify)}</b>${esc((d.names || ['Sophie M.', 'Unknown number', 'Hannah', 'Priya', 'Unknown number'])[i])}</div>`).join('')}</div>
     </div><div class="badge" id="badge">1</div></div>
   </div>
   <div class="scene" data-scene="day">
@@ -395,10 +400,10 @@ function scenesHtml(p) {
   <div class="scene" data-scene="sheet">
     <div class="tag">Mock-up · swap in your screen recording</div>
     <div class="panel" style="width:600px;right:60px;"><div class="sheet on"><table>
-      <thead><tr><th>Time</th><th>Name</th><th>Channel</th><th>Replied in</th><th>Status</th></tr></thead>
+      <thead><tr><th>Time</th><th>Name</th><th>Channel</th><th>${esc((d.sheetCols || [])[0] || 'Replied in')}</th><th>${esc(d.sheetHead || 'Status')}</th></tr></thead>
       <tbody>
-        <tr><td>09:14</td><td>Demo enquiry</td><td>${esc(d.channel)}</td><td>3s</td><td>${esc((d.statuses || [])[0] || 'Booked')}</td></tr>
-        <tr><td>10:20</td><td>Demo enquiry</td><td>${esc(d.channel)}</td><td>5s</td><td>${esc((d.statuses || [])[1] || 'Nudged')}</td></tr>
+        <tr><td>09:14</td><td>${esc(d.rowName || 'Demo enquiry')}</td><td>${esc(d.channel)}</td><td>3s</td><td>${esc((d.statuses || [])[0] || 'Booked')}</td></tr>
+        <tr><td>10:20</td><td>${esc(d.rowName || 'Demo enquiry')}</td><td>${esc(d.channel)}</td><td>5s</td><td>${esc((d.statuses || [])[1] || 'Nudged')}</td></tr>
         <tr class="new"><td>11:02</td><td>${esc(d.name)} (demo)</td><td>${esc(d.channel)}</td><td>4s</td><td>${esc((d.statuses || [])[2] || 'Nudged')}</td></tr>
       </tbody></table></div></div>
   </div>
@@ -407,14 +412,14 @@ function scenesHtml(p) {
     <div class="panel" style="width:560px;"><div class="report on">
       <h3>Weekly report</h3><p>Demo data, not a real result</p>
       <div class="tiles">
-        <div><strong>14</strong><span>Enquiries</span></div>
-        <div><strong>14</strong><span>Answered in seconds</span></div>
+        <div><strong>14</strong><span>${esc((d.tiles || [])[0] || 'Enquiries')}</span></div>
+        <div><strong>14</strong><span>${esc((d.tiles || [])[1] || 'Answered in seconds')}</span></div>
         <div><strong>5</strong><span>${esc(d.tile3 || 'Recovered')}</span></div>
         <div><strong>£610</strong><span>Estimated value</span></div>
       </div></div></div>
   </div>
   <div class="scene" data-scene="addons">
-    <div class="addons"><div>Cancellation fill</div><div>Rebooking nudges</div><div>Appointment reminders</div><small>The details are in the breakdown.</small></div>
+    <div class="addons">${(d.addons || ['Cancellation fill', 'Rebooking nudges', 'Appointment reminders']).map((x) => `<div>${esc(x)}</div>`).join('')}<small>The details are in the breakdown.</small></div>
   </div>
   <div class="scene" data-scene="doors">
     <div class="doors">
@@ -438,8 +443,8 @@ function scenesHtml(p) {
     </div>
   </div>
   <div class="scene" data-scene="hire">
-    <div class="advert"><h4>The usual fix</h4><h3>Wanted: admin help</h3>
-      <div data-i="0">Another wage, every month</div><div data-i="1">Time spent training them</div><div data-i="2">Clocks off at 5pm</div></div>
+    <div class="advert"><h4>The usual fix</h4><h3>${esc((d.hire || {}).title || 'Wanted: admin help')}</h3>
+      ${((d.hire || {}).items || ['Another wage, every month', 'Time spent training them', 'Clocks off at 5pm']).map((x, i) => `<div data-i="${i}">${esc(x)}</div>`).join('')}</div>
   </div>
   <div class="scene" data-scene="watch">
     <div class="alerts">
@@ -476,8 +481,8 @@ function selectPack(key, keepTime = false) {
   if (pack.audio) voice.src = pack.audio; else voice.removeAttribute('src');
   $('soundBtn').disabled = !pack.audio;
   $('voiceNote').textContent = pack.audio
-    ? `This version has a voice. It’s a free test voice (Piper, ${pack.voice.voice.replace(/\.onnx$/, '')}) so you can hear the script; swap in an AI voice or your own when you have one.`
-    : 'This version has no voice yet: it’s the faceless cut (text only). Wellness has the voice.';
+    ? `This version has a voice: ${pack.voice.engine === 'kokoro' ? 'a natural British voice made with Kokoro (free, open-source)' : 'a free test voice (Piper)'}. Swap in an AI voice or your own recording whenever you like; the video re-times itself to it.`
+    : `This version has no voice yet: it’s the faceless cut (text only).${DATA.packs.some((x) => x.audio) ? ` ${DATA.packs.find((x) => x.audio).label} has the voice.` : ''}`;
   setSound(soundOn);
   seek(keepTime ? Math.min(t, pack.total) : 0);
   try { localStorage.setItem('vsl-niche', pack.key); } catch { /* not available */ }

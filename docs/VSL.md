@@ -142,3 +142,9 @@ Through the problem section, the steps are shown waiting on the owner and then b
 **Voice:** `npm run vsl:voice -- wellness` (with `PIPER` and `PIPER_VOICE` set) voices each line with Piper, a free text-to-speech engine. It then times the video to the real audio and writes `dist/vsl-voice/wellness.m4a` and `.json`. `npm run build:vsl-preview` picks these up, and the player gets a Sound on/off button. To use a better voice later (an AI voice or your own recording), replace the clips and keep the same manifest.
 
 Before it goes out, check that the monitoring promise ("we're alerted and we tell you") is backed by a real alerting setup for each client's automations.
+
+## Online coach onboarding (current focus)
+
+`coach_onboarding` is the version being sent out now. It's written in your own voice ("I build the system in between", "we keep an eye on it") and follows the path: paid (A), then welcomed with the intake form and call link in seconds (B), then started, with the form back, the call booked and the programme sent (C), then staying, checking in every week and reported on (D). The full timed script is in [vsl-scripts/online-coach-onboarding-v1.md](vsl-scripts/online-coach-onboarding-v1.md).
+
+**Voice:** Kokoro (free, open-source, natural). Each line is one continuous take. The voice is a blend of two British male voices (`bm_george:0.65,bm_lewis:0.35`), so it isn't a stock voice people will recognise. To use a different voice, change `KOKORO_VOICE` and run `npm run vsl:voice -- coach_onboarding`. The model files come from the kokoro-onnx GitHub releases (`model-files-v1.0`).

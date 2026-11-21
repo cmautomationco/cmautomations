@@ -225,6 +225,55 @@ export const PACKS = {
       cta: 'Arrow pointing down to the button.',
     },
   },
+  // Online coach, onboarding only. Pain-first, in the owner's own voice ("I build", "we keep an eye on it"),
+  // along the path: paid (A) → welcomed and sent everything (B) → set up and started (C) → checking in and staying (D).
+  coach_onboarding: {
+    label: 'Online coach onboarding', status: 'draft', source: 'brief', core_niche: 'coaching',
+    vars: { business: 'coaching business', business_plural: 'online coaches', who: 'online coaches', message: 'sign-up', front_door: 'new-client onboarding', work: 'coach' },
+    hooks: [
+      'If you coach online, every new client you onboard by hand is an evening you’re not getting back.',
+      'Online coaches: how long does it take a new client to actually start after they’ve paid?',
+      'If you’re still sending welcome messages and chasing forms at ten at night, this is for you.',
+    ],
+    path: [
+      { key: 'A', label: 'Paid', text: 'A new client signs up' },
+      { key: 'B', label: 'Welcomed', text: 'Welcome, intake form and call link, in seconds' },
+      { key: 'C', label: 'Started', text: 'Form back, call booked, programme sent' },
+      { key: 'D', label: 'Staying', text: 'Checking in every week, reported on' },
+    ],
+    problem: {
+      day: 'Point A: a client pays, then the welcome, intake form, kickoff call and app set-up all wait on the coach.',
+      tried: 'Doing it late at night between calls, or hiring a VA: another wage, time training them, and only there for set hours.',
+      why_failing: 'Every gap between the steps is where clients go cold: the form that never comes back, the call that never gets booked.',
+      cost: 'Refund requests, clients who quietly drop off after month one, and every month of coaching they would have paid for.',
+      sample_line: 'You started coaching to change people’s lives, not to chase paperwork at ten at night. What you need is the steps joined up, not another wage.',
+    },
+    problem_lines: {
+      day: 'Someone pays to work with you. Brilliant. Then it\u2019s all on you. The welcome, the intake form, the call to book, getting them set up.',
+      tried: 'So you do it late at night, between client calls. Or you think about hiring a VA. Another wage, time training them, and they\u2019re only there for set hours.',
+      why_failing: 'And every gap between those steps is where clients go cold. The form that never comes back. The call that never gets booked.',
+      cost: 'That\u2019s refund requests, clients who drop off after month one, and every month of coaching they\u2019d have paid for.',
+    },
+    method_line: 'So I build the system in between. From the moment someone pays to their first check-in, every step is connected, and you don’t have to hire anyone.',
+    demo_lines: {
+      test_dm: 'Here’s a new client signing up on a demo coaching account. That’s point A.',
+      instant_reply: 'Within seconds, they’ve got a welcome message, their intake form, and a link to book their kickoff call. That’s point B.',
+      nudge: 'If the form doesn’t come back, they get a friendly nudge after thirty minutes, another at midday, and a final one in the 5pm sweep. Nothing goes out after seven on weekdays.',
+      spreadsheet: 'Every client’s onboarding sits in one sheet. Form back, call booked, programme sent. You can see who’s stuck at a glance. That’s point C.',
+      report: 'And every week, one report shows who’s started, who’s checking in, and who needs a word from you. That’s point D.',
+    },
+    add_on_line: 'It can also chase missed check-ins, nudge clients to rebook, and send reminders before calls. That’s all in the breakdown.',
+    what_changes: 'There’s no one new to hire. The system runs every day, and we keep an eye on it for you. If anything breaks, needs changing, or could work better, we’re alerted and we let you know. You coach. The system handles the onboarding. You check one report on a Friday.',
+    proof_relation: 'other_niche',
+    proof_framing: 'I’ve built and tested this system with two businesses, a plumber and an internet connections company. It’s the same system with a different front door. For them, it catches missed calls and messages. For an online coach, it takes a new client from paid to started.',
+    cta_line: 'Right under this video, there’s a full breakdown. It shows how this works for online coaches like you, the problems it solves, and what it’s done for the businesses I’ve worked with. Watch that next.',
+    broll: {
+      hook: 'A coach at a laptop late at night, a new-client notification on the phone beside it.',
+      problem: 'Late-night admin at a kitchen table; an unanswered intake form; a client waiting.',
+      proof: 'Log sheet and weekly report screenshots, customer details blurred.',
+      cta: 'Arrow pointing down to the button.',
+    },
+  },
 };
 
 export const DEFAULT_PACK = 'aesthetics_clinic';
