@@ -43,7 +43,8 @@ const spoken = (t) => t
   .replace(/[“”]/g, '').replace(/’/g, "'");
 
 const built = buildScript({ pack: PACKS[packKey], packKey, format: 'voiceover', hook });
-const GAP = { line: 0.6, demo: 1.4, section: 1.2, placeholder: 5 };
+// Pauses between lines. Short, like breaths in natural speech, so it flows rather than stopping and starting.
+const GAP = { line: Number(process.env.GAP_LINE ?? 0.3), demo: Number(process.env.GAP_DEMO ?? 0.55), section: Number(process.env.GAP_SECTION ?? 0.7), placeholder: 4 };
 const duration = (f) => Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', f]).toString().trim());
 
 // Every line to say, in order. Placeholders are shown, never read out.
