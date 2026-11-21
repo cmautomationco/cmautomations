@@ -174,6 +174,57 @@ export const PACKS = {
     cta_line: 'Right under this video there’s a full breakdown. It shows how this works for coaches like you, the problems it solves, and what it’s done for the businesses I’ve worked with. Watch that next.',
     broll: { hook: 'Phone with a stack of unread DMs and “info” comments.', problem: 'Zoom call on a laptop; DMs piling on the phone beside it.', proof: 'Log sheet and weekly report, customer details blurred.', cta: 'Arrow pointing down to the button.' },
   },
+  // Wellness: gym owners and managers, personal trainers and online coaches, in one pack.
+  // Pain-first, and built as a path: where the business is now (A) to where it wants
+  // to be (D), with the system as the thing in between instead of another hire.
+  wellness: {
+    label: 'Wellness (gyms, PTs, online coaches)', status: 'draft', source: 'brief', core_niche: 'fitness',
+    vars: { business: 'gym', business_plural: 'gyms and coaches', who: 'gym owners, managers, personal trainers and online coaches', message: 'enquiry', front_door: 'enquiries and new-member onboarding', work: 'run the sessions' },
+    hooks: [
+      'If you run a gym or coach clients, every new member you onboard by hand is time you’re not spending with clients.',
+      'Gym owners and coaches: how much of your week goes on chasing forms, check-ins and payments?',
+      'If your answer to the admin is “hire someone”, this is for you.',
+    ],
+    // A → B → C → D: enquiry → answered and booked → onboarded → kept, with no new hire.
+    path: [
+      { key: 'A', label: 'Enquiry', text: 'Someone gets in touch' },
+      { key: 'B', label: 'Answered', text: 'Replied in seconds and booked in' },
+      { key: 'C', label: 'Onboarded', text: 'Forms, welcome and first session sent' },
+      { key: 'D', label: 'Kept', text: 'Checked in on, reported on, staying' },
+    ],
+    problem: {
+      day: 'Point A: enquiries, sign-ups, forms, welcomes, first sessions, check-ins and payments, all waiting on the owner or coach.',
+      tried: 'The usual fix is hiring someone or handing it to someone already stretched: more wages, more training, and it stops when they go home.',
+      why_failing: 'Every gap between the steps is where people drop off: the enquiry that waited, the member who never booked a first session.',
+      cost: 'Each gap is a lost member or client, plus every month of fees that would have followed.',
+      sample_line: 'You didn’t get into fitness to do admin at night. You need the steps connected, not another wage.',
+    },
+    problem_lines: {
+      day: 'Right now, a new member signs up and the rest is on you. Forms to chase, a welcome to send, a first session to book.',
+      tried: 'The usual fix is to hire someone, or hand it to someone who’s already stretched. More wages, more training, and it stops when they go home.',
+      why_failing: 'And every gap between those steps is where people drop off. The enquiry that waited. The member who never booked a first session.',
+      cost: 'Each one is a lost member or client, and every month of fees that would have followed.',
+    },
+    method_line: 'I build the system in between. It connects every step, from the first enquiry to a fully onboarded member, without you hiring anyone.',
+    demo_lines: {
+      test_dm: 'Here’s a new enquiry coming into a demo gym account. That’s point A.',
+      instant_reply: 'Within seconds, it’s answered, with a link to join and book a first session. Point B.',
+      nudge: 'If they go quiet, a follow-up goes out at 30 minutes, then midday, then a 5pm sweep. Nothing after 7pm on weekdays.',
+      spreadsheet: 'When they join, their forms, welcome and first session go out by themselves, and every step is logged in one place. Point C.',
+      report: 'And each week, one report shows who came in, who’s onboarded and what it’s worth. Point D.',
+    },
+    add_on_line: 'It can also fill cancelled classes, nudge people to rebook and send session reminders. That’s all in the breakdown.',
+    what_changes: 'There’s no one new to hire. It runs every day, and we watch over it. If anything breaks, needs changing or could work better, we’re alerted and we tell you. You run the sessions. You check one report on a Friday.',
+    proof_relation: 'other_niche',
+    proof_framing: 'I’ve built and tested this system with two businesses, a plumber and an internet connections company. It’s the same system with a different front door. For them it catches missed calls and messages. For a gym or a coach, it catches enquiries and carries them through onboarding.',
+    cta_line: 'Right under this video there’s a full breakdown. It shows how this works for gyms and coaches like you, the problems it solves, and what it’s done for the businesses I’ve worked with. Watch that next.',
+    broll: {
+      hook: 'Phone lighting up with notifications on a gym bench.',
+      problem: 'A coach mid-session; paperwork and a laptop late at night; an empty reception desk.',
+      proof: 'Log sheet and weekly report screenshots, customer details blurred.',
+      cta: 'Arrow pointing down to the button.',
+    },
+  },
 };
 
 export const DEFAULT_PACK = 'aesthetics_clinic';

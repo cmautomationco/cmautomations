@@ -152,6 +152,40 @@ h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.02em; color: var(--accent-
 .shot .rows i:nth-child(3n) { width: 70%; }
 .quote-slot { grid-column: 1 / -1; border: 3px dashed #e8b46a; border-radius: 14px; padding: 18px; font-size: 19px; font-weight: 700; color: #b45309; background: #fffbeb; text-align: center; }
 
+/* Wellness: the A→B→C→D path, the hire comparison and the monitoring alerts */
+.path { position: absolute; right: 70px; top: 120px; width: 560px; display: grid; gap: 0; }
+.node { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 16px; background: #fff; border-radius: 16px; padding: 14px 18px; box-shadow: 0 2px 10px rgba(21,75,113,.08); }
+.node b { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; background: #e1edf6; color: #1e6a9e; transition: background .4s, color .4s; }
+.node strong { display: block; font-size: 22px; }
+.node span { font-size: 16px; color: #64748b; font-weight: 600; }
+.node em { font-style: normal; font-size: 14px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; padding: 5px 10px; border-radius: 8px; background: #fef3c7; color: #b45309; transition: opacity .3s; }
+.link { height: 44px; margin-left: 43px; width: 6px; border-radius: 3px; background: #cbd5e1; position: relative; transition: background .5s; }
+.link i { position: absolute; left: 22px; top: 10px; font-style: normal; font-size: 15px; font-weight: 800; color: #dc2626; white-space: nowrap; opacity: 0; transition: opacity .3s; }
+.path.broken .link { background: repeating-linear-gradient(180deg, #dc2626 0 7px, transparent 7px 13px); }
+.path.broken .link i { opacity: 1; }
+.path.connected .link { background: #1e6a9e; }
+.path.connected .node b { background: #1e6a9e; color: #fff; }
+.path.connected .node em { opacity: 0; }
+.path.manual .node em, .path.broken .node em { opacity: 1; }
+.path .note-in { position: absolute; left: 0; right: 0; bottom: -64px; text-align: center; font-size: 18px; font-weight: 800; color: #1e6a9e; opacity: 0; transition: opacity .4s .6s; }
+.path.connected .note-in { opacity: 1; }
+.advert { position: absolute; right: 90px; top: 150px; width: 500px; background: #fff; border-radius: 18px; padding: 28px 30px; box-shadow: 0 10px 30px rgba(21,75,113,.12); display: grid; gap: 14px; }
+.advert h4 { margin: 0; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: #64748b; }
+.advert h3 { margin: 0; font-size: 34px; color: #0b1220; letter-spacing: -0.02em; }
+.advert > div { display: flex; align-items: center; gap: 12px; font-size: 21px; font-weight: 700; color: #334155; padding: 12px 14px; border-radius: 12px; background: #f8fafc; opacity: 0; transform: translateX(14px); transition: opacity .35s, transform .35s; }
+.advert > div.on { opacity: 1; transform: none; }
+.advert > div::before { content: "+"; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #fee2e2; color: #dc2626; font-weight: 800; }
+.alerts { position: absolute; right: 70px; top: 150px; width: 540px; display: grid; gap: 14px; }
+.alerts > div { background: #fff; border-radius: 14px; padding: 16px 18px; box-shadow: 0 2px 10px rgba(21,75,113,.1); display: grid; grid-template-columns: 12px 1fr; gap: 14px; align-items: start; opacity: 0; transform: translateY(10px); transition: opacity .35s, transform .35s; }
+.alerts > div.on { opacity: 1; transform: none; }
+.alerts > div::before { content: ""; width: 12px; height: 12px; border-radius: 50%; margin-top: 7px; background: var(--dot, #1e6a9e); }
+.alerts strong { display: block; font-size: 20px; }
+.alerts span { font-size: 16px; color: #64748b; font-weight: 600; }
+.alerts small { font-size: 15px; font-weight: 700; color: #1e6a9e; text-align: center; }
+.abcd { position: absolute; left: 640px; top: 28px; display: flex; gap: 8px; }
+.abcd b { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; background: #e1edf6; color: #1e6a9e; transition: background .3s, color .3s; }
+.abcd b.on { background: #1e6a9e; color: #fff; }
+
 /* CTA */
 .arrow { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); display: grid; justify-items: center; gap: 8px; color: #1e6a9e; font-size: 22px; font-weight: 800; }
 .arrow svg { width: 70px; height: 70px; animation: bob 1.4s ease-in-out infinite; }
@@ -164,9 +198,16 @@ h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.02em; color: var(--accent-
 :root[data-theme="dark"] .cta-btn { color: #0a121c; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cta-btn { color: #0a121c; } }
 .under small { color: var(--muted); }
-.transport { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; }
+.transport { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; }
 .ctrl { font: inherit; font-weight: 700; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; cursor: pointer; display: grid; place-items: center; }
 .ctrl svg { width: 18px; height: 18px; fill: currentColor; }
+.sound { font: inherit; font-size: .85rem; font-weight: 700; height: 44px; padding: 0 14px; border-radius: 22px; border: 1px solid var(--line); background: var(--surface); color: var(--fg-2); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.sound svg { width: 18px; height: 18px; fill: currentColor; }
+.sound[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.sound:disabled { opacity: .55; cursor: default; }
+.sound:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { .sound span { display: none; } }
+.voice-note { font-size: .85rem; color: var(--muted); margin: -6px 0 0; }
 .time { font-family: var(--mono); font-size: .9rem; color: var(--fg-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .scrub { position: relative; height: 46px; cursor: pointer; min-width: 0; }
 .segs { position: absolute; left: 0; right: 0; top: 6px; height: 10px; display: flex; gap: 3px; }
@@ -226,12 +267,16 @@ body.rec #bigPlay { display: none; }
 
   <div class="transport">
     <button class="ctrl" id="playBtn" type="button" aria-label="Play"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg></button>
+    <button class="sound" id="soundBtn" type="button" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg><span>Sound on</span></button>
     <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Position in the video" aria-valuemin="0">
       <div class="segs" id="segs"></div>
       <div class="labels" id="labels"></div>
     </div>
     <div class="time" id="time">0:00 / 3:30</div>
   </div>
+
+  <p class="voice-note" id="voiceNote"></p>
+  <audio id="voice" preload="auto"></audio>
 
   <div class="cols">
     <section class="box now" aria-live="polite">
@@ -264,10 +309,19 @@ const DEMO = {
   trades: { win: 'job', name: 'Mark', block: 'Job', notify: 'Missed call', incoming: 'Missed call · 07700 900123', reply: 'Sorry I missed your call, I’m on a job. What do you need doing? I’ll get back to you today.', nudge: 'Just following up on your call earlier. Still need a hand?', channel: 'Phone', robot: 'The person you are calling is not available. Please leave a message after the tone.' },
   gym: { win: 'membership', name: 'Jordan', block: 'Class', notify: 'New enquiry', incoming: 'How much is membership? Do you do a trial?', reply: 'Hi Jordan, thanks for asking! Want me to send you the prices and a link to book a trial session?', nudge: 'Just checking you saw this, Jordan. Here’s the trial link whenever you’re ready.', channel: 'Website', robot: 'Thank you for contacting us. A member of staff will be in touch.' },
   personal_trainer: { win: 'client', name: 'Alex', block: 'Session', notify: 'New DM', incoming: 'Have you got space for a new client? Looking to start in January.', reply: 'Hi Alex, thanks for reaching out! I do. Want to book a quick call to chat about your goals?', nudge: 'Just checking you saw this, Alex. Here’s the link whenever suits.', channel: 'Instagram', robot: 'Thanks for your message! I’ll reply as soon as I can.' },
+  wellness: { win: 'member', name: 'Jordan', block: 'Session', notify: 'New enquiry', incoming: 'Hi, how do I join? Do you do a trial session?', reply: 'Hi Jordan, thanks for getting in touch! Here’s the link to join and book your first session.', nudge: 'Just checking you saw this, Jordan. Your first-session link is here whenever you’re ready.', channel: 'Instagram', robot: 'Thank you for contacting us. A member of staff will be in touch.',
+    chain: ['The membership', 'Next month’s fees', 'The month after'], statuses: ['Onboarded', 'Forms sent', 'Booked in'], tile3: 'Onboarded' },
   online_coach: { win: 'call', name: 'Sam', block: 'Client call', notify: 'New DM', incoming: 'Info', reply: 'Hey Sam! Here’s how the programme works, and a link to book a call if it sounds right for you.', nudge: 'Just checking you saw this, Sam. Any questions, just ask.', channel: 'Instagram', robot: 'Hi! Thanks for your interest. Someone will reply soon.' },
 };
 
 const sceneOf = (key) => {
+  if (pack && pack.path) {
+    if (key === 'problem.day') return 'path';
+    if (key === 'problem.tried') return 'hire';
+    if (key === 'problem.why_failing') return 'path';
+    if (key === 'solution.method') return 'path';
+    if (key === 'solution.what_changes') return 'watch';
+  }
   if (key === 'hook.line') return 'hook';
   if (key === 'problem.day') return 'day';
   if (key === 'problem.tried') return 'tried';
@@ -281,6 +335,8 @@ const sceneOf = (key) => {
   return 'title';
 };
 const CENTER = new Set(['title', 'cta']);
+const PATH_STATE = { 'problem.day': 'manual', 'problem.why_failing': 'broken', 'solution.method': 'connected' };
+const DEMO_POINT = { test_dm: 'A', instant_reply: 'B', nudge: 'B', spreadsheet: 'C', report: 'D' };
 const DEMO_STEPS = ['test_dm', 'instant_reply', 'nudge', 'spreadsheet', 'report'];
 
 let pack = null; let t = 0; let playing = false; let last = 0; let curCard = -1; let lines = [];
@@ -313,11 +369,12 @@ function scenesHtml(p) {
     </div>
   </div>
   <div class="scene" data-scene="cost">
-    <div class="chain"><div data-i="0">The ${esc(d.block.toLowerCase())}</div><div data-i="1" class="fade">The rebooking</div><div data-i="2" class="fade">The one after that</div></div>
+    <div class="chain">${(d.chain || [`The ${d.block.toLowerCase()}`, 'The rebooking', 'The one after that']).map((c, i) => `<div data-i="${i}"${i ? ' class="fade"' : ''}>${esc(c)}</div>`).join('')}</div>
   </div>
   <div class="scene" data-scene="title"></div>
   <div class="scene" data-scene="demo">
     <div class="tag">Mock-up · swap in your screen recording</div>
+    ${p.path ? `<div class="abcd">${p.path.map((n) => `<b data-k="${n.key}">${n.key}</b>`).join('')}</div>` : ''}
     ${phone(`<div class="thread">
       <div class="meta" data-step="0">Today, 11:02am · demo ${esc(v.business)} account</div>
       <div class="bubble in" data-step="0">${esc(d.incoming)}</div>
@@ -340,9 +397,9 @@ function scenesHtml(p) {
     <div class="panel" style="width:600px;right:60px;"><div class="sheet on"><table>
       <thead><tr><th>Time</th><th>Name</th><th>Channel</th><th>Replied in</th><th>Status</th></tr></thead>
       <tbody>
-        <tr><td>09:14</td><td>Demo enquiry</td><td>${esc(d.channel)}</td><td>3s</td><td>Booked</td></tr>
-        <tr><td>10:20</td><td>Demo enquiry</td><td>${esc(d.channel)}</td><td>5s</td><td>Nudged</td></tr>
-        <tr class="new"><td>11:02</td><td>${esc(d.name)} (demo)</td><td>${esc(d.channel)}</td><td>4s</td><td>Nudged</td></tr>
+        <tr><td>09:14</td><td>Demo enquiry</td><td>${esc(d.channel)}</td><td>3s</td><td>${esc((d.statuses || [])[0] || 'Booked')}</td></tr>
+        <tr><td>10:20</td><td>Demo enquiry</td><td>${esc(d.channel)}</td><td>5s</td><td>${esc((d.statuses || [])[1] || 'Nudged')}</td></tr>
+        <tr class="new"><td>11:02</td><td>${esc(d.name)} (demo)</td><td>${esc(d.channel)}</td><td>4s</td><td>${esc((d.statuses || [])[2] || 'Nudged')}</td></tr>
       </tbody></table></div></div>
   </div>
   <div class="scene" data-scene="report">
@@ -352,7 +409,7 @@ function scenesHtml(p) {
       <div class="tiles">
         <div><strong>14</strong><span>Enquiries</span></div>
         <div><strong>14</strong><span>Answered in seconds</span></div>
-        <div><strong>5</strong><span>Recovered</span></div>
+        <div><strong>5</strong><span>${esc(d.tile3 || 'Recovered')}</span></div>
         <div><strong>£610</strong><span>Estimated value</span></div>
       </div></div></div>
   </div>
@@ -373,6 +430,25 @@ function scenesHtml(p) {
       <div class="quote-slot">Owner’s two-line quote or 15–20 second clip goes here</div>
     </div>
   </div>
+  ${p.path ? `
+  <div class="scene" data-scene="path">
+    <div class="path" id="pathEl">
+      ${p.path.map((n, i) => `${i ? `<div class="link"><i>people drop off here</i></div>` : ''}<div class="node"><b>${esc(n.key)}</b><div><strong>${esc(n.label)}</strong><span>${esc(n.text)}</span></div><em>Waiting on you</em></div>`).join('')}
+      <div class="note-in">The system in between. No new hire.</div>
+    </div>
+  </div>
+  <div class="scene" data-scene="hire">
+    <div class="advert"><h4>The usual fix</h4><h3>Wanted: admin help</h3>
+      <div data-i="0">Another wage, every month</div><div data-i="1">Time spent training them</div><div data-i="2">Clocks off at 5pm</div></div>
+  </div>
+  <div class="scene" data-scene="watch">
+    <div class="alerts">
+      <div data-i="0" style="--dot:#dc2626"><div><strong>Something breaks</strong><span>We’re alerted straight away and fix it</span></div></div>
+      <div data-i="1" style="--dot:#b45309"><div><strong>Something needs changing</strong><span>We flag it and tell you</span></div></div>
+      <div data-i="2" style="--dot:#16a34a"><div><strong>Something could work better</strong><span>You get our recommendation</span></div></div>
+      <small>Runs every day. You check one report on a Friday.</small>
+    </div>
+  </div>` : ''}
   <div class="scene" data-scene="cta">
     <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v15M5 12l7 7 7-7"/></svg>${esc(DATA.button)}</div>
   </div>`;
@@ -387,7 +463,7 @@ function selectPack(key, keepTime = false) {
   const bounds = pack.sections.map((s, i) => {
     const first = pack.cards.find((c) => c.section === s.key);
     const next = pack.sections[i + 1] && pack.cards.find((c) => c.section === pack.sections[i + 1].key);
-    return { s, from: first ? Math.min(first.start, s.start) : s.start, to: next ? next.start : pack.total };
+    return { s, from: first ? (pack.audio ? first.start : Math.min(first.start, s.start)) : s.start, to: next ? next.start : pack.total };
   });
   bounds[0].from = 0;
   pack.bounds = bounds;
@@ -396,11 +472,25 @@ function selectPack(key, keepTime = false) {
   $('scrub').setAttribute('aria-valuemax', String(Math.round(pack.total)));
   $('script').innerHTML = pack.sections.map((s) => `<li class="sec">${s.number}. ${esc(s.title)} · ${s.window}</li>` + s.lines.map((l) => `<li><button type="button" data-at="${l.at ?? s.start}" data-key="${esc(l.key)}" class="${l.placeholder ? 'ph' : ''}"><span>${clock(l.at ?? s.start)}</span><span>${esc(l.kind === 'demo' ? `[${l.step}] ${l.text}` : l.text)}</span></button></li>`).join('')).join('');
   curCard = -1;
+  voice.pause();
+  if (pack.audio) voice.src = pack.audio; else voice.removeAttribute('src');
+  $('soundBtn').disabled = !pack.audio;
+  $('voiceNote').textContent = pack.audio
+    ? `This version has a voice. It’s a free test voice (Piper, ${pack.voice.voice.replace(/\.onnx$/, '')}) so you can hear the script; swap in an AI voice or your own when you have one.`
+    : 'This version has no voice yet: it’s the faceless cut (text only). Wellness has the voice.';
+  setSound(soundOn);
   seek(keepTime ? Math.min(t, pack.total) : 0);
   try { localStorage.setItem('vsl-niche', pack.key); } catch { /* not available */ }
 }
 
-function seek(to) { t = Math.max(0, Math.min(to, pack.total)); render(true); }
+const voice = $('voice');
+let soundOn = true;
+function syncVoice() {
+  if (!pack.audio) return;
+  if (Math.abs(voice.currentTime - t) > 0.25) { try { voice.currentTime = t; } catch { /* not loaded yet */ } }
+  if (playing && soundOn && t < pack.total) voice.play().catch(() => {}); else voice.pause();
+}
+function seek(to) { t = Math.max(0, Math.min(to, pack.total)); render(true); syncVoice(); }
 
 function lineAt(time) {
   let cur = lines[0];
@@ -450,6 +540,15 @@ function render(force = false) {
   document.querySelectorAll('[data-scene="demo"] .step').forEach((n) => n.classList.toggle('on', nudgeT >= Number(n.dataset.n) * 1.4));
   document.querySelectorAll('[data-scene="demo"] [data-pane]').forEach((n) => n.classList.toggle('on', stepIdx >= 2));
 
+  const pathEl = document.getElementById('pathEl');
+  if (pathEl) pathEl.className = `path ${PATH_STATE[line.key] || 'connected'}`;
+  const tried = since('problem.tried');
+  document.querySelectorAll('[data-scene="hire"] .advert > div').forEach((n) => n.classList.toggle('on', tried >= 1 + Number(n.dataset.i) * 1.6));
+  const watch = since('solution.what_changes');
+  document.querySelectorAll('[data-scene="watch"] .alerts > div').forEach((n) => n.classList.toggle('on', watch >= 1 + Number(n.dataset.i) * 1.4));
+  const point = line.key.startsWith('solution.demo.') ? DEMO_POINT[line.key.split('.').pop()] : null;
+  document.querySelectorAll('.abcd b').forEach((n) => n.classList.toggle('on', point && n.dataset.k <= point));
+
   // Page panels.
   const pct = t / pack.total;
   pack.bounds.forEach((b, i) => { const seg = $('segs').children[i].firstElementChild; seg.style.width = `${Math.max(0, Math.min(1, (t - b.from) / (b.to - b.from))) * 100}%`; });
@@ -472,7 +571,10 @@ function render(force = false) {
 
 function tick(now) {
   if (!playing) return;
-  t += (now - last) / 1000; last = now;
+  // With the voice playing, its position is the clock, so words and cards stay together.
+  if (pack.audio && soundOn && !voice.paused && voice.readyState >= 2) t = voice.currentTime;
+  else t += (now - last) / 1000;
+  last = now;
   if (t >= pack.total) { t = pack.total; setPlaying(false); }
   render();
   if (playing) requestAnimationFrame(tick);
@@ -484,14 +586,23 @@ function setPlaying(on) {
   $('playBtn').setAttribute('aria-label', on ? 'Pause' : 'Play');
   $('playBtn').innerHTML = on ? '<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>';
   if (on) { last = performance.now(); requestAnimationFrame(tick); }
+  syncVoice();
 }
+function setSound(on) {
+  soundOn = on;
+  const btn = $('soundBtn');
+  btn.setAttribute('aria-pressed', String(on));
+  btn.querySelector('span').textContent = !pack.audio ? 'No voice yet' : on ? 'Sound on' : 'Sound off';
+  syncVoice();
+}
+$('soundBtn').addEventListener('click', () => { if (pack.audio) setSound(!soundOn); });
 
 function fit() {
   const w = $('frame').clientWidth;
   $('stage').style.transform = `scale(${w / 1280})`;
 }
 
-$('niches').innerHTML = DATA.packs.map((p) => `<button type="button" data-key="${p.key}" aria-pressed="false">${esc(p.label.replace(/ \(.*\)/, ''))}${p.status === 'v1' ? ' · v1' : ''}</button>`).join('');
+$('niches').innerHTML = DATA.packs.map((p) => `<button type="button" data-key="${p.key}" aria-pressed="false">${esc(p.label.replace(/ \(.*\)/, ''))}${p.status === 'v1' ? ' · v1' : ''}${p.audio ? ' · voiced' : ''}</button>`).join('');
 $('niches').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) selectPack(b.dataset.key, true); });
 $('frame').addEventListener('click', () => setPlaying(!playing));
 $('frame').addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setPlaying(!playing); } });
@@ -507,12 +618,14 @@ window.__seek = (x) => { setPlaying(false); seek(x); };
 const params = new URLSearchParams(location.search);
 let start = params.get('niche');
 if (!start) { try { start = localStorage.getItem('vsl-niche'); } catch { start = null; } }
-selectPack(start || 'aesthetics_clinic');
+selectPack(start || (DATA.packs.find((p) => p.audio) || DATA.packs[0]).key);
 fit();
 if (params.has('record')) {
   document.body.classList.add('rec');
   fit();
   // The recorder calls this once the page is ready, so the clip starts on the hook's first frame.
+  // The MP4 gets the voice added afterwards, so the recorder runs on the clock, not the audio.
+  setSound(false);
   window.__go = () => { seek(0); setPlaying(true); return pack.total; };
 }
 </script>

@@ -11,7 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildScript } from '../server/modules/vsl/builder.js';
+import { buildScript, splitCards, wordCount } from '../server/modules/vsl/builder.js';
 import { PACKS } from '../server/modules/vsl/niches.js';
 import { PAGE, SECTIONS } from '../server/modules/vsl/foundation.js';
 
@@ -37,13 +37,36 @@ function timeline(built) {
   return { cards, total: round1(Math.max(t, SECTIONS.at(-1).end)) };
 }
 
+/** Voiced packs: cards follow the voice. Each line's cards share its audio time by word count. */
+function voicedTimeline(built, manifest) {
+  const cards = [];
+  for (const m of manifest.lines) {
+    const line = built.sections.flatMap((s) => s.lines).find((l) => l.key === m.key);
+    if (!line) continue;
+    const parts = splitCards(line.text, 9);
+    const words = parts.reduce((n, p) => n + Math.max(1, wordCount(p)), 0);
+    let t = m.start;
+    for (const p of parts) {
+      const d = ((m.end - m.start) * Math.max(1, wordCount(p))) / words;
+      cards.push({ section: m.section, line: m.key, start: round1(t), end: round1(t + d), text: p });
+      t += d;
+    }
+  }
+  return { cards, total: manifest.total };
+}
+
+const voiceDir = path.join(root, 'dist', 'vsl-voice');
 const packs = Object.entries(PACKS).map(([key, pack]) => {
-  const built = buildScript({ pack, packKey: key, format: 'faceless' });
-  const { cards, total } = timeline(built);
+  const manifestFile = path.join(voiceDir, `${key}.json`);
+  const manifest = fs.existsSync(manifestFile) ? JSON.parse(fs.readFileSync(manifestFile, 'utf8')) : null;
+  const built = buildScript({ pack, packKey: key, format: manifest ? 'voiceover' : 'faceless', hook: manifest?.hook ?? 0 });
+  const { cards, total } = manifest ? voicedTimeline(built, manifest) : timeline(built);
+  const audio = manifest ? `data:audio/mp4;base64,${fs.readFileSync(path.join(voiceDir, `${key}.m4a`)).toString('base64')}` : null;
   const lineStart = {};
   for (const c of cards) if (lineStart[c.line] === undefined) lineStart[c.line] = c.start;
   return {
     key, label: built.niche.label, status: built.niche.status, vars: built.niche.vars, hooks: built.hook.options,
+    format: built.format.key, path: pack.path || null, audio, voice: manifest ? { engine: manifest.engine, voice: manifest.voice } : null,
     sections: built.sections.map((s) => ({
       key: s.key, number: s.number, title: s.title, window: s.window, start: s.start, end: s.end, direction: s.direction,
       lines: s.lines.map((l) => ({ key: l.key, kind: l.kind, text: l.text, visual: l.visual, step: l.step || null, placeholder: Boolean(l.placeholder), at: lineStart[l.key] ?? null })),

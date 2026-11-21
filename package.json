@@ -15,6 +15,7 @@
     "screenshots": "node --disable-warning=ExperimentalWarning scripts/screenshots.mjs",
     "build:test": "node scripts/build-demo.mjs",
     "build:vsl-preview": "node --disable-warning=ExperimentalWarning scripts/build-vsl-preview.mjs",
+    "vsl:voice": "node --disable-warning=ExperimentalWarning scripts/vsl-voice.mjs",
     "check:live": "node --disable-warning=ExperimentalWarning scripts/check-live.mjs"
   },
   "dependencies": {

@@ -125,3 +125,20 @@ Line keys for `overrides`: `hook.line`, `problem.day`, `problem.tried`, `problem
 - The demo in section 3 is a **mock-up**, marked on screen. The real cut uses your screen recording of the demo account.
 - The proof section stays a **placeholder** until real results are added. The video never makes numbers up.
 - Open it with `?record&niche=<pack>` for a bare 1280×720 stage. That's what the MP4 export records.
+
+## Wellness pack and the voiced cut
+
+`wellness` covers gym owners and managers, personal trainers and online coaches in one pack. It's pain-first and built as a path:
+
+| Point | Where they are | What the system does |
+|---|---|---|
+| A | Enquiry: someone gets in touch | Answered in seconds |
+| B | Answered and booked in | Follow-ups at 30 min, midday, 5pm sweep |
+| C | Onboarded: forms, welcome, first session | Sent by themselves, every step logged |
+| D | Kept: checked in on, reported on | One report a week |
+
+Through the problem section, the steps are shown waiting on the owner and then breaking where people drop off. The solution connects them. The usual fix, hiring someone or handing the work to someone already stretched, is set against the system in between with no new hire. The video also says that we watch over the system and are alerted when something breaks, needs changing or could work better.
+
+**Voice:** `npm run vsl:voice -- wellness` (with `PIPER` and `PIPER_VOICE` set) voices each line with Piper, a free text-to-speech engine. It then times the video to the real audio and writes `dist/vsl-voice/wellness.m4a` and `.json`. `npm run build:vsl-preview` picks these up, and the player gets a Sound on/off button. To use a better voice later (an AI voice or your own recording), replace the clips and keep the same manifest.
+
+Before it goes out, check that the monitoring promise ("we're alerted and we tell you") is backed by a real alerting setup for each client's automations.
