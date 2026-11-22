@@ -5,6 +5,7 @@ import { openDatabase } from '../server/db/index.js';
 import { createApp } from '../server/app.js';
 import { seedState } from '../public/hq/seed.js';
 import { approve, earnings, runAll, scoreLead } from '../public/hq/engine.js';
+import { actionsOn, doneOn, milestones, periodSummary, progress, toggleAction } from '../public/hq/results.js';
 
 /** HQ: the AI team command centre – its API and how the agents behave. */
 
@@ -136,5 +137,59 @@ describe('HQ agents', () => {
     const e = earnings(s);
     assert.ok(e.owed >= 750 + 750 + 297);
     assert.ok(e.pipeline > 0);
+  });
+});
+
+describe('HQ results', () => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  test('each client has a goal, progress and a status', () => {
+    const [swift, glow, peak] = seedState().results;
+    const p = progress(swift);
+    assert.equal(p.now, 46200);
+    assert.ok(p.toGoal > 0.8 && p.toGoal < 0.9);
+    assert.equal(p.status, 'on-track');
+    assert.equal(progress(glow).status, 'behind');
+    assert.equal(progress(peak).status, 'starting'); // no fair read before the first check-in
+  });
+
+  test('daily actions change with the month of the plan, and ticking builds the log', () => {
+    const swift = seedState().results[0];
+    const titles = actionsOn(swift).map((a) => a.title);
+    assert.ok(titles.some((t) => t.includes('commercial contract'))); // month 4 onwards
+    const early = actionsOn(swift, swift.startDate).map((a) => a.title);
+    assert.ok(!early.some((t) => t.includes('commercial contract')));
+    const a = actionsOn(swift).find((x) => !doneOn(swift, today).has(x.id));
+    assert.equal(toggleAction(swift, a.id), true);
+    assert.ok(doneOn(swift, today).has(a.id));
+    assert.equal(toggleAction(swift, a.id), false);
+  });
+
+  test('the period dropdown covers a week, 30 days, 3 months and 6 months', () => {
+    const swift = seedState().results[0];
+    const week = periodSummary(swift, 7);
+    const half = periodSummary(swift, 180);
+    assert.equal(week.days, 7);
+    assert.ok(half.days > 140 && half.days <= 180); // started ~150 days ago
+    assert.ok(half.done > week.done);
+    assert.equal(half.change, 46200 - 20000);
+    assert.equal(half.wins.length, 4);
+    assert.equal(milestones(swift).length, 6);
+    assert.equal(milestones(swift)[5].target, 50000);
+  });
+
+  test('the Project Manager flags clients who are behind or have gone quiet', async () => {
+    const auto = seedState(); // Project Manager acts on its own by default: nudges straight away
+    await runAll(auto, null);
+    assert.ok(auto.updates.projects.needs.some((n) => n.startsWith('Glow Skin Clinic is behind')));
+    assert.ok(auto.updates.projects.fixed.some((n) => n.startsWith('Nudged Glow Skin Clinic')));
+
+    const s = seedState(); // "Ask me first": the nudge waits on your desk
+    s.agents.find((a) => a.id === 'projects').autonomy = 'ask';
+    await runAll(s, null);
+    const nudge = s.approvals.find((a) => a.kind === 'results-nudge');
+    assert.ok(nudge && nudge.title.includes('Glow Skin Clinic'));
+    approve(s, nudge, nudge.body);
+    assert.ok(s.results.find((r) => r.id === 'res_glow').nudgedAt);
   });
 });

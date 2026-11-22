@@ -6,6 +6,7 @@
 //  asking; agents set to "Ask me first" (autonomy: 'ask') queue them for you.
 // ─────────────────────────────────────────────────────────────────────────────
 import { addDaysIso, daysSince, daysUntil, fill, firstName, money, nowIso, ordinal, shortDate, sum, today, uid } from './util.js';
+import { checkinDue, monthOf, progress, quietDays } from './results.js';
 
 export const DEAL_OPEN = ['new', 'drafted', 'sent', 'negotiating'];
 export const PROJECT_STAGES = ['Signed', 'Kickoff', 'Building', 'Review', 'Live'];
@@ -222,7 +223,23 @@ const RUNS = {
     }
     const mism = s.deals.filter((d) => d.stage === 'won' && d.contract?.status === 'received').length;
     if (!mism) out.fixed.push('Every signed job matches its quote');
-    out.summary = `${live.length} live job${live.length === 1 ? '' : 's'} checked against contracts and deadlines.`;
+    // Client results: keep every brand on course for its goal.
+    let onTrack = 0;
+    for (const r of s.results || []) {
+      const p = progress(r);
+      const fmt = (v) => (r.unit === '£' || r.unit === s.profile.currency ? money(v, s.profile.currency) : `${Math.round(v).toLocaleString('en-GB')} ${r.unit || ''}`.trim());
+      if (p.status === 'behind') out.needs.push(`${r.client} is behind: ${fmt(p.now)} now, should be near ${fmt(p.expected)} by day ${p.day}`);
+      else onTrack++;
+      if (checkinDue(r)) out.needs.push(`Log ${r.client}’s ${String(r.metric || 'result').toLowerCase()} for month ${monthOf(r)}`);
+      const quiet = quietDays(r);
+      if (quiet >= 2 && (!r.nudgedAt || daysSince(r.nudgedAt) >= 3)) {
+        const body = `Hi ${firstName(r.contact || r.client)},\n\nQuick check-in – I can see the daily actions haven’t been ticked off for ${quiet} days. Totally normal to have a busy patch, but these are the small things that add up to ${fmt(r.goal)} a month.\n\nToday, just pick one: ${(r.actions || [])[0]?.title || 'your first action'}. I’ll check in again tomorrow.\n\n${s.profile.owner}`;
+        if (me.autonomy === 'auto') { r.nudgedAt = nowIso(); log(s, me.id, 'you', `Nudged ${r.client} – ${quiet} quiet days`); out.fixed.push(`Nudged ${r.client} after ${quiet} quiet days`); }
+        else addApproval(s, { agentId: me.id, kind: 'results-nudge', refId: r.id, title: `Nudge to ${r.client} is ready`, sub: `No daily actions ticked for ${quiet} days`, body });
+      }
+    }
+    if ((s.results || []).length) out.fixed.push(`${onTrack} of ${s.results.length} clients on track for their goal`);
+    out.summary = `${live.length} live job${live.length === 1 ? '' : 's'} and ${(s.results || []).length} client goals checked.`;
   },
 
   scripts(s, me, out) {
@@ -349,6 +366,7 @@ export function approve(s, ap, body) {
     case 'lead-reply': if (lead) { lead.thread = [...(lead.thread || []), { from: 'us', text: body, at: nowIso() }]; lead.status = 'replied'; lead.lastReplyAt = nowIso(); } break;
     case 'revive': if (lead) { lead.thread = [...(lead.thread || []), { from: 'us', text: body, at: nowIso() }]; lead.revivedAt = nowIso(); lead.status = 'replied'; lead.lastReplyAt = nowIso(); log(s, me.id, 'you', `Checked back in with ${lead.name}`); } break;
     case 'rebook': { const c = s.clients.find((x) => x.id === ap.refId); if (c) { c.rebookPitchedAt = nowIso(); log(s, me.id, 'you', `Rebook pitch sent to ${c.name}`); } } break;
+    case 'results-nudge': { const r = (s.results || []).find((x) => x.id === ap.refId); if (r) { r.nudgedAt = nowIso(); log(s, me.id, 'you', `Nudge sent to ${r.client}`); } } break;
     default: log(s, me.id, 'you', `Done: ${ap.title}`);
   }
   s.approvals = s.approvals.filter((x) => x.id !== ap.id);
@@ -361,6 +379,7 @@ export function decline(s, ap) {
   if (ap.kind === 'rebook') { const c = s.clients.find((x) => x.id === ap.refId); if (c) c.rebookPitchedAt = nowIso(); }
   if (ap.kind === 'revive') { const l = s.leads.find((x) => x.id === ap.refId); if (l) l.revivedAt = nowIso(); }
   if (ap.kind === 'script') { const sc = s.scripts.find((x) => x.id === ap.refId); if (sc) sc.status = 'brief'; }
+  if (ap.kind === 'results-nudge') { const r = (s.results || []).find((x) => x.id === ap.refId); if (r) r.nudgedAt = nowIso(); }
   s.approvals = s.approvals.filter((x) => x.id !== ap.id);
 }
 
@@ -417,6 +436,7 @@ export function snapshot(s) {
     invoices: s.invoices.slice(0, 40).map(({ number, client, amount, status, due }) => ({ number, client, amount, status, due })),
     scripts: s.scripts.map(({ title, client, status, postBy }) => ({ title, client, status, postBy })),
     clients: s.clients.map(({ name, services, retainer, rebookDue }) => ({ name, services, retainer, rebookDue })),
+    results: (s.results || []).map((r) => ({ client: r.client, metric: r.metric, baseline: r.baseline, goal: r.goal, now: progress(r).now, status: progress(r).status, day: progress(r).day })),
     events: s.events.filter((e) => daysUntil(e.date) >= 0 && daysUntil(e.date) <= 14),
   };
 }
@@ -465,7 +485,7 @@ export function cardBullets(s, a) {
       const late = live.filter((p) => p.due && daysSince(p.due) > 0);
       const mism = s.deals.filter((d) => d.stage === 'won' && d.contract?.status === 'received').length;
       return [`${live.length} live jobs on the board`, week.length ? `${week.length} due this week: ${week[0].client}` : 'Nothing due this week', late.length ? `${late.length} job${late.length === 1 ? '' : 's'} past due` : 'No stalled jobs',
-        mism ? `${mism} contract${mism === 1 ? '' : 's'} to check` : 'Contracts all match your quotes', live.every((p) => p.kickoff) ? 'Every signed job has a kickoff' : 'Kickoffs being booked'];
+        mism ? `${mism} contract${mism === 1 ? '' : 's'} to check` : 'Contracts all match your quotes', `${(s.results || []).filter((r) => progress(r).status !== 'behind').length} of ${(s.results || []).length} clients on track for their goal`];
     }
     case 'scripts':
       return [`${s.scripts.filter((x) => x.status === 'brief').length} briefs waiting to be written`, `${s.scripts.filter((x) => x.status === 'drafted').length} scripts need your sign-off`, `${s.scripts.filter((x) => x.status === 'approved').length} approved, ready to film`, `${s.scripts.filter((x) => x.status === 'posted').length} posted`];

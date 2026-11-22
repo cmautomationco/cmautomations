@@ -16,6 +16,21 @@ Open it at **`/hq/`** on your server (or click **HQ · AI team** in the main sid
 
 You can **hire more agents** (Briefing → *Hire another agent*, or Edit HQ → *Hire an agent*). Give each one a name, a job and written instructions. When Claude is connected, they follow those instructions on every run.
 
+## Results
+
+**Results** (sidebar, under Office) tracks the chain the business is built on: **what we deliver → the brand's result → their customers' result**.
+
+- **Overview:** every client on one card. It shows where they started, where they are now, how far they are to their goal, and whether they're *ahead*, *on track* or *behind* compared with a straight line from start to goal. The small marker on each bar is where they should be by now. It also shows today's daily actions and their streak.
+- **Each client's page:**
+  - **Today's actions:** the things they do each day, as a checklist. Use ◀ ▶ to fill in earlier days.
+  - **What's been done:** a dropdown for the last 7 days, 30 days, 3 months or 6 months. It shows actions done, perfect days, how much their number moved, wins and check-ins, a day-by-day heat grid, a bar for each action, and a full day-by-day log.
+  - **Progress chart:** their real number against the plan to the goal.
+  - **Roadmap:** monthly milestones up to the goal. Click a month to add its focus.
+  - **The results chain** for that client, **check-ins** (log their number once a month), **wins**, and their **daily actions**. Each action can be set to run only in certain months, so the plan builds as they grow.
+- **The team keeps you on it:** in the morning update the Project Manager flags any client who is behind and reminds you when a monthly check-in is due. When a client hasn't ticked anything off for 2+ days, it drafts a nudge to them. With "Act on their own" it sends the nudge itself.
+
+Add a client with **Add a client goal**: where they are now, the goal, an optional stretch goal, the start date and how many months (6 by default). You can measure anything, not just revenue, e.g. *Members* or *Bookings a week*.
+
 ## How it works
 
 - **Morning update.** The team checks in automatically the first time you open HQ each day. **Run morning update** makes them check in again at any time, and each desk has its own **Run** button.
@@ -50,7 +65,8 @@ Everything is editable, either in the app or in the code.
 |---|---|
 | `seed.js` | The starter data and the five default agents – the easiest place to change defaults. |
 | `engine.js` | What each agent checks and does (`RUNS.receptionist`, `RUNS.deals`, …), the email/quote/chaser templates, and how they hand work to each other. |
-| `app.js` | The pages: Briefing, Calendar, Clients, each desk, Edit HQ. |
+| `app.js` | The pages: Briefing, Calendar, Clients, Results, each desk, Edit HQ. |
+| `results.js` | The Results maths: progress, pace, streaks, period summaries and milestones. |
 | `hq.css` | The look. Colours are tokens at the top (`--a1`, `--a2`, `--a3`, `--bg`, `--panel`, …). |
 | `store.js` | Saving: to your server when signed in, otherwise in the browser. |
 | `server/modules/hq/` | The API (`/api/hq`): saving, live CRM data, and the Claude endpoints. |

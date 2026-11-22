@@ -41,7 +41,7 @@ export function upgrade(state) {
     deals: { ...base.settings.deals, ...(state.settings?.deals || {}) },
     chase: { ...base.settings.chase, ...(state.settings?.chase || {}) },
   };
-  for (const k of ['leads', 'deals', 'projects', 'scripts', 'invoices', 'clients', 'events', 'approvals', 'activity', 'rateCard', 'agents']) if (!Array.isArray(s[k])) s[k] = base[k];
+  for (const k of ['results', 'leads', 'deals', 'projects', 'scripts', 'invoices', 'clients', 'events', 'approvals', 'activity', 'rateCard', 'agents']) if (!Array.isArray(s[k])) s[k] = base[k];
   if (!s.agents.length) s.agents = DEFAULT_AGENTS.map((a) => ({ ...a }));
   s.updates = s.updates || {};
   s.meta = { ...base.meta, ...(state.meta || {}) };

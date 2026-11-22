@@ -1,7 +1,9 @@
 // Tiny DOM helpers for HQ. All text goes in as text nodes (never raw HTML).
 
+const SVG_TAGS = new Set(['svg', 'path', 'circle', 'g', 'title', 'line', 'rect', 'text']);
+
 export function h(tag, attrs, ...kids) {
-  const el = tag === 'svg' || tag === 'path' || tag === 'circle' || tag === 'g' || tag === 'title' ? document.createElementNS('http://www.w3.org/2000/svg', tag) : document.createElement(tag);
+  const el = SVG_TAGS.has(tag) ? document.createElementNS('http://www.w3.org/2000/svg', tag) : document.createElement(tag);
   if (attrs && (typeof attrs !== 'object' || attrs instanceof Node || Array.isArray(attrs))) { kids.unshift(attrs); attrs = null; }
   for (const [k, v] of Object.entries(attrs || {})) {
     if (v == null || v === false) continue;
@@ -44,6 +46,7 @@ const ICONS = {
   menu: 'M3 6h18M3 12h18M3 18h18',
   refresh: 'M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5',
   arrow: 'M5 12h14M13 6l6 6-6 6',
+  target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 12h.01',
   back: 'M19 12H5M11 18l-6-6 6-6',
 };
 export function icon(name, size = 16) {

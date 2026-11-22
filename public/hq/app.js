@@ -2,7 +2,8 @@
 //  HQ – your AI team command centre.
 //  Pages: Briefing · Calendar · Clients · one desk per agent · Edit HQ.
 // ─────────────────────────────────────────────────────────────────────────────
-import { emptyState, seedState } from './seed.js';
+import { emptyState, newResult, seedState } from './seed.js';
+import { PERIODS, STATUS, actionsOn, doneOn, endDate, milestones, monthOf, periodSummary, portfolio, programmeDay, progress, streak, toggleAction, totalDays } from './results.js';
 import { aiAgent, aiDraft, clearLocal, liveData, loadState, saveState, store, upgrade } from './store.js';
 import {
   DEAL_OPEN, PROJECT_STAGES, addApproval, agentById, agentFor, approve, buildQuote, cardBullets, chaseText, dealValue,
@@ -103,6 +104,7 @@ function render() {
   if (page === 'calendar') calendarPage(main);
   else if (page === 'clients') clientsPage(main);
   else if (page === 'settings') settingsPage(main);
+  else if (page === 'results') { const r = (S.results || []).find((x) => x.id === arg); if (r) resultsClient(main, r); else resultsOverview(main); }
   else if (agent) deskPage(main, agent);
   else briefingPage(main);
   renderSaveStatus();
@@ -123,6 +125,7 @@ function sidebar(page, arg) {
     nav('#/briefing', 'Briefing', 'You, the boss', { ic: icon('home'), active: page === 'briefing', badge: S.approvals.length ? { n: S.approvals.length, tone: 'hot' } : null }),
     nav('#/calendar', 'Calendar', 'Calls and deadlines', { ic: icon('calendar'), active: page === 'calendar', badge: week ? { n: week } : null }),
     nav('#/clients', 'Clients', 'Clients and rebooks', { ic: icon('users'), active: page === 'clients' }),
+    nav('#/results', 'Results', 'Client goals & progress', { ic: icon('target'), active: page === 'results', badge: (S.results || []).some((r) => progress(r).status === 'behind') ? { n: (S.results || []).filter((r) => progress(r).status === 'behind').length, tone: 'hot' } : null }),
     h('div', { class: 'nav-label' }, 'Your team'),
     S.agents.map((a) => {
       const n = S.approvals.filter((x) => x.agentId === a.id).length;
@@ -138,7 +141,8 @@ function sidebar(page, arg) {
 
 function topbar(page, arg) {
   const agent = page === 'desk' ? agentById(S, arg) : null;
-  const crumb = agent ? `${agent.desk || agent.name}` : { calendar: 'Calendar', clients: 'Clients', settings: 'Edit HQ' }[page] || 'Briefing';
+  const res = page === 'results' && arg ? (S.results || []).find((x) => x.id === arg) : null;
+  const crumb = agent ? `${agent.desk || agent.name}` : res ? `Results / ${res.client}` : { calendar: 'Calendar', clients: 'Clients', settings: 'Edit HQ', results: 'Results' }[page] || 'Briefing';
   return h('header', { class: 'topbar' },
     h('button', { class: 'icon-btn menu-btn', 'aria-label': 'Menu', onclick: () => document.body.classList.toggle('nav-open') }, icon('menu')),
     h('div', { class: 'crumb' }, h('span', { class: 'muted' }, `${S.profile.business} HQ`), h('span', { class: 'muted' }, ' / '), crumb),
@@ -164,6 +168,7 @@ function briefingPage(el) {
       S.meta.lastRunAt ? h('span', { class: 'muted small' }, `Team last checked in ${ago(S.meta.lastRunAt)}`) : null, runBtn),
     earningsCard(e),
     morningUpdate(),
+    resultsBriefing(),
     weekCard(),
     h('div', { class: 'section-title' }, h('h2', 'Your team'), h('span', { class: 'muted small' }, 'Click a desk to open it')),
     h('div', { class: 'team-grid' }, S.agents.map(teamCard), h('button', { class: 'team-card add', onclick: () => addAgentForm() }, icon('plus', 22), h('b', 'Hire another agent'), h('small', 'Give it a job and instructions'))),
@@ -308,6 +313,7 @@ function calendarPage(el) {
   for (const i of S.invoices) if (i.status === 'sent') add(i.due, 'Invoice due', i.client, `${i.number} · ${$(i.amount)}`, '#34d399');
   for (const d of S.deals) if (DEAL_OPEN.includes(d.stage)) add(d.deadline, 'Deadline', d.client, d.want, '#3b82f6');
   for (const c of S.clients) add(c.rebookDue, 'Rebook due', c.name, c.services, '#f472b6');
+  for (const r of S.results || []) for (const m of milestones(r)) add(m.date, 'Milestone', r.client, `Month ${m.month} target: ${$(m.target)}`, '#e879f9');
   items.sort((a, b) => a.date.localeCompare(b.date));
   const days = [...new Set(items.map((x) => x.date))];
   mount(el,
@@ -712,6 +718,275 @@ function customDesk(el, a) {
     deskHead(a, a.role || 'Custom agent'),
     !store.ai ? card({ class: 'note' }, h('p', h('b', 'This agent follows its written instructions using Claude. '), store.mode === 'server' ? 'Add ANTHROPIC_API_KEY to your server’s .env file and restart to switch it on.' : 'Open HQ from your CM Automations server with ANTHROPIC_API_KEY set to switch it on.')) : null,
     deskUpdate(a));
+}
+
+// ── Results ─────────────────────────────────────────────────────────────────
+// Every client's goal, the daily actions that build up to it, and what's been
+// done over the last week, 30 days, 3 months or 6 months.
+let RESULT_PERIOD = 30;
+let RESULT_DAY = null; // which day the checklist shows (null = today)
+
+const isMoney = (r) => !r.unit || r.unit === '£' || r.unit === cur();
+const fmtVal = (r, v) => (isMoney(r) ? $(v) : `${Math.round(Number(v) || 0).toLocaleString('en-GB')} ${r.unit}`);
+const fmtShort = (r, v) => {
+  const n = Number(v) || 0;
+  const s = Math.abs(n) >= 1000 ? `${Math.round(n / 100) / 10}k` : String(Math.round(n));
+  return isMoney(r) ? `${cur()}${s}` : s;
+};
+const pct = (x) => `${Math.round(x * 100)}%`;
+const goalLine = (r) => `${fmtVal(r, r.baseline)} → ${fmtVal(r, r.goal)}${Number(r.stretch) > Number(r.goal) ? `–${fmtVal(r, r.stretch)}` : ''} ${isMoney(r) ? 'a month ' : ''}by ${shortDate(endDate(r))}`;
+const statusChip = (p) => chip(STATUS[p.status][0], STATUS[p.status][1]);
+
+function goalBar(r, p) {
+  return h('div', { class: 'goal-bar', title: `${pct(p.toGoal)} of the way to the goal` },
+    h('i', { style: { width: pct(p.toGoal) } }),
+    h('b', { class: 'expected', style: { left: pct(Math.min(1, p.timeUsed)) }, title: 'Where they should be by now' }));
+}
+
+function resultsOverview(el) {
+  const list = S.results || [];
+  const t = portfolio(list);
+  const step = (n, title, big, text) => h('div', { class: 'chain-step' }, h('span', { class: 'chain-n' }, n), h('small', title), h('b', big), h('p', { class: 'muted' }, text));
+  mount(el,
+    pageHead('Results', 'Every client’s goal, where they are now, and the daily work that gets them there.', btn('Add a client goal', () => resultForm(), { kind: 'primary', ic: 'plus' })),
+    card({ class: 'chain' },
+      step(1, 'What we deliver', `${list.length} brand${list.length === 1 ? '' : 's'} on a plan`, 'Systems, content and a daily action plan for each brand.'),
+      h('span', { class: 'chain-arrow', 'aria-hidden': 'true' }, icon('arrow', 22)),
+      step(2, 'The brands’ result', `${$(t.now)}/mo`, `Up from ${$(t.baseline)} at the start, heading for ${$(t.goal)} a month. ${t.onTrack} of ${t.clients} on track.`),
+      h('span', { class: 'chain-arrow', 'aria-hidden': 'true' }, icon('arrow', 22)),
+      step(3, 'Their customers’ result', 'Faster, better service', 'More of their customers get looked after properly – and they come back and tell their friends.')),
+    h('div', { class: 'section-title' }, h('h2', 'Clients'), h('span', { class: 'muted small' }, `${t.doneToday} of ${t.actionsToday} daily actions done today`)),
+    list.length ? h('div', { class: 'result-grid' }, list.map((r) => {
+      const p = progress(r);
+      const acts = actionsOn(r);
+      const done = acts.filter((a) => doneOn(r, today()).has(a.id)).length;
+      const st = streak(r);
+      return h('a', { class: `result-card ${p.status}`, href: `#/results/${r.id}` },
+        h('div', { class: 'row between' }, h('b', r.client), statusChip(p)),
+        h('small', { class: 'muted' }, goalLine(r)),
+        h('div', { class: 'result-now' }, h('b', fmtVal(r, p.now)), h('span', { class: p.growth >= 0 ? 'up' : 'down' }, `${p.growth >= 0 ? '+' : ''}${pct(p.growth)} since start`)),
+        goalBar(r, p),
+        h('div', { class: 'row between small muted' }, h('span', `${pct(p.toGoal)} to goal`), h('span', `Month ${p.month} of ${r.months} · day ${Math.min(p.day, p.totalDays)}`)),
+        h('div', { class: 'today-mini' }, h('span', `Today ${done}/${acts.length}`), h('div', { class: 'mini-bar' }, h('i', { style: { width: acts.length ? pct(done / acts.length) : '0%' } })), st ? h('span', `🔥 ${st}-day streak`) : null));
+    })) : card({}, empty('No client goals yet. Add one to start tracking their results.')));
+}
+
+function resultsClient(el, r) {
+  const p = progress(r);
+  const day = RESULT_DAY && RESULT_DAY >= r.startDate && RESULT_DAY <= today() ? RESULT_DAY : today();
+  const stat = (label, value, sub, cls) => h('div', { class: `stat ${cls || ''}` }, h('small', label), h('b', value), h('span', sub));
+  mount(el,
+    h('a', { class: 'back-link', href: '#/results' }, icon('back', 14), 'All results'),
+    h('div', { class: 'desk-head' },
+      h('span', { class: 'avatar xl', style: { background: PALETTE[(S.results || []).indexOf(r) % PALETTE.length] } }, r.client[0] || '?'),
+      h('div', { class: 'grow' }, h('h1', r.client), h('p', { class: 'sub' }, `${r.metric}: ${goalLine(r)}`)),
+      h('div', { class: 'row' }, statusChip(p), btn('Edit goal', () => resultForm(r), { kind: 'ghost', ic: 'edit' }))),
+    card({ class: 'stats-row five' },
+      stat('Started at', fmtVal(r, r.baseline), shortDate(r.startDate)),
+      stat('Now', fmtVal(r, p.now), `${p.growth >= 0 ? '+' : ''}${pct(p.growth)} since start`, 'a1'),
+      stat('Goal', fmtVal(r, r.goal), `${pct(p.toGoal)} of the way`, 'a2'),
+      stat('Stretch', Number(r.stretch) > Number(r.goal) ? fmtVal(r, r.stretch) : '–', Number(r.stretch) > Number(r.goal) ? `${pct(p.toStretch)} of the way` : 'not set', 'a3'),
+      stat('Time used', `Month ${p.month} of ${r.months}`, `Day ${Math.min(p.day, p.totalDays)} of ${p.totalDays}`)),
+    h('div', { class: 'desk-grid' },
+      card({ class: 'chart-card' }, cardHead(`${r.metric} vs the plan`, `goal ${fmtShort(r, r.goal)}${Number(r.stretch) > Number(r.goal) ? ` · stretch ${fmtShort(r, r.stretch)}` : ''}`, h('span', { class: 'legend-inline' }, dot('var(--a1)'), 'Actual', dot('var(--faint)'), 'Plan to goal')), resultChart(r)),
+      todayCard(r, day)),
+    doneCard(r),
+    roadmapCard(r),
+    card({ class: 'chain small-chain' },
+      ['us', 'brand', 'customers'].map((k, i) => [
+        i ? h('span', { class: 'chain-arrow', 'aria-hidden': 'true' }, icon('arrow', 18)) : null,
+        h('div', { class: 'chain-step' }, h('span', { class: 'chain-n' }, i + 1), h('small', ['What we deliver', `${r.client}’s result`, 'Their customers’ result'][i]), h('p', (r.chain || {})[k] || h('span', { class: 'muted' }, 'Not written yet – click Edit goal.')))])),
+    h('div', { class: 'desk-grid even' }, checkinsCard(r), winsCard(r)),
+    actionsCard(r));
+}
+
+function todayCard(r, day) {
+  const acts = actionsOn(r, day);
+  const set = doneOn(r, day);
+  const done = acts.filter((a) => set.has(a.id)).length;
+  const go = (n) => { const d = addDaysIso(n, new Date(day + 'T12:00:00')); RESULT_DAY = d > today() ? today() : d < r.startDate ? r.startDate : d; render(); };
+  return card({ class: 'today-card', color: 'var(--a1)' },
+    h('div', { class: 'card-head' },
+      h('h2', day === today() ? 'Today’s actions' : `Actions on ${shortDate(day)}`),
+      h('div', { class: 'row' },
+        h('button', { class: 'icon-btn sm', 'aria-label': 'Previous day', onclick: () => go(-1), disabled: day <= r.startDate }, icon('back', 14)),
+        h('button', { class: 'icon-btn sm', 'aria-label': 'Next day', onclick: () => go(1), disabled: day >= today() }, icon('arrow', 14)))),
+    h('div', { class: 'today-progress' }, h('b', `${done}/${acts.length}`), h('div', { class: 'mini-bar big' }, h('i', { style: { width: acts.length ? pct(done / acts.length) : '0%' } })), h('span', { class: 'muted small' }, streak(r) ? `🔥 ${streak(r)}-day streak` : 'Start a streak today')),
+    acts.length ? h('div', { class: 'checklist' }, acts.map((a) => h('label', { class: `check-row ${set.has(a.id) ? 'done' : ''}` },
+      h('input', { type: 'checkbox', checked: set.has(a.id), onchange: () => { const on = toggleAction(r, a.id, day); commit(on && done + 1 === acts.length ? 'Every action done – that’s how it builds 🔥' : null); } }),
+      h('span', a.title)))) : empty(day < r.startDate ? 'Before the plan started.' : 'No daily actions set for this month – add some below.'),
+    h('p', { class: 'muted small' }, `${sum(Object.values(r.log || {}), (x) => x.length)} actions done since ${shortDate(r.startDate)} – each one builds on the last.`));
+}
+
+function doneCard(r) {
+  const s = periodSummary(r, RESULT_PERIOD);
+  const select = h('select', { class: 'period-select', 'aria-label': 'Period', onchange: (e) => { RESULT_PERIOD = Number(e.target.value); render(); } },
+    PERIODS.map(([d, l]) => h('option', { value: d, selected: d === RESULT_PERIOD }, l)));
+  const stat = (label, value, sub, cls) => h('div', { class: `stat ${cls || ''}` }, h('small', label), h('b', value), h('span', sub));
+  const shown = [...s.perDay].reverse().filter((d) => d.done);
+  return card({ class: 'done-card' },
+    cardHead('What’s been done', `${shortDate(s.from)} – ${shortDate(s.to)}`, select),
+    h('div', { class: 'stats-row' },
+      stat('Actions done', `${s.done}`, `of ${s.possible} (${pct(s.rate)})`, 'a1'),
+      stat('Perfect days', `${s.perfectDays}`, `of ${s.days} days`, 'a2'),
+      stat(`${r.metric} change`, `${s.change >= 0 ? '+' : ''}${fmtVal(r, s.change)}`, `${fmtShort(r, s.startValue)} → ${fmtShort(r, s.endValue)}`, s.change >= 0 ? 'a3' : 'red'),
+      stat('Wins', `${s.wins.length}`, s.wins[0] ? s.wins[0].text : 'None logged yet')),
+    h('div', { class: 'done-grid' },
+      h('div', h('div', { class: 'mini-label' }, 'Day by day'), heatmap(s), h('div', { class: 'heat-legend muted small' }, 'Less', [0, 0.34, 0.67, 1].map((x) => h('i', { vars: { '--r': String(x) } })), 'More')),
+      h('div', h('div', { class: 'mini-label' }, 'Each daily action'),
+        s.perAction.length ? s.perAction.map((x) => h('div', { class: 'action-stat' },
+          h('div', { class: 'row between' }, h('span', { class: 'truncate' }, x.action.title), h('b', `${x.done}/${x.possible}`)),
+          h('div', { class: 'mini-bar' }, h('i', { style: { width: pct(x.possible ? x.done / x.possible : 0) } })))) : empty('Nothing in this period yet.'))),
+    s.wins.length || s.checkins.length ? h('div', { class: 'period-notes' },
+      s.wins.map((w) => h('div', { class: 'note-row' }, chip('Win', 'green'), h('span', w.text), h('small', { class: 'muted' }, shortDate(w.date)))),
+      s.checkins.map((c) => h('div', { class: 'note-row' }, chip('Check-in', 'blue'), h('span', `${fmtVal(r, c.value)}${c.note ? ` – ${c.note}` : ''}`), h('small', { class: 'muted' }, shortDate(c.date))))) : null,
+    h('details', { class: 'day-log' }, h('summary', `Show each day (${shown.length} active day${shown.length === 1 ? '' : 's'})`),
+      shown.slice(0, 120).map((d) => h('div', { class: 'day-log-row' }, h('b', shortDate(d.date)), h('span', { class: 'muted' }, `${d.done}/${d.possible}`), h('span', d.items.join(' · '))))));
+}
+
+function heatmap(s) {
+  const first = new Date(s.from + 'T12:00:00');
+  const pad = (first.getDay() + 6) % 7; // Monday first
+  const cells = [...Array(pad).fill(null), ...s.perDay];
+  return h('div', { class: `heat ${s.days > 40 ? 'small' : ''}` }, cells.map((d) => (d
+    ? h('i', { vars: { '--r': String(d.possible ? d.done / d.possible : 0) }, title: `${shortDate(d.date)}: ${d.done}/${d.possible}` })
+    : h('i', { class: 'blank' }))));
+}
+
+function resultChart(r) {
+  const W = 640; const H = 230; const L = 52; const R = 16; const T = 16; const B = 30;
+  const total = totalDays(r);
+  const pts = [{ day: 0, v: Number(r.baseline) || 0 }, ...[...(r.checkins || [])].sort((a, b) => a.date.localeCompare(b.date)).map((c) => ({ day: programmeDay(r, c.date) - 1, v: Number(c.value) || 0 }))].filter((x) => x.day >= 0);
+  const top = Math.max(Number(r.goal) * 1.12, ...pts.map((x) => x.v * 1.08));
+  const bottom = Math.min(Number(r.baseline) * 0.85, ...pts.map((x) => x.v * 0.95));
+  const x = (d) => L + (Math.min(d, total) / total) * (W - L - R);
+  const y = (v) => T + (1 - (v - bottom) / (top - bottom || 1)) * (H - T - B);
+  const svg = h('svg', { viewBox: `0 0 ${W} ${H}`, class: 'chart-svg', role: 'img', 'aria-label': `${r.metric} against the plan` });
+  const add = (tag, attrs) => { const el = h(tag, attrs); svg.appendChild(el); return el; };
+  // Selected period shading.
+  const from = Math.max(0, programmeDay(r) - RESULT_PERIOD);
+  add('rect', { x: x(from), y: T, width: Math.max(0, x(Math.min(programmeDay(r), total)) - x(from)), height: H - T - B, fill: 'var(--a1)', opacity: 0.06 });
+  // Grid + labels.
+  for (let i = 0; i <= 3; i++) {
+    const v = bottom + ((top - bottom) * i) / 3;
+    add('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: 'var(--line)', 'stroke-width': 1 });
+    add('text', { x: L - 8, y: y(v) + 4, 'text-anchor': 'end', class: 'chart-label' }).textContent = fmtShort(r, v);
+  }
+  for (let m = 1; m <= (Number(r.months) || 6); m++) add('text', { x: x(m * 30) - 2, y: H - 10, 'text-anchor': 'end', class: 'chart-label' }).textContent = `M${m}`;
+  // Plan line + goal.
+  add('line', { x1: x(0), y1: y(Number(r.baseline)), x2: x(total), y2: y(Number(r.goal)), stroke: 'var(--faint)', 'stroke-width': 2, 'stroke-dasharray': '6 6' });
+  // Today.
+  const td = Math.min(programmeDay(r) - 1, total);
+  add('line', { x1: x(td), x2: x(td), y1: T, y2: H - B, stroke: 'var(--a2)', 'stroke-width': 1, 'stroke-dasharray': '2 4' });
+  add('text', { x: x(td) + 4, y: H - B - 6, class: 'chart-label' }).textContent = 'Today';
+  // Actual: area + line + dots.
+  const d = pts.map((pt, i) => `${i ? 'L' : 'M'}${x(pt.day)},${y(pt.v)}`).join(' ');
+  if (pts.length > 1) add('path', { d: `${d} L${x(pts[pts.length - 1].day)},${H - B} L${x(0)},${H - B} Z`, fill: 'var(--a1)', opacity: 0.12 });
+  add('path', { d, fill: 'none', stroke: 'var(--a1)', 'stroke-width': 3, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+  pts.forEach((pt, i) => {
+    const last = i === pts.length - 1;
+    const c = add('circle', { cx: x(pt.day), cy: y(pt.v), r: last ? 6 : 4, fill: last ? 'var(--a1)' : 'var(--panel)', stroke: 'var(--a1)', 'stroke-width': 2 });
+    c.appendChild(h('title', `${fmtVal(r, pt.v)}`));
+  });
+  if (pts.length) { const lp = pts[pts.length - 1]; add('text', { x: Math.min(x(lp.day) + 10, W - R - 60), y: y(lp.v) - 10, class: 'chart-label strong' }).textContent = fmtShort(r, lp.v); }
+  return h('div', { class: 'chart-wrap' }, svg);
+}
+
+function roadmapCard(r) {
+  const ms = milestones(r);
+  return card({ class: 'roadmap' }, cardHead(`${r.months}-month roadmap`, `to ${fmtVal(r, r.goal)}`),
+    h('div', { class: 'milestones' }, ms.map((m) => {
+      const state = m.current ? 'current' : m.passed ? (m.hit ? 'hit' : 'missed') : 'next';
+      return h('button', { class: `milestone ${state}`, onclick: () => openForm({ title: `Month ${m.month} – ${r.client}`, fields: [{ key: 'note', label: 'Focus or notes for this month', type: 'textarea' }], values: { note: m.note }, onSave: (v) => { r.milestoneNotes = { ...(r.milestoneNotes || {}), [m.month]: v.note }; commit('Saved'); } }) },
+        h('small', `Month ${m.month} · ${shortDate(m.date)}`), h('b', fmtShort(r, m.target)),
+        h('span', { class: 'ms-state' }, { hit: `✓ Hit (${fmtShort(r, m.value)})`, missed: `Reached ${fmtShort(r, m.value)}`, current: 'This month', next: 'Coming up' }[state]),
+        m.note ? h('small', { class: 'muted' }, m.note) : null);
+    })));
+}
+
+function checkinsCard(r) {
+  const rows = [...(r.checkins || [])].sort((a, b) => b.date.localeCompare(a.date));
+  return card({}, cardHead('Check-ins', `${r.metric}`, btn('Log a check-in', () => checkinForm(r), { sm: true, kind: 'primary', ic: 'plus' })),
+    rows.length ? h('div', { class: 'note-list' }, rows.map((c) => h('div', { class: 'note-row' },
+      h('b', fmtVal(r, c.value)), h('span', { class: 'muted grow' }, c.note || ''), h('small', { class: 'muted' }, shortDate(c.date)),
+      h('button', { class: 'icon-btn sm', 'aria-label': 'Edit check-in', onclick: () => checkinForm(r, c) }, icon('edit', 13))))) : empty(`Log their ${String(r.metric).toLowerCase()} once a month to see the line move.`));
+}
+function checkinForm(r, c) {
+  openForm({
+    title: c ? 'Edit check-in' : `Log ${r.metric.toLowerCase()} – ${r.client}`,
+    fields: [{ key: 'date', label: 'Date', type: 'date' }, { key: 'value', label: `${r.metric} (${r.unit || cur()})`, type: 'number' }, { key: 'note', label: 'What drove it?', full: true }],
+    values: c || { date: today(), value: progress(r).now },
+    onSave: (v) => { if (v.value == null || !v.date) { toast('Add a date and a number', 'bad'); return false; } if (c) Object.assign(c, v); else r.checkins = [...(r.checkins || []), { id: uid('ck'), ...v }]; commit('Check-in saved'); },
+    onDelete: c ? () => { r.checkins = r.checkins.filter((x) => x !== c); commit('Deleted'); } : null,
+  });
+}
+
+function winsCard(r) {
+  const rows = [...(r.wins || [])].sort((a, b) => b.date.localeCompare(a.date));
+  return card({}, cardHead('Wins', null, btn('Add a win', () => winForm(r), { sm: true, kind: 'ghost', ic: 'plus' })),
+    rows.length ? h('div', { class: 'note-list' }, rows.map((w) => h('div', { class: 'note-row' }, h('span', '🏆'), h('span', { class: 'grow' }, w.text), h('small', { class: 'muted' }, shortDate(w.date)),
+      h('button', { class: 'icon-btn sm', 'aria-label': 'Edit win', onclick: () => winForm(r, w) }, icon('edit', 13))))) : empty('Log the wins as they happen – they make the best testimonials.'));
+}
+function winForm(r, w) {
+  openForm({
+    title: w ? 'Edit win' : `New win for ${r.client}`,
+    fields: [{ key: 'text', label: 'What happened?', full: true }, { key: 'date', label: 'Date', type: 'date' }],
+    values: w || { date: today() },
+    onSave: (v) => { if (!v.text) return false; if (w) Object.assign(w, v); else { r.wins = [...(r.wins || []), { id: uid('w'), ...v }]; log(S, 'you', 'you', `Win for ${r.client}: ${v.text}`); } commit('🏆 Saved'); },
+    onDelete: w ? () => { r.wins = r.wins.filter((x) => x !== w); commit('Deleted'); } : null,
+  });
+}
+
+function actionsCard(r) {
+  const months = Array.from({ length: Number(r.months) || 6 }, (_, i) => i + 1);
+  const sel = (a, key) => h('select', { 'aria-label': key === 'fromMonth' ? 'From month' : 'To month', onchange: (e) => { a[key] = Number(e.target.value); commit(); } }, months.map((m) => h('option', { value: m, selected: Number(a[key] || (key === 'fromMonth' ? 1 : months.length)) === m }, `M${m}`)));
+  return card({}, cardHead('Daily actions', 'what they do each day', btn('Add action', () => { r.actions = [...(r.actions || []), { id: uid('act'), title: 'New daily action', fromMonth: monthOf(r), toMonth: Number(r.months) || 6 }]; commit(); }, { sm: true, kind: 'ghost', ic: 'plus' })),
+    h('p', { class: 'muted small' }, 'Set which months each action runs, so the plan builds as they grow (e.g. “pitch commercial contracts” from month 4).'),
+    h('div', { class: 'rate-rows' }, (r.actions || []).map((a) => h('div', { class: 'action-row' },
+      h('input', { value: a.title, 'aria-label': 'Action', onchange: (e) => { a.title = e.target.value; commit(); } }),
+      sel(a, 'fromMonth'), h('span', { class: 'muted small' }, 'to'), sel(a, 'toMonth'),
+      h('button', { class: 'icon-btn sm', 'aria-label': 'Remove action', onclick: () => confirmBox(`Remove “${a.title}”? Its history stays in the log.`, () => { r.actions = r.actions.filter((x) => x !== a); commit('Removed'); }, { yes: 'Remove' }) }, icon('trash', 14))))));
+}
+
+function resultForm(r) {
+  const v = r ? { ...r, chain_us: r.chain?.us, chain_brand: r.chain?.brand, chain_customers: r.chain?.customers } : { metric: 'Monthly revenue', unit: cur(), startDate: today(), months: 6 };
+  openForm({
+    title: r ? `Edit ${r.client}’s goal` : 'Add a client goal',
+    fields: [
+      { key: 'client', label: 'Client / brand' }, { key: 'contact', label: 'Contact name' },
+      { key: 'metric', label: 'What we measure', hint: 'e.g. Monthly revenue, Members, Bookings a week' }, { key: 'unit', label: 'Unit', hint: `${cur()} for money, or e.g. members` },
+      { key: 'baseline', label: 'Where they are now (start)', type: 'number' }, { key: 'goal', label: 'Goal', type: 'number' },
+      { key: 'stretch', label: 'Stretch goal (optional)', type: 'number' }, { key: 'months', label: 'Months', type: 'select', options: [3, 4, 5, 6, 9, 12] },
+      { key: 'startDate', label: 'Start date', type: 'date' },
+      { key: 'chain_us', label: '1 · What we deliver for them', type: 'textarea', rows: 2 },
+      { key: 'chain_brand', label: '2 · Their result', type: 'textarea', rows: 2 },
+      { key: 'chain_customers', label: '3 · Their customers’ result', type: 'textarea', rows: 2 },
+    ],
+    values: v,
+    onSave: (f) => {
+      if (!f.client || f.goal == null || f.baseline == null) { toast('Add the client, where they are now and the goal', 'bad'); return false; }
+      const fields = { client: f.client, contact: f.contact, metric: f.metric || 'Monthly revenue', unit: f.unit || cur(), baseline: f.baseline, goal: f.goal, stretch: f.stretch || 0, months: Number(f.months) || 6, startDate: f.startDate || today(), chain: { us: f.chain_us, brand: f.chain_brand, customers: f.chain_customers } };
+      if (r) Object.assign(r, fields);
+      else { const n = { ...newResult(f.client), ...fields }; S.results = [...(S.results || []), n]; location.hash = `#/results/${n.id}`; }
+      commit(r ? 'Goal updated' : 'Client goal added – tick off today’s actions to start the streak');
+    },
+    onDelete: r ? () => { S.results = S.results.filter((x) => x !== r); S.approvals = S.approvals.filter((x) => x.refId !== r.id); location.hash = '#/results'; commit('Deleted'); } : null,
+  });
+}
+
+function resultsBriefing() {
+  const list = S.results || [];
+  if (!list.length) return null;
+  return card({ class: 'results-brief' },
+    cardHead('Client results', `${portfolio(list).onTrack} of ${list.length} on track`, h('a', { class: 'btn sm ghost', href: '#/results' }, 'Open Results', icon('arrow', 13))),
+    h('div', { class: 'rb-list' }, list.map((r) => {
+      const p = progress(r);
+      const acts = actionsOn(r);
+      const done = acts.filter((a) => doneOn(r, today()).has(a.id)).length;
+      return h('a', { class: 'rb-row', href: `#/results/${r.id}` },
+        h('b', { class: 'truncate' }, r.client), h('span', { class: 'muted small truncate' }, `${fmtShort(r, p.now)} of ${fmtShort(r, r.goal)}`),
+        goalBar(r, p), statusChip(p), h('span', { class: 'muted small' }, `Today ${done}/${acts.length}`));
+    })));
 }
 
 // ── Edit HQ (settings) ───────────────────────────────────────────────────────

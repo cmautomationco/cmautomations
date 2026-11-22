@@ -131,6 +131,7 @@ export function seedState() {
       { id: uid('e'), date: day(2), type: 'Go live', title: 'Glow Skin Clinic', detail: 'Instagram auto-responder switches on' },
       { id: uid('e'), date: day(3), type: 'Meeting', title: 'Networking breakfast', detail: 'Chamber of Commerce, 7:30am' },
     ],
+    results: seedResults(),
     approvals: [],
     activity: [
       { id: uid('a'), from: 'deals', to: 'projects', text: 'Swift Plumbing signed the content pack (£450) – over to you', at: d(-3, 16) },
@@ -141,12 +142,126 @@ export function seedState() {
   };
 }
 
+// ── Results: client goals and the daily actions that get them there ─────────
+function rng(seed) { let x = seed; return () => { x = (x * 1664525 + 1013904223) % 4294967296; return x / 4294967296; }; }
+
+function buildLog(actions, startDaysAgo, rate, { quietLast = 0, todayDone = 0, seed = 1 } = {}) {
+  const rand = rng(seed);
+  const log = {};
+  for (let ago = startDaysAgo; ago >= 0; ago--) {
+    const date = day(-ago);
+    const month = Math.min(6, Math.floor((startDaysAgo - ago) / 30) + 1);
+    const active = actions.filter((a) => a.fromMonth <= month && month <= a.toMonth);
+    let done;
+    if (ago === 0) done = active.slice(0, todayDone);
+    else if (ago <= quietLast) done = [];
+    else done = active.filter(() => rand() < rate);
+    if (done.length) log[date] = done.map((a) => a.id);
+  }
+  return log;
+}
+
+export function newResult(client = '') {
+  return {
+    id: `res_${Date.now().toString(36)}`, client, contact: '', metric: 'Monthly revenue', unit: '£',
+    baseline: 0, goal: 0, stretch: 0, startDate: day(0), months: 6,
+    chain: { us: '', brand: '', customers: '' },
+    actions: [
+      { id: `act_${Date.now().toString(36)}a`, title: 'Reply to every new enquiry within 5 minutes', fromMonth: 1, toMonth: 6 },
+      { id: `act_${Date.now().toString(36)}b`, title: 'Post 1 piece of content', fromMonth: 1, toMonth: 6 },
+      { id: `act_${Date.now().toString(36)}c`, title: 'Follow up 3 warm leads or open quotes', fromMonth: 1, toMonth: 6 },
+    ],
+    log: {}, checkins: [], wins: [], milestoneNotes: {},
+  };
+}
+
+export function seedResults() {
+  const swiftActions = [
+    { id: 'a_sw1', title: 'Reply to every enquiry within 5 minutes (auto-responder on)', fromMonth: 1, toMonth: 6 },
+    { id: 'a_sw2', title: 'Post 1 short video (TikTok / Reels)', fromMonth: 1, toMonth: 6 },
+    { id: 'a_sw3', title: 'Ask 2 happy customers for a Google review', fromMonth: 1, toMonth: 6 },
+    { id: 'a_sw4', title: 'Call back every missed call before 6pm', fromMonth: 1, toMonth: 6 },
+    { id: 'a_sw5', title: 'Follow up 3 open quotes', fromMonth: 2, toMonth: 6 },
+    { id: 'a_sw6', title: 'Pitch 1 commercial contract (landlords, letting agents)', fromMonth: 4, toMonth: 6 },
+  ];
+  const glowActions = [
+    { id: 'a_gl1', title: 'Reply to Instagram DMs within 10 minutes', fromMonth: 1, toMonth: 6 },
+    { id: 'a_gl2', title: 'Post 1 before & after (with consent)', fromMonth: 1, toMonth: 6 },
+    { id: 'a_gl3', title: 'Text yesterday’s clients aftercare + a rebook link', fromMonth: 1, toMonth: 6 },
+    { id: 'a_gl4', title: 'Offer 1 client a treatment course', fromMonth: 2, toMonth: 6 },
+  ];
+  const peakActions = [
+    { id: 'a_pk1', title: 'Text every new free-trial sign-up within 1 hour', fromMonth: 1, toMonth: 6 },
+    { id: 'a_pk2', title: 'Book trial members a goal-setting session', fromMonth: 1, toMonth: 6 },
+    { id: 'a_pk3', title: 'Post 1 member transformation story', fromMonth: 1, toMonth: 6 },
+    { id: 'a_pk4', title: 'Check in with members who missed 2 sessions', fromMonth: 1, toMonth: 6 },
+  ];
+  return [
+    {
+      id: 'res_swift', client: 'Swift Plumbing & Heating', contact: 'Gary Swift', metric: 'Monthly revenue', unit: '£',
+      baseline: 20000, goal: 50000, stretch: 100000, startDate: day(-150), months: 6,
+      chain: {
+        us: 'Missed-call text-back, WhatsApp booking, review requests and 12 videos a month – so no enquiry goes cold.',
+        brand: 'From £20k to £50k–£100k a month by adding 2 vans and taking on commercial contracts.',
+        customers: 'Homeowners get a reply in minutes and an engineer the same day – no more waiting in the cold for a boiler fix.',
+      },
+      actions: swiftActions,
+      log: buildLog(swiftActions, 150, 0.82, { todayDone: 2, seed: 7 }),
+      checkins: [
+        { id: 'ck1', date: day(-120), value: 23500, note: 'Missed-call text-back live – 31 jobs saved' },
+        { id: 'ck2', date: day(-90), value: 28200, note: 'Google reviews up from 41 to 96' },
+        { id: 'ck3', date: day(-60), value: 33900, note: 'Second van on the road' },
+        { id: 'ck4', date: day(-30), value: 39600, note: 'First letting-agent contract' },
+        { id: 'ck5', date: day(-2), value: 46200, note: 'Best month ever – boiler season' },
+      ],
+      wins: [
+        { id: 'w1', date: day(-95), text: 'First £30k month' },
+        { id: 'w2', date: day(-33), text: 'Signed Harbour Lettings – 40 properties on contract' },
+        { id: 'w3', date: day(-9), text: '150th five-star Google review' },
+        { id: 'w4', date: day(-3), text: 'TikTok boiler-pressure video hit 210k views – 14 enquiries' },
+      ],
+      milestoneNotes: {},
+    },
+    {
+      id: 'res_glow', client: 'Glow Skin Clinic', contact: 'Priya Shah', metric: 'Monthly revenue', unit: '£',
+      baseline: 12000, goal: 25000, stretch: 40000, startDate: day(-70), months: 6,
+      chain: {
+        us: 'Instagram auto-responder, rebooking reminders and a treatment-course offer.',
+        brand: 'From £12k to £25k a month by keeping the diary full and selling courses, not one-offs.',
+        customers: 'Clients get an answer at midnight, a slot that suits them and a proper plan for their skin.',
+      },
+      actions: glowActions,
+      log: buildLog(glowActions, 70, 0.55, { quietLast: 3, seed: 21 }),
+      checkins: [
+        { id: 'ck6', date: day(-40), value: 13100, note: 'Auto-responder live, still tweaking tone' },
+        { id: 'ck7', date: day(-10), value: 14200, note: 'Courses not being offered consistently' },
+      ],
+      wins: [{ id: 'w5', date: day(-25), text: 'Diary fully booked on Saturdays for the first time' }],
+      milestoneNotes: {},
+    },
+    {
+      id: 'res_peak', client: 'Peak Fitness Studio', contact: 'Tom Hughes', metric: 'Monthly revenue', unit: '£',
+      baseline: 8000, goal: 20000, stretch: 30000, startDate: day(-18), months: 6,
+      chain: {
+        us: 'Free-trial follow-up texts and emails, plus a goal-setting booking flow.',
+        brand: 'From £8k to £20k a month by turning 1 in 2 free trials into members.',
+        customers: 'New members get a coach who checks in, a clear goal and a reason to keep turning up.',
+      },
+      actions: peakActions,
+      log: buildLog(peakActions, 18, 0.86, { todayDone: 1, seed: 3 }),
+      checkins: [],
+      wins: [{ id: 'w6', date: day(-4), text: '9 trial members converted in week 2' }],
+      milestoneNotes: {},
+    },
+  ];
+}
+
 /** A clean slate: your agents, rate card and settings, with no demo records. */
 export function emptyState(from) {
   const base = from || seedState();
   return {
     ...base,
-    leads: [], deals: [], projects: [], scripts: [], invoices: [], clients: [], events: [],
+    leads: [], deals: [], projects: [], scripts: [], invoices: [], clients: [], events: [], results: [],
     approvals: [], activity: [], updates: {}, meta: { lastRunDate: '', createdAt: new Date().toISOString() },
   };
 }
