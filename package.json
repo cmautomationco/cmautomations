@@ -14,7 +14,8 @@
     "test": "node --disable-warning=ExperimentalWarning --test tests/*.test.js",
     "screenshots": "node --disable-warning=ExperimentalWarning scripts/screenshots.mjs",
     "build:test": "node scripts/build-demo.mjs",
-    "check:live": "node --disable-warning=ExperimentalWarning scripts/check-live.mjs"
+    "check:live": "node --disable-warning=ExperimentalWarning scripts/check-live.mjs",
+    "build:hq": "node scripts/build-hq.mjs"
   },
   "dependencies": {
     "express": "^5.2.1"

@@ -23,6 +23,8 @@ export const state = { me: null, meta: null };
 const NAV = [
   { section: 'Overview' },
   { path: '/', label: 'Dashboard', icon: 'home', page: dashboard },
+  // HQ is its own page next to this app: the AI team (public/hq).
+  { href: '/hq/', label: 'HQ · AI team', icon: 'sparkles', when: () => !globalThis.initSqlJs },
   { path: '/agency', label: 'Agency', icon: 'briefcase', page: agency, when: (me) => me.agency_access },
   { path: '/api', label: 'API hub', icon: 'layers', page: apihub },
   { section: 'Build' },
@@ -105,7 +107,7 @@ function layout(active, view) {
     h('nav', { class: 'nav' }, visibleNav(me).map((n) => {
       if (n.section) return h('div', { class: 'nav-label' }, n.section);
       const count = n.badge ? (badges[n.badge] = h('span', { class: 'count', hidden: true })) : null;
-      return h('a', { href: `#${n.path}`, class: n === active ? 'active' : '' }, icon(n.icon), n.label, count);
+      return h('a', { href: n.href || `#${n.path}`, class: n === active ? 'active' : '' }, icon(n.icon), n.label, count);
     })),
     h('div', { class: 'sidebar-foot' },
       h('div', { class: 'eyebrow' }, 'Time saved · 30 days'),

@@ -23,6 +23,7 @@ import { apiKeyRoutes, publicApiRoutes } from './modules/api/routes.js';
 import { essentialsPublicRoutes, essentialsRoutes, socialHookRoutes } from './modules/essentials/routes.js';
 import { seoRoutes } from './modules/seo/routes.js';
 import { dialerHookRoutes, dialerPublicRoutes, dialerRoutes } from './modules/dialer/routes.js';
+import { hqRoutes } from './modules/hq/routes.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -68,6 +69,7 @@ export function createApp(db) {
   app.use('/api/essentials', essentialsRoutes(ctx));
   app.use('/api/seo', seoRoutes(ctx));
   app.use('/api/dialer', dialerRoutes(ctx));
+  app.use('/api/hq', hqRoutes(ctx));
 
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 

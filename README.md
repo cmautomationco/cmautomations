@@ -15,6 +15,7 @@ It has three connected systems plus an automation engine that links them:
 | 📅 **Bookings** | Online booking page with live availability, deposits, day-before and 2-hour reminders (reply C to confirm, R to rearrange), "on my way" texts, a morning job sheet to the team's phone and a calendar feed for Google, Outlook and iPhone. |
 | 💷 **Quotes, invoices & payments** | Deal or finished job → quote (accepted online) → invoice with a card-payment link. Overdue invoices are chased automatically: friendly, firmer, then a call task for a person. |
 | 🧭 **Agency control centre** | For the agency running all of this: every client on one screen with a health score, the audit → proposal → new client flow, white-label branding and an automatic monthly report per client. |
+| 🧠 **HQ – your AI team** | A command centre next to the main dashboard (`/hq/`). Five AI agents – Receptionist (auto-replies & new leads), Deal Manager, Project Manager, Scriptwriter and Finance – check in every morning, hand work to each other and bring anything that needs a decision to you for sign-off. Everything is editable. See [docs/HQ.md](docs/HQ.md). |
 | ⚡ **Automation engine** | Uses WHEN → IF → THEN rules to connect all of the above. It also logs the time it saves each business. |
 
 The design uses a deep nautical sky blue on a white background with black text. Headers and key figures are in blue text.
