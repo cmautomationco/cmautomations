@@ -32,6 +32,17 @@ Ten steps in three phases. Each step waits on one person, and both sides can alw
 - The first three weeks are shaded **Building foundations**. In those weeks the client's page tells them a flat line is normal, and afterwards that this is where progress picks up. The coach sees a matching prompt to reassure them.
 - It works for goals that go down (body weight) as well as up (a lift). There's a "See as a table" view, and a tooltip for each week.
 
+## Results: more than the number
+
+A client may not change physically as fast as they'd like, but if they've changed in some way, that's a result. Every check-in rates four things out of 5: **clear head**, **habits**, **day-to-day happiness** and **energy**. The intake form asks the same four questions, so there's a starting point.
+
+The Progress tab shows **Your results so far** (at the end of the programme, **Your transformation**):
+- what's better since they started
+- a small trend line for each rating
+- their wins, week by week
+
+In the demo, Priya's weight has barely moved (82 → 81.4 kg in three weeks, which is normal), but her clear head, habits and happiness have each gone from 2 to 4, and her energy from 2 to 5. That's the proof the VSL talks about.
+
 ## Demo data
 
 Bright Path Coaching (in the demo and the test build) has a client at each point:

@@ -37,7 +37,7 @@ export function vslRoutes(ctx) {
   // ── The foundation ──
   r.get('/foundation', (req, res) => {
     res.json({
-      version: F.FOUNDATION_VERSION, offer: F.OFFER, sections: F.SECTIONS, total_seconds: F.TOTAL_SECONDS,
+      version: F.FOUNDATION_VERSION, principle: F.RESULT_CHAIN, offer: F.OFFER, sections: F.SECTIONS, total_seconds: F.TOTAL_SECONDS,
       honesty_rules: F.HONESTY_RULES, proof_plan: F.PROOF_PLAN, proof_checklist: F.PROOF_CHECKLIST, page: F.PAGE, open_decisions: F.OPEN_DECISIONS,
       formats: Object.entries(FORMATS).map(([key, f]) => ({ key, label: f.label, status: f.status, summary: f.summary, directions: f.directions })),
       niches: listPacks(db, req.org.id), default_niche: DEFAULT_PACK,
@@ -419,7 +419,8 @@ function cleanPackData(d) {
     return r;
   };
   if (Array.isArray(d.hooks)) out.hooks = d.hooks.map((h) => text(h, 300)).filter(Boolean).slice(0, 6);
-  for (const k of ['what_changes', 'proof_framing', 'cta_line', 'method_line', 'add_on_line']) if (text(d[k])) out[k] = text(d[k]);
+  for (const k of ['what_changes', 'proof_framing', 'cta_line', 'method_line', 'add_on_line', 'result_line']) if (text(d[k])) out[k] = text(d[k]);
+  const chain = obj(d.result_chain, ['problem', 'solution', 'business_result', 'customer_result']); if (chain) out.result_chain = chain;
   if (['same_niche', 'other_niche'].includes(d.proof_relation)) out.proof_relation = d.proof_relation;
   if (['draft', 'v1', 'v2'].includes(d.status)) out.status = d.status;
   const vars = obj(d.vars, null, 120); if (vars) out.vars = vars;
@@ -432,7 +433,7 @@ function cleanPackData(d) {
 
 function mergePack(a, b) {
   const out = { ...a, ...b };
-  for (const k of ['vars', 'problem', 'problem_lines', 'demo_lines', 'broll']) if (a[k] || b[k]) out[k] = { ...(a[k] || {}), ...(b[k] || {}) };
+  for (const k of ['vars', 'problem', 'problem_lines', 'demo_lines', 'broll', 'result_chain']) if (a[k] || b[k]) out[k] = { ...(a[k] || {}), ...(b[k] || {}) };
   return out;
 }
 

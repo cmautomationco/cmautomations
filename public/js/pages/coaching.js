@@ -1,8 +1,8 @@
 import { del, get, post, put } from '../api.js';
 import { state } from '../app.js';
 import { ago, confirmDialog, copyText, field, formData, h, icon, modal, mount, select, showError, toast } from '../ui.js';
-import { progressChart, progressNote } from '../progress-chart.js';
-import { recentFirst } from '../coach-portal.js';
+import { progressChart, progressNote, resultsPanel } from '../progress-chart.js';
+import { feelLine, recentFirst } from '../coach-portal.js';
 
 /**
  * Coaching: every client from the first conversation to fully onboarded, and
@@ -163,10 +163,11 @@ async function clientPage(el, id) {
     h('div', { class: 'card-body stack' },
       progressChart(p, { audience: 'coach' }),
       h('p', { class: 'small muted' }, progressNote(p, { audience: 'coach' })),
+      resultsPanel(p, { audience: 'coach' }),
       p.checkins.length ? recentFirst(p.checkins, (ck) => {
         const reply = h('textarea', { id: `co-reply-${ck.week}`, rows: 2, placeholder: 'Your feedback…', 'aria-label': `Feedback for week ${ck.week}` });
         return h('div', { class: 'cp-checkin' },
-          h('div', { class: 'cp-step-title' }, h('b', `Week ${ck.week}`), ck.value !== null ? h('span', `${ck.value}${p.metric_unit ? ` ${p.metric_unit}` : ''}`) : null, ck.energy ? h('span', { class: 'small muted' }, `Energy ${ck.energy}/5`) : null),
+          h('div', { class: 'cp-step-title' }, h('b', `Week ${ck.week}`), ck.value !== null ? h('span', `${ck.value}${p.metric_unit ? ` ${p.metric_unit}` : ''}`) : null, feelLine(ck)),
           ck.wins ? h('div', { class: 'small' }, h('b', 'Win: '), ck.wins) : null,
           ck.struggles ? h('div', { class: 'small' }, h('b', 'Tough: '), ck.struggles) : null,
           ck.coach_reply ? h('div', { class: 'cp-reply' }, h('b', 'You: '), ck.coach_reply)

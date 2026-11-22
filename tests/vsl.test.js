@@ -55,6 +55,8 @@ describe('the foundation', () => {
     assert.equal(f.open_decisions[0].key, 'breakdown_cta');
     assert.deepEqual(f.formats.map((x) => [x.key, x.status]), [['faceless', 'now'], ['voiceover', 'next'], ['on_camera', 'later']]);
     assert.ok(f.niches.some((x) => x.key === 'aesthetics_clinic' && x.status === 'v1'));
+    // The principle every VSL proves: problem → solution → their result → their customers' result.
+    assert.deepEqual(f.principle.links.map((l) => l.key), ['problem', 'solution', 'business_result', 'customer_result']);
   });
 
   test('every built-in pack fills every slot', () => {
@@ -82,6 +84,9 @@ describe('scripts', () => {
     assert.match(line(b, 'proof.framing').text, /For a clinic, it catches Instagram DMs\.$/);
     assert.equal(line(b, 'cta.line').text, 'Right under this video there’s a full breakdown. It shows how this works for clinics like yours, the problems it solves, and what it’s done for the businesses I’ve worked with. Watch that next.');
     assert.equal(b.page.button_text, 'Watch the full breakdown');
+    // The solution ends on the result, and the chain travels with the script.
+    assert.equal(b.sections[2].lines.at(-1).key, 'solution.result');
+    assert.ok(b.result_chain.business_result && b.result_chain.customer_result);
     // No proof yet, so it can't leave draft.
     assert.equal(b.checks.ready, false);
     const ready = await call('PUT', `/vsl/scripts/${res.body.id}`, { status: 'ready' }, biz.token);

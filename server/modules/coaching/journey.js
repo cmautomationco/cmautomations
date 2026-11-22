@@ -81,6 +81,18 @@ export const STEPS = [
   },
 ];
 
+/**
+ * Results aren't only the number on the chart. Every check-in also rates how
+ * the client feels, out of 5, so a clearer head, better habits and happier days
+ * show up as results too, often before the physical change does.
+ */
+export const WELLBEING = [
+  { key: 'mind', label: 'Clear head', question: 'How clear has your head felt?', low: 'Foggy, stressed', high: 'Clear, calm' },
+  { key: 'habits', label: 'Habits', question: 'How well have you stuck to your habits?', low: 'Not at all', high: 'Every day' },
+  { key: 'mood', label: 'Day-to-day happiness', question: 'How happy have your days felt?', low: 'Low', high: 'Really happy' },
+  { key: 'energy', label: 'Energy', question: 'How has your energy been?', low: 'Drained', high: 'Full of it' },
+];
+
 export const STEP = Object.fromEntries(STEPS.map((s, i) => [s.key, { ...s, position: i }]));
 
 export const DEFAULT_SETTINGS = {

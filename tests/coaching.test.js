@@ -78,7 +78,10 @@ describe('onboarding, from the first conversation', () => {
     assert.equal(db.get('SELECT lifecycle FROM contacts WHERE id = ?', c.contact_id).lifecycle, 'customer');
 
     // Intake: their starting point and goal become the ends of their chart.
-    page = (await call('POST', `/public/coach/${portal}/intake`, { goals: 'Squat 100kg by summer', history: 'Lifted on and off', starting_value: 60, goal_value: 100 })).body;
+    page = (await call('POST', `/public/coach/${portal}/intake`, { goals: 'Squat 100kg by summer', history: 'Lifted on and off', starting_value: 60, goal_value: 100, mind: 2, habits: 2, mood: 3, energy: 2 })).body;
+    // How they feel now is their starting point for results.
+    assert.equal(page.progress.has_starting_point, true);
+    assert.equal(page.progress.wellbeing.find((d) => d.key === 'mind').start, 2);
     assert.equal(page.journey.current.key, 'agreement');
     assert.equal(page.progress.baseline, 60);
     assert.equal(page.progress.target, 100);
@@ -103,8 +106,15 @@ describe('onboarding, from the first conversation', () => {
     assert.ok(c.journey.current.data.due_at, 'the first check-in is due a week in');
 
     // First check-in finishes onboarding.
-    page = (await call('POST', `/public/coach/${portal}/checkin`, { value: 62.5, energy: 4, wins: 'Trained 3 times', struggles: 'Sleep' })).body;
+    page = (await call('POST', `/public/coach/${portal}/checkin`, { value: 62.5, energy: 4, mind: 4, habits: 3, mood: 3, wins: 'Trained 3 times', struggles: 'Sleep' })).body;
     assert.equal(page.journey.onboarded, true);
+    // Results are more than the number: how they feel counts, and the starting point isn't a check-in.
+    assert.equal(page.progress.checkins.length, 1);
+    assert.deepEqual(page.progress.results.improved, ['Squat', 'Clear head', 'Habits', 'Energy']);
+    assert.ok(page.progress.results.items.some((i) => i.text === 'Clear head: 2/5 → 4/5'));
+    assert.equal(page.progress.wellbeing.find((d) => d.key === 'mood').change, 0);
+    assert.deepEqual(page.progress.results.wins.map((w) => w.text), ['Trained 3 times']);
+    assert.equal((await call('POST', `/public/coach/${portal}/checkin`, { week: 1, value: 62.5, mind: 9 })).body.progress.checkins[0].mind, 5, 'ratings stay within 1–5');
     assert.equal(page.status, 'active');
     assert.deepEqual(page.progress.actual.map((p) => [p.week, p.value]), [[0, 60], [1, 62.5]]);
     assert.equal(page.progress.change, 2.5);

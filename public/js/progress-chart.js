@@ -131,3 +131,49 @@ export function progressNote(progress, { audience = 'client' } = {}) {
     ? 'You’re past the foundation weeks. This is where progress picks up, week after week, as long as the check-ins keep coming.'
     : 'Past the foundation weeks: progress should now be picking up.';
 }
+
+/** A small single-line trend for one 1–5 rating, from their starting point to now. */
+function sparkline(series, label) {
+  const w = 120; const hgt = 34; const pad = 4;
+  const weeks = Math.max(1, series[series.length - 1].week - series[0].week);
+  const x = (wk) => pad + ((wk - series[0].week) / weeks) * (w - pad * 2);
+  const y = (v) => pad + (1 - (v - 1) / 4) * (hgt - pad * 2);
+  const svg = s('svg', { viewBox: `0 0 ${w} ${hgt}`, class: 'spark', role: 'img', 'aria-label': `${label}: ${series.map((p) => `${p.week ? `week ${p.week}` : 'start'} ${p.value} out of 5`).join(', ')}` });
+  svg.append(s('line', { x1: pad, x2: w - pad, y1: y(3), y2: y(3), stroke: '#e2e8f0', 'stroke-width': 1 }));
+  if (series.length > 1) svg.append(s('path', { d: series.map((p, i) => `${i ? 'L' : 'M'}${x(p.week).toFixed(1)},${y(p.value).toFixed(1)}`).join(' '), fill: 'none', stroke: C_YOU, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+  const last = series[series.length - 1];
+  svg.append(s('circle', { cx: x(last.week), cy: y(last.value), r: 4, fill: C_YOU, stroke: '#fff', 'stroke-width': 2 }));
+  return svg;
+}
+
+/**
+ * Their results: the number, how they feel, and their wins. Results aren't only
+ * on the scales: a clearer head, better habits and happier days count, and they
+ * often come first. At the end of the programme this is their transformation.
+ */
+export function resultsPanel(progress, { audience = 'client' } = {}) {
+  const r = progress.results || { items: [], wins: [], improved: [] };
+  const you = audience === 'client';
+  const feel = (progress.wellbeing || []).filter((d) => d.series.length);
+  const wrap = h('div', { class: 'results stack' },
+    h('div', { class: 'cp-phase-head' }, h('h2', r.finished ? (you ? 'Your transformation' : 'Their transformation') : (you ? 'Your results so far' : 'Their results so far'))),
+    h('p', { class: 'small muted', style: { margin: 0 } }, you
+      ? 'Results aren’t only on the chart. A clearer head, better habits and happier days count too, and they often come first.'
+      : 'Not just the number: how they feel, their habits and their wins. Use these when the chart is slow.'));
+  if (r.improved.length) {
+    wrap.append(h('div', { class: 'results-better' }, h('b', you ? 'Better since you started: ' : 'Better since they started: '), r.improved.join(', ')));
+  }
+  if (feel.length) {
+    wrap.append(h('div', { class: 'feel-grid' }, feel.map((d) => h('div', { class: 'feel' },
+      h('div', { class: 'feel-head' }, h('b', d.label), d.now !== null ? h('span', { class: 'feel-now' }, `${d.now}/5`) : null),
+      sparkline(d.series, d.label),
+      h('div', { class: 'small muted' }, d.change === null ? 'One more check-in to see the change' : d.change > 0 ? `Up ${d.change} since ${you ? 'you' : 'they'} started (${d.start}/5)` : d.change < 0 ? `Down ${-d.change} since the start (${d.start}/5)` : `Same as the start (${d.start}/5)`)))));
+  } else {
+    wrap.append(h('div', { class: 'pchart-empty' }, you ? 'Rate how you feel in your check-ins and your results show here.' : 'Their ratings show here once they check in.'));
+  }
+  if (r.wins.length) {
+    wrap.append(h('div', h('b', `${r.wins.length} win${r.wins.length === 1 ? '' : 's'} logged`),
+      h('ul', { class: 'wins' }, [...r.wins].reverse().slice(0, 3).map((w) => h('li', h('span', { class: 'muted' }, `Week ${w.week}: `), w.text)))));
+  }
+  return wrap;
+}

@@ -33,13 +33,16 @@ export function seedCoaching(db, engine) {
     });
     db.run('UPDATE coaching_clients SET created_at = ?, updated_at = ? WHERE id = ?', daysAgo(fromDays), daysAgo(toDays), c.id);
   };
+  // How they felt when they started (from their intake form), out of 5.
+  const start = (c, [mind, habits, mood, energy]) => db.insert('coaching_checkins', { id: id('cchk'), org_id: org.id, client_id: c.id, week: 0, value: null, mind, habits, mood, energy, created_at: get(c.id).created_at });
   // Each check-in lands at the end of its week, counted from the day the programme started.
   const checkins = (c, startDaysAgo, values, notes) => {
     values.forEach((value, i) => {
       const week = i + 1;
       const at = daysAgo(startDaysAgo - week * 7);
       const n = notes[i] || {};
-      db.insert('coaching_checkins', { id: id('cchk'), org_id: org.id, client_id: c.id, week, value, energy: n.energy || 4, wins: n.wins || null, struggles: n.struggles || null, coach_reply: n.reply || null, created_at: at, replied_at: n.reply ? at : null });
+      const f = n.feel || [];
+      db.insert('coaching_checkins', { id: id('cchk'), org_id: org.id, client_id: c.id, week, value, mind: f[0] ?? null, habits: f[1] ?? null, mood: f[2] ?? null, energy: f[3] ?? n.energy ?? 4, wins: n.wins || null, struggles: n.struggles || null, coach_reply: n.reply || null, created_at: at, replied_at: n.reply ? at : null });
       db.insert('coaching_updates', { id: id('cupd'), org_id: org.id, client_id: c.id, author: 'client', body: `Week ${week} check-in · ${get(c.id).metric_label}: ${value} ${get(c.id).metric_unit}${n.wins ? ` · Win: ${n.wins}` : ''}`, step_key: `checkin_${week}`, created_at: at });
       if (n.reply) db.insert('coaching_updates', { id: id('cupd'), org_id: org.id, client_id: c.id, author: 'coach', body: `Week ${week} feedback: ${n.reply}`, step_key: `checkin_${week}`, created_at: at });
     });
@@ -84,10 +87,12 @@ export function seedCoaching(db, engine) {
   db.update('coaching_clients', priya.id, { baseline: 82, target: 74 });
   db.run('DELETE FROM coaching_checkins WHERE client_id = ?', priya.id);
   backdate(priya, 27, 21);
+  // Priya: the scales have barely moved, but her head, habits and happiness have all gone up.
+  start(priya, [2, 2, 2, 2]);
   checkins(priya, 22, [81.8, 81.9, 81.4], [
-    { wins: 'Hit my protein every day', struggles: 'Weekend meals out', reply: 'Brilliant start. The scale barely moves in week 1, that’s normal. Keep the protein going.' },
-    { wins: 'Walked 8k steps 5 days', struggles: 'Felt like nothing changed', reply: 'It will look flat for a couple of weeks while the habits settle. You’re doing everything right.' },
-    { wins: 'Clothes feel looser', energy: 5 },
+    { feel: [3, 3, 3, 3], wins: 'Hit my protein every day', struggles: 'Weekend meals out', reply: 'Brilliant start. The scale barely moves in week 1, that’s normal. Keep the protein going.' },
+    { feel: [3, 4, 3, 3], wins: 'Walked 8k steps 5 days', struggles: 'Felt like nothing changed', reply: 'It will look flat for a couple of weeks while the habits settle. You’re doing everything right.' },
+    { feel: [4, 4, 4, 5], wins: 'Clothes feel looser, and I’m sleeping better' },
   ]);
 
   // Sam: week 9, past the foundations and picking up week after week.
@@ -96,15 +101,16 @@ export function seedCoaching(db, engine) {
   db.update('coaching_clients', sam.id, { baseline: 60, target: 100 });
   db.run('DELETE FROM coaching_checkins WHERE client_id = ?', sam.id);
   backdate(sam, 62, 56);
+  start(sam, [3, 2, 3, 3]);
   checkins(sam, 57, [60.5, 61, 62.5, 64, 67.5, 70, 74, 78], [
-    { wins: 'Trained all 4 sessions', struggles: 'Sleep', reply: 'Great first week. Numbers won’t move much yet: we’re building the base.' },
-    { wins: 'Form felt smoother', reply: 'That smoother form is exactly what we want in these early weeks.' },
-    { wins: 'First 62.5 single', reply: 'There it is. This is where it starts to pick up.' },
-    { wins: '4 for 4 again', reply: 'Consistency is paying off. Keep sleeping 7+ hours.' },
-    { wins: 'New PR 67.5', energy: 5, reply: 'Big jump! The foundation work is showing now.' },
-    { wins: 'Hit 70 for a triple', reply: 'Brilliant. Halfway to the goal already.' },
-    { wins: 'Squatted 74', energy: 5, reply: 'Flying. Deload next week, then we push on.' },
-    { wins: 'Hit 78 for the first time', energy: 5 },
+    { feel: [3, 3, 3, 3], wins: 'Trained all 4 sessions', struggles: 'Sleep', reply: 'Great first week. Numbers won’t move much yet: we’re building the base.' },
+    { feel: [3, 4, 3, 4], wins: 'Form felt smoother', reply: 'That smoother form is exactly what we want in these early weeks.' },
+    { feel: [4, 4, 4, 4], wins: 'First 62.5 single', reply: 'There it is. This is where it starts to pick up.' },
+    { feel: [4, 5, 4, 4], wins: '4 for 4 again', reply: 'Consistency is paying off. Keep sleeping 7+ hours.' },
+    { feel: [4, 5, 4, 5], wins: 'New PR 67.5', energy: 5, reply: 'Big jump! The foundation work is showing now.' },
+    { feel: [5, 5, 4, 4], wins: 'Hit 70 for a triple', reply: 'Brilliant. Halfway to the goal already.' },
+    { feel: [5, 5, 5, 5], wins: 'Squatted 74', energy: 5, reply: 'Flying. Deload next week, then we push on.' },
+    { feel: [5, 5, 5, 5], wins: 'Hit 78 for the first time', energy: 5 },
   ]);
 
   db.run(`INSERT INTO org_meta (org_id, key, value) VALUES (?, 'coaching_seeded', '1') ON CONFLICT(org_id, key) DO NOTHING`, org.id);

@@ -47,6 +47,14 @@ export const PACKS = {
       cost: 'So every enquiry you miss is a lost treatment, plus every rebooking that would have followed it.',
     },
     what_changes: 'You treat clients. The system catches the enquiries. You check one report on a Friday.',
+    // Problem → solution → result: the chain this pack's VSL proves.
+    result_chain: {
+      problem: "Enquiries go unanswered mid-treatment, so bookings go to the clinic that replies first.",
+      solution: "Every enquiry answered in seconds and followed up, without anyone on the phone.",
+      business_result: "More of the enquiries they already get turn into treatments and rebookings.",
+      customer_result: "Clients get booked in for the treatment they wanted, while they still want it.",
+    },
+    result_line: "So more of the enquiries you already get turn into treatments, and your clients get booked in while they still want it. That’s the result.",
     proof_relation: 'other_niche',
     proof_framing: 'I’ve built and tested this system with two businesses, a plumber and an internet connections company. It’s the same system with a different front door. For them it catches missed calls and messages. For a clinic, it catches Instagram DMs.',
     cta_line: 'Right under this video there’s a full breakdown. It shows how this works for clinics like yours, the problems it solves, and what it’s done for the businesses I’ve worked with. Watch that next.',
@@ -80,6 +88,14 @@ export const PACKS = {
       cost: 'So every missed call is a lost job, plus the repeat work and referrals that would have followed it.',
     },
     what_changes: 'You do the work. The system catches the calls. You check one report on a Friday.',
+    // Problem → solution → result: the chain this pack's VSL proves.
+    result_chain: {
+      problem: "Calls are missed on the tools, so the job goes to the next number.",
+      solution: "Every missed call answered in seconds and followed up, while they work.",
+      business_result: "More of the calls they already get turn into jobs, plus the repeat work after.",
+      customer_result: "Customers get a reply while the problem’s still fresh, and get it sorted.",
+    },
+    result_line: "So more of the calls you already get turn into jobs, and your customers get a reply while the problem’s still fresh. That’s the result.",
     proof_relation: 'same_niche',
     proof_framing: 'I’ve built and tested this system with two businesses, a plumber and an internet connections company. For both of them it catches missed calls and messages, which is exactly what it would do for you.',
     cta_line: 'Right under this video there’s a full breakdown. It shows how this works for {{trade_plural}} like you, the problems it solves, and what it’s done for the businesses I’ve worked with. Watch that next.',
@@ -113,6 +129,14 @@ export const PACKS = {
       cost: 'So every enquiry you miss is a lost membership, and months of fees with it.',
     },
     what_changes: 'You run the gym. The system catches the enquiries. You check one report on a Friday.',
+    // Problem → solution → result: the chain this pack's VSL proves.
+    result_chain: {
+      problem: "Enquiries wait while the owner is on the gym floor, so people join elsewhere.",
+      solution: "Every enquiry answered in seconds and followed up, without extra front-desk staff.",
+      business_result: "More enquiries turn into members who actually start.",
+      customer_result: "People get started while they’re motivated, which is where their results begin.",
+    },
+    result_line: "So more enquiries turn into members who actually start. And starting is where their results begin. That’s the result, for them and for you.",
     proof_relation: 'other_niche',
     proof_framing: 'I’ve built and tested this system with two businesses, a plumber and an internet connections company. It’s the same system with a different front door. For them it catches missed calls and messages. For a gym, it catches DMs and membership enquiries.',
     cta_line: 'Right under this video there’s a full breakdown. It shows how this works for gyms like yours, the problems it solves, and what it’s done for the businesses I’ve worked with. Watch that next.',
@@ -141,6 +165,14 @@ export const PACKS = {
       cost: 'So every DM you miss is a lost client, plus months of sessions that would have followed.',
     },
     what_changes: 'You train clients. The system catches the enquiries. You check one report on a Friday.',
+    // Problem → solution → result: the chain this pack's VSL proves.
+    result_chain: {
+      problem: "DMs wait while the PT is with clients, so enquiries sign up elsewhere.",
+      solution: "Every DM answered in seconds and followed up, mid-session or not.",
+      business_result: "More DMs turn into clients, without more hours on the phone.",
+      customer_result: "Clients start while they’re motivated, which is where their results come from.",
+    },
+    result_line: "So more DMs turn into clients, and every client starts while they’re motivated. That’s where their results come from, and yours.",
     proof_relation: 'other_niche',
     proof_framing: 'I’ve built and tested this system with two businesses, a plumber and an internet connections company. It’s the same system with a different front door. For them it catches missed calls and messages. For a PT, it catches Instagram DMs.',
     cta_line: 'Right under this video there’s a full breakdown. It shows how this works for trainers like you, the problems it solves, and what it’s done for the businesses I’ve worked with. Watch that next.',
@@ -169,6 +201,14 @@ export const PACKS = {
       cost: 'So every DM you miss is a lost client, plus months of coaching fees.',
     },
     what_changes: 'You coach. The system catches the enquiries. You check one report on a Friday.',
+    // Problem → solution → result: the chain this pack's VSL proves.
+    result_chain: {
+      problem: "DMs from content wait, interest fades, and the sales call never happens.",
+      solution: "Every DM answered in seconds and followed up, while the coach coaches.",
+      business_result: "More DMs turn into calls and clients.",
+      customer_result: "People get started while they still care, which is where their results begin.",
+    },
+    result_line: "So more DMs turn into calls and clients, and people start while they still care. That’s where their results begin, and yours.",
     proof_relation: 'other_niche',
     proof_framing: 'I’ve built and tested this system with two businesses, a plumber and an internet connections company. It’s the same system with a different front door. For them it catches missed calls and messages. For a coach, it catches DMs and comments.',
     cta_line: 'Right under this video there’s a full breakdown. It shows how this works for coaches like you, the problems it solves, and what it’s done for the businesses I’ve worked with. Watch that next.',
@@ -215,6 +255,14 @@ export const PACKS = {
     },
     add_on_line: 'It can also fill cancelled classes, nudge people to rebook and send session reminders. That’s all in the breakdown.',
     what_changes: 'There’s no one new to hire. It runs every day, and we watch over it. If anything breaks, needs changing or could work better, we’re alerted and we tell you. You run the sessions. You check one report on a Friday.',
+    // Problem → solution → result: the chain this pack's VSL proves.
+    result_chain: {
+      problem: "New members and clients are onboarded by hand, and people drop off in the gaps.",
+      solution: "The system in between connects every step from enquiry to onboarded, without a new hire.",
+      business_result: "More people go from enquiry to onboarded, and stay.",
+      customer_result: "People who stay get results: in their body, in their head and in their week.",
+    },
+    result_line: "So more people go from enquiry to onboarded, and stay. And people who stay get results: in their body, in their head, and in their week. That’s the result.",
     proof_relation: 'other_niche',
     proof_framing: 'I’ve built and tested this system with two businesses, a plumber and an internet connections company. It’s the same system with a different front door. For them it catches missed calls and messages. For a gym or a coach, it catches enquiries and carries them through onboarding.',
     cta_line: 'Right under this video there’s a full breakdown. It shows how this works for gyms and coaches like you, the problems it solves, and what it’s done for the businesses I’ve worked with. Watch that next.',
@@ -263,13 +311,77 @@ export const PACKS = {
       report: 'And every week, one report shows who’s started, who’s checking in, and who needs a word from you. That’s point D.',
     },
     add_on_line: 'It can also chase missed check-ins, nudge clients to rebook, and send reminders before calls. That’s all in the breakdown.',
-    what_changes: 'There’s no one new to hire. The system runs every day, and we keep an eye on it for you. If anything breaks, needs changing, or could work better, we’re alerted and we let you know. You coach. The system handles the onboarding. You check one report on a Friday.',
+    what_changes: 'There’s no one new to hire. It runs every day, and we keep an eye on it for you. If anything breaks or could work better, we’re alerted and we let you know. You coach, and you check one report on a Friday.',
+    // Problem → solution → result: the chain this pack's VSL proves.
+    result_chain: {
+      problem: "New clients are onboarded by hand, late at night, and clients go cold in the gaps.",
+      solution: "The system in between connects every step from paid to started, without hiring a VA.",
+      business_result: "More clients who pay actually start, and stay, with fewer refund requests.",
+      customer_result: "Clients get results: not just on the scales, but a clearer head, better habits and happier days.",
+    },
+    result_line: "And this is the point. Clients who start properly stay, and clients who stay get results. Not always on the scales straight away, but a clearer head, better habits and happier days. That’s their result, and it’s yours too.",
     proof_relation: 'other_niche',
     proof_framing: 'I’ve built and tested this system with two businesses, a plumber and an internet connections company. It’s the same system with a different front door. For them, it catches missed calls and messages. For an online coach, it takes a new client from paid to started.',
     cta_line: 'Right under this video, there’s a full breakdown. It shows how this works for online coaches like you, the problems it solves, and what it’s done for the businesses I’ve worked with. Watch that next.',
     broll: {
       hook: 'A coach at a laptop late at night, a new-client notification on the phone beside it.',
       problem: 'Late-night admin at a kitchen table; an unanswered intake form; a client waiting.',
+      proof: 'Log sheet and weekly report screenshots, customer details blurred.',
+      cta: 'Arrow pointing down to the button.',
+    },
+  },
+  // Gym member onboarding: from the day someone joins to the day it's a habit.
+  // The owner's result is members who stay; the member's result is physical AND mental.
+  gym_onboarding: {
+    label: 'Gym member onboarding', status: 'draft', source: 'brief', core_niche: 'fitness',
+    vars: { business: 'gym', business_plural: 'gyms', who: 'gym owners and managers', message: 'new member sign-up', front_door: 'new-member onboarding', work: 'run the gym' },
+    hooks: [
+      'If you run a gym, the first few weeks after someone joins decide whether they stay. Right now, they\u2019re on their own.',
+      'Gym owners: how many new members have you never seen again after their first fortnight?',
+      'If your onboarding is a fob, a locker and \u201cany questions, just ask\u201d, this is for you.',
+    ],
+    path: [
+      { key: 'A', label: 'Joined', text: 'A new member signs up' },
+      { key: 'B', label: 'Welcomed', text: 'Welcome, induction to book and a first-fortnight plan, in seconds' },
+      { key: 'C', label: 'Settled in', text: 'Inducted, first visits done, checking in' },
+      { key: 'D', label: 'Staying', text: 'A habit, and results they can feel' },
+    ],
+    problem: {
+      day: 'Point A: a member joins, gets a fob and a tour, and is left to it. No plan, no check-in, nobody noticing when they stop coming.',
+      tried: 'More staff on the floor, or asking the team to chase new members between everything else: more wages, and it still gets missed on a busy week.',
+      why_failing: 'The gap between joining and building a habit is where members drift: the induction never booked, the second week they didn\u2019t come in.',
+      cost: 'Every member who drifts is a cancellation, plus the months of membership that would have followed.',
+      sample_line: 'You didn\u2019t open a gym to watch people quietly stop coming. They need the steps joined up, and so do you.',
+    },
+    problem_lines: {
+      day: 'Someone joins your gym. They get their fob, a quick tour, and then they\u2019re on their own. No plan, no check-in, and nobody notices when they stop coming.',
+      tried: 'The usual fix is more staff on the floor, or asking your team to chase new members between everything else. More wages, more time, and it still gets missed on a busy week.',
+      why_failing: 'And the gap between joining and building a habit is where members drift. The induction that never got booked. The second week they didn\u2019t come in.',
+      cost: 'Every member who drifts is a cancellation, plus the months of membership that would have followed.',
+    },
+    method_line: 'So I build the system in between. From the day someone joins to the day it\u2019s a habit, every step is connected, and you don\u2019t need more staff to do it.',
+    demo_lines: {
+      test_dm: 'Here\u2019s a new member signing up at a demo gym. That\u2019s point A.',
+      instant_reply: 'Within seconds, they\u2019re welcomed, with their induction to book and a plan for their first two weeks. That\u2019s point B.',
+      nudge: 'If they haven\u2019t booked their induction, a friendly nudge goes out after thirty minutes, another at midday, and a final one in the 5pm sweep. Nothing after seven on weekdays.',
+      spreadsheet: 'Every new member sits in one sheet. Inducted, first visits done, checking in. You can see who\u2019s drifting before they cancel. That\u2019s point C.',
+      report: 'And every week, one report shows who\u2019s settled in, who\u2019s coming regularly, and who needs a word from your team. That\u2019s point D.',
+    },
+    add_on_line: 'It can also chase missed classes and remind members before their sessions. That\u2019s all in the breakdown.',
+    what_changes: 'There\u2019s no one new to hire. It runs every day, and we keep an eye on it for you. If anything breaks or could work better, we\u2019re alerted and we let you know. You run the gym, and you check one report on a Friday.',
+    result_chain: {
+      problem: 'New members are left to it after joining, and they drift before it becomes a habit.',
+      solution: 'The system in between connects every step from joining to a habit, without more staff.',
+      business_result: 'Members who start properly stay: fewer cancellations and more renewals.',
+      customer_result: 'Members get their results: physical, and also a clearer head, better habits and days that feel better.',
+    },
+    result_line: 'And this is the point. Members who start properly stay. And members who stay get their results. Not always on the scales straight away, but a clearer head, better habits, and days that feel better. That\u2019s what keeps them, and that\u2019s your result too.',
+    proof_relation: 'other_niche',
+    proof_framing: 'I\u2019ve built and tested this system with two businesses, a plumber and an internet connections company. It\u2019s the same system with a different front door. For them, it catches missed calls and messages. For a gym, it takes a new member from joining to a habit.',
+    cta_line: 'Right under this video, there\u2019s a full breakdown. It shows how this works for gyms like yours, the problems it solves, and what it\u2019s done for the businesses I\u2019ve worked with. Watch that next.',
+    broll: {
+      hook: 'A new member at reception with a fob, then alone on the gym floor.',
+      problem: 'An empty induction slot; a member\u2019s card unused for weeks; a busy front desk.',
       proof: 'Log sheet and weekly report screenshots, customer details blurred.',
       cta: 'Arrow pointing down to the button.',
     },
@@ -282,7 +394,8 @@ export const DEFAULT_PACK = 'aesthetics_clinic';
 export const PACK_FIELDS = {
   vars: ['business', 'business_plural', 'who', 'message', 'front_door'],
   problem: ['day', 'tried', 'why_failing', 'cost', 'sample_line'],
-  top: ['hooks', 'what_changes', 'proof_framing', 'cta_line'],
+  top: ['hooks', 'what_changes', 'proof_framing', 'cta_line', 'result_line'],
+  result_chain: ['problem', 'solution', 'business_result', 'customer_result'],
 };
 
 /** Fills a pack's defaults for anything a custom pack leaves out. */
@@ -292,6 +405,7 @@ export function completePack(pack) {
     ...base, ...pack,
     vars: { ...base.vars, ...(pack.vars || {}) },
     problem: { ...base.problem, ...(pack.problem || {}) },
+    result_chain: { ...(base.result_chain || {}), ...(pack.result_chain || {}) },
     problem_lines: { ...base.problem_lines, ...(pack.problem_lines || {}) },
     demo_lines: { ...DEMO_LINES, ...(base.demo_lines || {}), ...(pack.demo_lines || {}) },
     add_on_line: pack.add_on_line || base.add_on_line || ADD_ON_LINE,
@@ -306,6 +420,7 @@ export function packGaps(pack) {
   for (const k of PACK_FIELDS.vars) if (!pack.vars?.[k]) gaps.push(`vars.${k}`);
   for (const k of PACK_FIELDS.problem) if (!pack.problem?.[k]) gaps.push(`problem.${k}`);
   for (const k of PACK_FIELDS.top) if (!pack[k] || (Array.isArray(pack[k]) && !pack[k].length)) gaps.push(k);
+  for (const k of PACK_FIELDS.result_chain) if (!pack.result_chain?.[k]) gaps.push(`result_chain.${k}`);
   return gaps;
 }
 

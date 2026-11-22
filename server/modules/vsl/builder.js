@@ -1,4 +1,4 @@
-import { FOUNDATION_VERSION, OFFER, OPEN_DECISIONS, PAGE, PROOF_PLAN, SECTIONS, TOTAL_SECONDS, clock } from './foundation.js';
+import { FOUNDATION_VERSION, OFFER, OPEN_DECISIONS, PAGE, PROOF_PLAN, RESULT_CHAIN, SECTIONS, TOTAL_SECONDS, clock } from './foundation.js';
 import { FORMATS, formatOf } from './formats.js';
 import { PACKS, completePack, fill, packGaps, resolveVars } from './niches.js';
 import { checkHonesty, numbersLine } from './proof.js';
@@ -33,6 +33,8 @@ export function buildScript({ pack: rawPack, packKey = null, format = 'faceless'
       ...SECTIONS[2].demo_steps.map((st) => ({ key: `solution.demo.${st.key}`, kind: 'demo', step: fill(st.text, v), text: say(`solution.demo.${st.key}`, pack.demo_lines[st.key]), visual: `Screen recording: ${fill(st.text, v)}` })),
       { key: 'solution.add_ons', kind: 'line', text: say('solution.add_ons', pack.add_on_line), visual: 'Screen recording (one line only)' },
       { key: 'solution.what_changes', kind: 'line', text: say('solution.what_changes', pack.what_changes), visual: 'Title card' },
+      // Problem → solution → result: the section ends on what solving it gives them, and their customers.
+      ...(pack.result_line ? [{ key: 'solution.result', kind: 'line', text: say('solution.result', pack.result_line), visual: 'Result card: their result, then their customers\u2019 result' }] : []),
     ],
     proof: [
       { key: 'proof.framing', kind: 'line', text: say('proof.framing', pack.proof_framing), visual: 'Business names on screen' },
@@ -77,6 +79,7 @@ export function buildScript({ pack: rawPack, packKey = null, format = 'faceless'
   return {
     foundation_version: FOUNDATION_VERSION,
     niche: { key: packKey, label: pack.label, status: pack.status, source: pack.source, vars: v, proof_relation: pack.proof_relation },
+    result_chain: { principle: RESULT_CHAIN, ...Object.fromEntries(Object.entries(pack.result_chain || {}).map(([k, t]) => [k, fill(t, v)])) },
     format: { key: fmtKey, label: f.label, status: f.status, summary: f.summary },
     hook: { index: typeof hook === 'string' && hook.trim() ? null : hookIndex, text: lines.hook[0].text, options: hooks },
     total_seconds: TOTAL_SECONDS,

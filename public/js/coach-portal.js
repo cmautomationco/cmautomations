@@ -1,6 +1,6 @@
 import { get, post } from './api.js';
 import { field, h, icon, mount, showError, toast } from './ui.js';
-import { progressChart, progressNote } from './progress-chart.js';
+import { progressChart, progressNote, resultsPanel } from './progress-chart.js';
 
 /**
  * The client's own coaching page, from their link. Three parts, one tap apart:
@@ -12,6 +12,10 @@ import { progressChart, progressNote } from './progress-chart.js';
 
 const when = (iso) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 const whenTime = (iso) => new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+// How they feel, out of 5. Their starting point (intake) and every check-in, so the results show it.
+const FEEL = [['mind', 'Clear head'], ['habits', 'Sticking to habits'], ['mood', 'Day-to-day happiness'], ['energy', 'Energy']];
+const rating = (name, label, id) => field(label, h('select', { name, id }, ['', '1', '2', '3', '4', '5'].map((x) => h('option', { value: x }, x ? `${x}${x === '1' ? ' – low' : x === '5' ? ' – great' : ''}` : 'Choose'))));
+const feelFields = (prefix) => h('div', { class: 'grid cp-two' }, FEEL.map(([k, l]) => rating(k, l, `${prefix}-${k}`)));
 const read = (el) => Object.fromEntries([...el.querySelectorAll('[name]')].map((i) => [i.name, i.value]));
 
 export async function coachPortal(shell, token, { header, footer }, tab = null) {
@@ -84,6 +88,8 @@ function actionFor(step, data, act) {
       field('Your training or coaching history', h('textarea', { name: 'history', id: 'cp-history', rows: 2 })),
       field('Injuries or anything your coach should know', h('textarea', { name: 'injuries', id: 'cp-injuries', rows: 2 })),
       field('What does a normal week look like for you?', h('textarea', { name: 'schedule', id: 'cp-schedule', rows: 2 })),
+      h('div', { class: 'small', style: { fontWeight: 700 } }, 'Right now, out of 5 (1 = low, 5 = great):'),
+      feelFields('cp-in'),
       h('div', { class: 'grid cp-two' },
         field('Where you’re starting from (a number)', h('input', { name: 'starting_value', id: 'cp-start', inputmode: 'decimal', placeholder: 'e.g. 60' }), { help: 'Your coach will tell you what to measure. It’s the first point on your chart.' }),
         field('Your goal (a number)', h('input', { name: 'goal_value', id: 'cp-goal', inputmode: 'decimal', placeholder: 'e.g. 100' }))),
@@ -112,9 +118,9 @@ function actionFor(step, data, act) {
 function checkinForm(data, act, label = 'Send my check-in') {
   const p = data.progress;
   const form = h('form', { class: 'cp-action stack', onsubmit: (e) => { e.preventDefault(); act('checkin', read(form), 'Check-in sent. Your coach will reply with feedback.'); } },
-    h('div', { class: 'grid cp-two' },
-      field(`${p.metric_label || 'Your number this week'}${p.metric_unit ? ` (${p.metric_unit})` : ''}`, h('input', { name: 'value', id: 'cp-value', inputmode: 'decimal', placeholder: p.actual.length ? String(p.actual[p.actual.length - 1].value) : '' })),
-      field('Energy this week (1–5)', h('select', { name: 'energy', id: 'cp-energy' }, ['', '1', '2', '3', '4', '5'].map((x) => h('option', { value: x }, x || 'Choose'))))),
+    field(`${p.metric_label || 'Your number this week'}${p.metric_unit ? ` (${p.metric_unit})` : ''}`, h('input', { name: 'value', id: 'cp-value', inputmode: 'decimal', placeholder: p.actual.length ? String(p.actual[p.actual.length - 1].value) : '' })),
+    h('div', { class: 'small', style: { fontWeight: 700 } }, 'This week, out of 5 (1 = low, 5 = great):'),
+    feelFields('cp-ck'),
     field('A win from this week', h('textarea', { name: 'wins', id: 'cp-wins', rows: 2 })),
     field('Anything that was tough', h('textarea', { name: 'struggles', id: 'cp-struggles', rows: 2 })),
     h('button', { class: 'btn primary', type: 'submit' }, icon('send'), label));
@@ -136,13 +142,20 @@ function progress(data, act) {
         p.to_goal_pct !== null ? h('div', h('div', { class: 'small muted' }, 'Of the way to your goal'), h('b', `${p.to_goal_pct}%`)) : null) : null,
       progressChart(p, { audience: 'client' }),
       h('p', { class: 'cp-note' }, progressNote(p, { audience: 'client' }))),
+    h('div', { class: 'pub-card' }, resultsPanel(p, { audience: 'client' })),
     data.status === 'active' ? h('div', { class: 'pub-card stack' }, h('h2', `Check in for week ${p.next_checkin_week || 1}`), checkinForm(data, act)) : null,
     p.checkins.length ? h('div', { class: 'pub-card stack' }, h('h2', 'Your check-ins'),
       recentFirst(p.checkins, (c) => h('div', { class: 'cp-checkin' },
-        h('div', { class: 'cp-step-title' }, h('b', `Week ${c.week}`), c.value !== null ? h('span', `${c.value}${p.metric_unit ? ` ${p.metric_unit}` : ''}`) : null, c.energy ? h('span', { class: 'small muted' }, `Energy ${c.energy}/5`) : null),
+        h('div', { class: 'cp-step-title' }, h('b', `Week ${c.week}`), c.value !== null ? h('span', `${c.value}${p.metric_unit ? ` ${p.metric_unit}` : ''}`) : null, feelLine(c)),
         c.wins ? h('div', { class: 'small' }, h('b', 'Win: '), c.wins) : null,
         c.struggles ? h('div', { class: 'small' }, h('b', 'Tough: '), c.struggles) : null,
         c.coach_reply ? h('div', { class: 'cp-reply' }, h('b', 'Your coach: '), c.coach_reply) : h('div', { class: 'small muted' }, 'Feedback on its way.')))) : null);
+}
+
+/** "Clear head 4 · Habits 5 · Happiness 4 · Energy 4 /5" for one check-in. */
+export function feelLine(c) {
+  const bits = [['mind', 'Clear head'], ['habits', 'Habits'], ['mood', 'Happiness'], ['energy', 'Energy']].filter(([k]) => c[k]).map(([k, l]) => `${l} ${c[k]}`);
+  return bits.length ? h('span', { class: 'small muted' }, `${bits.join(' · ')} /5`) : null;
 }
 
 /** The latest three check-ins, with earlier weeks one tap away. */

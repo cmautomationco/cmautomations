@@ -8,7 +8,7 @@ import { notifyUsers } from '../core/notifications.js';
 import { businessCard } from '../public/routes.js';
 import { DEFAULT_SETTINGS, STEP } from './journey.js';
 import {
-  addUpdate, completeStep, confirmKickoff, createClient, getClient, getCoachingSettings, journeyOf, messageClient,
+  addUpdate, completeStep, confirmKickoff, createClient, getClient, getCoachingSettings, journeyOf, messageClient, recordStartingPoint,
   portalLink, progressOf, proposeKickoff, replyToCheckin, submitCheckin, updatesOf, weeklyReport,
 } from './service.js';
 
@@ -158,8 +158,11 @@ export function coachingPublicRoutes(ctx) {
   r.post('/:token/intake', (req, res) => {
     limit(req);
     const c = clientFor(req.params.token);
-    const body = pick(req.body, { goals: { required: true, max: 2000 }, history: { max: 2000 }, injuries: { max: 1000 }, schedule: { max: 1000 }, starting_value: { type: 'number' }, goal_value: { type: 'number' } });
+    const body = pick(req.body, { goals: { required: true, max: 2000 }, history: { max: 2000 }, injuries: { max: 1000 }, schedule: { max: 1000 }, starting_value: { type: 'number' }, goal_value: { type: 'number' },
+      mind: { type: 'number' }, habits: { type: 'number' }, mood: { type: 'number' }, energy: { type: 'number' } });
     completeStep(ctx, c, 'intake', { by: 'client', data: { ...body, submitted_at: now() } });
+    // How they feel right now: the starting point their results are measured from.
+    recordStartingPoint(db, c, body);
     // Their starting point and goal become the two ends of their progress chart.
     const patch = {};
     if (body.starting_value !== undefined && body.starting_value !== null) patch.baseline = body.starting_value;
@@ -188,7 +191,7 @@ export function coachingPublicRoutes(ctx) {
   r.post('/:token/checkin', (req, res) => {
     limit(req);
     const c = clientFor(req.params.token);
-    const body = pick(req.body, { week: { type: 'number' }, value: { type: 'number' }, energy: { type: 'number' }, wins: { max: 1000 }, struggles: { max: 1000 } });
+    const body = pick(req.body, { week: { type: 'number' }, value: { type: 'number' }, energy: { type: 'number' }, mind: { type: 'number' }, habits: { type: 'number' }, mood: { type: 'number' }, wins: { max: 1000 }, struggles: { max: 1000 } });
     submitCheckin(ctx, c, body);
     res.json(view(clientFor(req.params.token)));
   });

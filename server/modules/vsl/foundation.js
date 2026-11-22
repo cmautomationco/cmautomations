@@ -10,6 +10,24 @@
 
 export const FOUNDATION_VERSION = 'v1';
 
+/**
+ * The principle under every VSL: we never sell the tool, we prove a chain.
+ * The business has a problem (where they are now, point A). We are the
+ * solution in between (B, C, D…). Solving it gives the owner their result,
+ * and that gives THEIR customers theirs. Problem solving is how results happen.
+ */
+export const RESULT_CHAIN = {
+  title: 'Problem → solution → result',
+  summary: 'Every VSL proves one chain: the business has a problem; we provide the solution in between; solving it gives the owner their result; and that result gives their customers theirs.',
+  links: [
+    { key: 'problem', label: 'The problem', text: 'Where the business is now (point A), and what it’s costing them.' },
+    { key: 'solution', label: 'Our solution', text: 'The system in between that takes them from A through B, C, D… without another hire.' },
+    { key: 'business_result', label: 'Their result', text: 'What the owner gets once the problem is solved.' },
+    { key: 'customer_result', label: 'Their customers’ result', text: 'What the owner’s own customers get. Not only physical: a clearer head, better habits and happier days count.' },
+  ],
+  rule: 'Lead with the problem, show the solution working, and end on the result. Never sell the tool.',
+};
+
 export const OFFER = {
   name: 'Automations service',
   method_line: 'I set up a system that replies to every enquiry within seconds, follows up for you, and shows you each week how many bookings it saved.',

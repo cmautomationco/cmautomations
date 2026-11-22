@@ -37,7 +37,17 @@ const COLUMNS = {
   ],
 };
 
+// Tables added later that have since gained columns.
+const LATER = {
+  coaching_checkins: [['mind', 'INTEGER'], ['habits', 'INTEGER'], ['mood', 'INTEGER']],
+};
+
 export function migrate(db) {
+  for (const [table, cols] of Object.entries(LATER)) {
+    const have = new Set(db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name));
+    if (!have.size) continue;
+    for (const [name, ddl] of cols) if (!have.has(name)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${ddl}`);
+  }
   for (const [table, cols] of Object.entries(COLUMNS)) {
     const have = new Set(db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name));
     for (const [name, ddl] of cols) {

@@ -4,6 +4,19 @@ The back end for the video sales letter you send to brands, businesses and creat
 
 It has **no screens yet**. The design comes next. Everything below works through the API.
 
+## The principle: problem → solution → result
+
+Every VSL proves one chain, and we never sell the tool:
+
+1. **The problem**: where the business is now (point A), and what it's costing them.
+2. **Our solution**: the system in between that takes them from A through B, C, D… without another hire.
+3. **Their result**: what the owner gets once the problem is solved, such as more members who stay, more clients who start and fewer refunds.
+4. **Their customers' result**: what the owner's own customers get. It isn't only physical: a clearer head, better habits and happier days count, and they often come first.
+
+Every niche pack has to fill all four (`result_chain`) plus a spoken `result_line`. The solution section of every script ends on that line, after "what changes". A pack missing any of them fails its checks. The Coaching system measures the fourth link (see [COACHING.md](COACHING.md#results-more-than-the-number)), so the result in the video is one the system can show.
+
+**Packs built around it:** `coach_onboarding` (online coaches) and `gym_onboarding` (gym member onboarding: joined → welcomed → settled in → staying, with members' results physical and mental).
+
 ## How it fits together
 
 ```

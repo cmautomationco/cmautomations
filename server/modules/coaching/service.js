@@ -8,7 +8,7 @@ import { notifyUsers } from '../core/notifications.js';
 import { logActivity } from '../crm/service.js';
 import { sendInBackground } from '../messaging/service.js';
 import { createTask } from '../tasks/service.js';
-import { DEFAULT_SETTINGS, PHASES, STEP, STEPS, expectedPath, round2 } from './journey.js';
+import { DEFAULT_SETTINGS, PHASES, STEP, STEPS, WELLBEING, expectedPath, round2 } from './journey.js';
 
 export const getCoachingSettings = (db, orgId) => getSetting(db, orgId, 'coaching', DEFAULT_SETTINGS);
 const tzOf = (db, orgId) => db.get('SELECT timezone FROM organizations WHERE id = ?', orgId)?.timezone || 'Europe/London';
@@ -209,8 +209,7 @@ export function submitCheckin(ctx, client, input) {
   const week = Math.max(1, Math.min(client.weeks, Number(input.week) || checkinWeek(db, client, today)));
   const value = input.value === undefined || input.value === null || input.value === '' ? null : Number(input.value);
   if (value !== null && !Number.isFinite(value)) throw badRequest('Your number must be a number');
-  const energy = input.energy ? Math.max(1, Math.min(5, Math.round(Number(input.energy)))) : null;
-  const row = { value, energy, wins: input.wins || null, struggles: input.struggles || null };
+  const row = { value, ...ratingsFrom(input), wins: input.wins || null, struggles: input.struggles || null };
   const existing = db.get('SELECT id FROM coaching_checkins WHERE client_id = ? AND week = ?', client.id, week);
   if (existing) db.update('coaching_checkins', existing.id, row);
   else db.insert('coaching_checkins', { id: id('cchk'), org_id: client.org_id, client_id: client.id, week, ...row, created_at: now() });
@@ -220,6 +219,25 @@ export function submitCheckin(ctx, client, input) {
   const first = db.get(`SELECT status FROM coaching_steps WHERE client_id = ? AND key = 'first_checkin'`, client.id);
   if (first?.status === 'open') completeStep(ctx, client, 'first_checkin', { by: 'client', data: { week } });
   return { week };
+}
+
+/** The four 1–5 ratings from a form, each left empty if not given. */
+export function ratingsFrom(input = {}) {
+  const out = {};
+  for (const d of WELLBEING) {
+    const v = input[d.key];
+    out[d.key] = v === undefined || v === null || v === '' ? null : Math.max(1, Math.min(5, Math.round(Number(v)))) || null;
+  }
+  return out;
+}
+
+/** Where they're starting from, out of 5, from the intake form: week 0 on their results. */
+export function recordStartingPoint(db, client, input) {
+  const ratings = ratingsFrom(input);
+  if (Object.values(ratings).every((v) => v === null)) return;
+  const existing = db.get('SELECT id FROM coaching_checkins WHERE client_id = ? AND week = 0', client.id);
+  if (existing) db.update('coaching_checkins', existing.id, ratings);
+  else db.insert('coaching_checkins', { id: id('cchk'), org_id: client.org_id, client_id: client.id, week: 0, value: null, ...ratings, created_at: now() });
 }
 
 export function replyToCheckin(ctx, client, week, reply) {
@@ -233,10 +251,18 @@ export function replyToCheckin(ctx, client, week, reply) {
 /** Their progress for the chart: where they started, their check-ins, and the expected path to their goal. */
 export function progressOf(db, client) {
   const today = localDate(new Date(), tzOf(db, client.org_id));
-  const checkins = checkinsOf(db, client.id);
+  const all = checkinsOf(db, client.id);
+  const start = all.find((c) => c.week === 0) || null;
+  const checkins = all.filter((c) => c.week > 0);
   const actual = [];
   if (client.baseline !== null && client.baseline !== undefined) actual.push({ week: 0, value: client.baseline });
   for (const c of checkins) if (c.value !== null) actual.push({ week: c.week, value: c.value });
+  // How they feel, out of 5, from their starting point (intake) to their latest check-in.
+  const wellbeing = WELLBEING.map((d) => {
+    const series = all.filter((c) => c[d.key] !== null && c[d.key] !== undefined).map((c) => ({ week: c.week, value: c[d.key] }));
+    const first = series[0]; const latest = series[series.length - 1];
+    return { key: d.key, label: d.label, series, start: first ? first.value : null, now: latest ? latest.value : null, change: first && latest && series.length > 1 ? latest.value - first.value : null };
+  });
   const last = actual[actual.length - 1];
   const change = last && actual.length > 1 ? round2(last.value - actual[0].value) : null;
   const toGoal = client.target !== null && client.baseline !== null && last ? (client.target === client.baseline ? 1 : (last.value - client.baseline) / (client.target - client.baseline)) : null;
@@ -244,7 +270,34 @@ export function progressOf(db, client) {
     metric_label: client.metric_label, metric_unit: client.metric_unit, baseline: client.baseline, target: client.target, weeks: client.weeks,
     current_week: currentWeek(client, today), next_checkin_week: client.start_date ? checkinWeek(db, client, today) : null, actual, expected: expectedPath(client.baseline, client.target, client.weeks), change,
     to_goal_pct: toGoal === null ? null : Math.max(0, Math.round(toGoal * 100)),
-    checkins: checkins.map((c) => ({ week: c.week, value: c.value, energy: c.energy, wins: c.wins, struggles: c.struggles, coach_reply: c.coach_reply, created_at: c.created_at })),
+    checkins: checkins.map((c) => ({ week: c.week, value: c.value, energy: c.energy, mind: c.mind, habits: c.habits, mood: c.mood, wins: c.wins, struggles: c.struggles, coach_reply: c.coach_reply, created_at: c.created_at })),
+    wellbeing, has_starting_point: Boolean(start),
+    results: resultsOf(client, actual, wellbeing, checkins, currentWeek(client, today)),
+  };
+}
+
+/**
+ * The results so far, in plain words: the number, how they feel, and their wins.
+ * At the end of the programme this is their transformation.
+ */
+function resultsOf(client, actual, wellbeing, checkins, week) {
+  const items = [];
+  const unit = client.metric_unit ? ` ${client.metric_unit}` : '';
+  if (actual.length > 1) {
+    const first = actual[0].value; const last = actual[actual.length - 1].value;
+    const delta = round2(last - first);
+    const towards = client.target === null || client.target === undefined ? delta !== 0 : Math.sign(client.target - first) === Math.sign(delta) && delta !== 0;
+    items.push({ kind: 'number', label: client.metric_label || 'Your number', from: first, to: last, text: `${client.metric_label || 'Your number'}: ${first}${unit} → ${last}${unit}`, better: towards });
+  }
+  for (const w of wellbeing) {
+    if (w.change === null) continue;
+    items.push({ kind: 'feel', label: w.label, from: w.start, to: w.now, text: `${w.label}: ${w.start}/5 → ${w.now}/5`, better: w.change > 0 });
+  }
+  const wins = checkins.filter((c) => c.wins).map((c) => ({ week: c.week, text: c.wins }));
+  return {
+    finished: client.status === 'finished' || week >= client.weeks,
+    improved: items.filter((i) => i.better).map((i) => i.label),
+    items, wins,
   };
 }
 
@@ -344,7 +397,7 @@ export function weeklyReport(db, orgId, at = new Date()) {
     const open = parseJson(db.get(`SELECT * FROM coaching_steps WHERE client_id = ? AND status = 'open'`, c.id), 'data');
     const programme = db.get(`SELECT done_at FROM coaching_steps WHERE client_id = ? AND key = 'programme'`, c.id);
     if (programme?.done_at && programme.done_at >= weekAgo) started.push({ id: c.id, name: c.name });
-    const recent = db.get('SELECT week FROM coaching_checkins WHERE client_id = ? AND created_at >= ? ORDER BY week DESC LIMIT 1', c.id, weekAgo);
+    const recent = db.get('SELECT week FROM coaching_checkins WHERE client_id = ? AND week > 0 AND created_at >= ? ORDER BY week DESC LIMIT 1', c.id, weekAgo);
     if (recent) checkingIn.push({ id: c.id, name: c.name, week: recent.week });
     if (open && open.owner === 'coach') waitingOnYou.push({ id: c.id, name: c.name, step: STEP[open.key].title });
     if (open && open.owner === 'client' && open.nudges >= 3) needsWord.push({ id: c.id, name: c.name, reason: `${STEP[open.key].title} still not done after 3 reminders` });
