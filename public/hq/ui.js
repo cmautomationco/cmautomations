@@ -75,6 +75,16 @@ export function modal(title, body, { actions = [], wide = false, onClose } = {})
   return close;
 }
 
+/** An in-page "are you sure?" (browser confirm() pop-ups are blocked in some viewers). */
+export function confirmBox(message, onYes, { yes = 'Yes, do it', danger = true } = {}) {
+  return modal('Are you sure?', h('p', message), {
+    actions: [
+      { label: 'Cancel', kind: 'ghost', onClick: (close) => close() },
+      { label: yes, kind: danger ? 'danger primary' : 'primary', onClick: (close) => { close(); onYes(); } },
+    ],
+  });
+}
+
 /**
  * A form for any record. fields: [{key, label, type, options, hint, full}].
  * Types: text, textarea, number, date, select, color, checkbox.
@@ -100,7 +110,7 @@ export function openForm({ title, fields, values = {}, onSave, onDelete, saveLab
   }));
   return modal(title, body, {
     actions: [
-      onDelete ? { label: 'Delete', kind: 'danger ghost', icon: 'trash', onClick: (close) => { if (confirm('Delete this for good?')) { onDelete(); close(); } } } : null,
+      onDelete ? { label: 'Delete', kind: 'danger ghost', icon: 'trash', onClick: (close) => confirmBox('Delete this for good?', () => { close(); onDelete(); }, { yes: 'Delete' }) } : null,
       { label: 'Cancel', kind: 'ghost', onClick: (close) => close() },
       { label: saveLabel, kind: 'primary', icon: 'check', onClick: (close) => { if (onSave(read()) !== false) close(); } },
     ],

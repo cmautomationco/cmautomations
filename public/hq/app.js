@@ -9,7 +9,7 @@ import {
   decline, earnings, handOver, heat, log, nameOf, nextInvoiceNumber, quoteTotal, replyDraft, runAgent, runAll, scoreLead, sendDeal, thisWeek, writeScript,
 } from './engine.js';
 import { addDaysIso, ago, clone, daysSince, daysUntil, firstName, greeting, longDate, money, nowIso, relDay, shortDate, sum, timeOf, today, uid } from './util.js';
-import { chip, dot, h, icon, modal, mount, openForm, toast } from './ui.js';
+import { chip, confirmBox, dot, h, icon, modal, mount, openForm, toast } from './ui.js';
 
 let S = null;
 // Which item is open on each desk (kept between re-renders).
@@ -760,8 +760,8 @@ function settingsPage(el) {
           f.addEventListener('change', async () => { try { S = upgrade(JSON.parse(await f.files[0].text())); commit('Imported'); } catch { toast('That file isn’t an HQ export', 'bad'); } });
           f.click();
         }, { kind: 'ghost', ic: 'upload' }),
-        btn('Start fresh', () => { if (confirm('Clear all the demo leads, deals, jobs, scripts, invoices and clients? Your team, rate card and settings stay.')) { S = emptyState(clone(S)); commit('Clean slate – over to you'); } }, { kind: 'ghost' }),
-        btn('Reset to demo', () => { if (confirm('Replace everything with the demo data?')) { const keep = clone(S.profile); clearLocal(); S = seedState(); S.profile = { ...S.profile, business: keep.business, owner: keep.owner, handle: keep.handle }; commit('Demo restored'); } }, { kind: 'danger ghost' }))));
+        btn('Start fresh', () => confirmBox('Clear all the demo leads, deals, jobs, scripts, invoices and clients? Your team, rate card and settings stay.', () => { S = emptyState(clone(S)); commit('Clean slate – over to you'); }, { yes: 'Clear demo data' }), { kind: 'ghost' }),
+        btn('Reset to demo', () => confirmBox('Replace everything in HQ with the demo data?', () => { const keep = clone(S.profile); clearLocal(); S = seedState(); S.profile = { ...S.profile, business: keep.business, owner: keep.owner, handle: keep.handle }; commit('Demo restored'); }, { yes: 'Reset to demo' }), { kind: 'danger ghost' }))));
 }
 
 function agentForm(a) {
