@@ -24,6 +24,7 @@ import { essentialsPublicRoutes, essentialsRoutes, socialHookRoutes } from '../s
 import { seoRoutes } from '../server/modules/seo/routes.js';
 import { dialerPublicRoutes, dialerRoutes } from '../server/modules/dialer/routes.js';
 import { vslPublicRoutes, vslRoutes } from '../server/modules/vsl/routes.js';
+import { coachingPublicRoutes, coachingRoutes } from '../server/modules/coaching/routes.js';
 
 export function createBackend(db, { onWrite = () => {} } = {}) {
   const engine = createEngine(db);
@@ -47,6 +48,7 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
     ['/api/public/essentials', essentialsPublicRoutes(ctx)],
     ['/api/public/dialer', dialerPublicRoutes(ctx)],
     ['/api/public/vsl', vslPublicRoutes(ctx)],
+    ['/api/public/coach', coachingPublicRoutes(ctx)],
     ['/api/public', publicRoutes(ctx)],
     ['/api/integrations', integrationRoutes(ctx)],
     ['/api/streams', streamRoutes(ctx)],
@@ -60,6 +62,7 @@ export function createBackend(db, { onWrite = () => {} } = {}) {
     ['/api/seo', seoRoutes(ctx)],
     ['/api/dialer', dialerRoutes(ctx)],
     ['/api/vsl', vslRoutes(ctx)],
+    ['/api/coaching', coachingRoutes(ctx)],
   ];
 
   async function request(method, url, headers = {}, rawBody) {

@@ -6,7 +6,7 @@ import { applyBrandColor, field, h, icon, mount, paybackLabel, pounds, showError
  * their own booking, lead forms, quotes & invoices, proposals and reports.
  * Each one wears the business's own name, logo and colour.
  */
-export const PUBLIC_PAGES = ['book', 'booking', 'form', 'doc', 'proposal', 'report', 'essentials', 'demo', 'confirmed', 'callback'];
+export const PUBLIC_PAGES = ['book', 'booking', 'form', 'doc', 'proposal', 'report', 'essentials', 'demo', 'confirmed', 'callback', 'coach'];
 
 export async function renderPublic(root, route) {
   const [page, key] = route.parts;
@@ -25,6 +25,7 @@ export async function renderPublic(root, route) {
     if (page === 'demo') return await demoPage(shell, key);
     if (page === 'confirmed') return await confirmedPage(shell, key);
     if (page === 'callback') return await callbackPickPage(shell, key);
+    if (page === 'coach') return await (await import('./coach-portal.js')).coachPortal(shell, key, { header, footer });
   } catch (err) {
     mount(shell, h('div', { class: 'pub-card pub-empty' }, h('h2', 'This link isn’t working'), h('p', err.status === 404 ? 'It may have expired or been replaced. Please contact the business that sent it.' : err.message)));
   }

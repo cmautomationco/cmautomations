@@ -843,3 +843,75 @@ CREATE TABLE IF NOT EXISTS vsl_views (
   UNIQUE (page_id, visitor)
 );
 CREATE INDEX IF NOT EXISTS idx_vsl_views_page ON vsl_views(page_id, variant_key);
+
+-- ───────────────────────── Online coaching: onboarding & progress ─────────────────────────
+-- One row per client, from the first conversation onwards. token opens their own page.
+CREATE TABLE IF NOT EXISTS coaching_clients (
+  id           TEXT PRIMARY KEY,
+  org_id       TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  contact_id   TEXT REFERENCES contacts(id) ON DELETE SET NULL,
+  token        TEXT NOT NULL UNIQUE,
+  name         TEXT NOT NULL,
+  status       TEXT NOT NULL DEFAULT 'onboarding' CHECK (status IN ('onboarding','active','paused','finished')),
+  met_via      TEXT,
+  goal         TEXT,
+  programme    TEXT NOT NULL,
+  weeks        INTEGER NOT NULL DEFAULT 12,
+  metric_label TEXT,
+  metric_unit  TEXT,
+  baseline     REAL,
+  target       REAL,
+  start_date   TEXT,
+  programme_link TEXT,
+  created_by   TEXT,
+  created_at   TEXT NOT NULL,
+  updated_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_coaching_clients_org ON coaching_clients(org_id, status);
+
+-- Each onboarding step for each client: who it waits on, when it opened, when it was done.
+CREATE TABLE IF NOT EXISTS coaching_steps (
+  id             TEXT PRIMARY KEY,
+  org_id         TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  client_id      TEXT NOT NULL REFERENCES coaching_clients(id) ON DELETE CASCADE,
+  key            TEXT NOT NULL,
+  position       INTEGER NOT NULL,
+  owner          TEXT NOT NULL CHECK (owner IN ('coach','client','system')),
+  status         TEXT NOT NULL DEFAULT 'locked' CHECK (status IN ('locked','open','done')),
+  data           TEXT NOT NULL DEFAULT '{}',
+  opened_at      TEXT,
+  done_at        TEXT,
+  done_by        TEXT,
+  nudges         INTEGER NOT NULL DEFAULT 0,
+  last_nudged_at TEXT,
+  UNIQUE (client_id, key)
+);
+CREATE INDEX IF NOT EXISTS idx_coaching_steps_open ON coaching_steps(status, owner);
+
+-- The shared timeline both the coach and the client see: every message and every step.
+CREATE TABLE IF NOT EXISTS coaching_updates (
+  id         TEXT PRIMARY KEY,
+  org_id     TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  client_id  TEXT NOT NULL REFERENCES coaching_clients(id) ON DELETE CASCADE,
+  author     TEXT NOT NULL CHECK (author IN ('coach','client','system')),
+  body       TEXT NOT NULL,
+  step_key   TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_coaching_updates_client ON coaching_updates(client_id, created_at);
+
+-- Weekly check-ins: where they're at (the number on their chart) and how the week went.
+CREATE TABLE IF NOT EXISTS coaching_checkins (
+  id          TEXT PRIMARY KEY,
+  org_id      TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  client_id   TEXT NOT NULL REFERENCES coaching_clients(id) ON DELETE CASCADE,
+  week        INTEGER NOT NULL,
+  value       REAL,
+  energy      INTEGER,
+  wins        TEXT,
+  struggles   TEXT,
+  coach_reply TEXT,
+  created_at  TEXT NOT NULL,
+  replied_at  TEXT,
+  UNIQUE (client_id, week)
+);

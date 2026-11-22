@@ -14,6 +14,7 @@ import { seedIncomeStreams } from './seedStreams.js';
 import { seedEssentials } from './seedEssentials.js';
 import { seedSeo } from './seedSeo.js';
 import { seedDialer } from './seedDialer.js';
+import { seedCoaching } from './seedCoaching.js';
 
 /**
  * Seeds a realistic demo business so every screen has something to show.
@@ -66,6 +67,7 @@ export async function seedDemo(db) {
   await seedEssentials(db, engine, { owner });
   seedSeo(db);
   seedDialer(db);
+  seedCoaching(db, engine);
   // Let any messages still being handed to the (demo) provider finish.
   await new Promise((resolve) => setTimeout(resolve, 0));
   return { org, owner, ...extra };
@@ -92,6 +94,7 @@ export async function upgradeDemo(db) {
     if (owner0 && (await seedEssentials(db, createEngine(db), { owner: owner0 }))) added = true;
     if (seedSeo(db)) added = true;
     if (seedDialer(db)) added = true;
+    if (seedCoaching(db, createEngine(db))) added = true;
     return added;
   }
   const owner = db.get('SELECT * FROM users WHERE email = ?', 'demo@cmautomations.com');
@@ -116,6 +119,7 @@ export async function upgradeDemo(db) {
   await seedEssentials(db, createEngine(db), { owner });
   seedSeo(db);
   seedDialer(db);
+  seedCoaching(db, createEngine(db));
   await new Promise((resolve) => setTimeout(resolve, 0));
   return true;
 }

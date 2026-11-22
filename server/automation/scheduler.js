@@ -78,6 +78,7 @@ export function createScheduler(ctx, { intervalSeconds = 30, digestHourUtc = 7 }
       summary.reports = await step('reports', () => runMonthlyReports(ctx, at));
       summary.streams = await step('income streams', () => remindMissingMonths(ctx, at));
       summary.essentials = await step('essentials', () => runEssentials(ctx, at));
+      summary.coaching = await step('coaching', async () => (await import('../modules/coaching/service.js')).runCoaching(ctx, at));
       summary.dialer = await step('dialer', async () => {
         const d = await import('../modules/dialer/service.js');
         const { enrichPending } = await import('../modules/crm/enrich.js');

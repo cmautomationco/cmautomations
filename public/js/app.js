@@ -14,6 +14,7 @@ import * as invoices from './pages/invoices.js';
 import * as agency from './pages/agency.js';
 import * as apihub from './pages/apihub.js';
 import * as seo from './pages/seo.js';
+import * as coaching from './pages/coaching.js';
 import { PUBLIC_PAGES, renderPublic } from './public.js';
 import { setAssistantVisible } from './assistant.js';
 
@@ -33,6 +34,7 @@ const NAV = [
   { path: '/messages', label: 'Messages', icon: 'inbox', page: messages, badge: 'messages' },
   { path: '/bookings', label: 'Bookings', icon: 'calendar', page: bookings },
   { path: '/crm', label: 'CRM', icon: 'users', page: crm },
+  { path: '/coaching', label: 'Coaching', icon: 'trend', page: coaching },
   { path: '/invoices', label: 'Quotes & invoices', icon: 'receipt', page: invoices },
   { path: '/tasks', label: 'Tasks', icon: 'check', page: tasks },
   { path: '/automations', label: 'Automations', icon: 'zap', page: automations },

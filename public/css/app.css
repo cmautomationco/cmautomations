@@ -946,3 +946,101 @@ a.hbar-row:hover .hbar-fill { filter: brightness(1.15); }
 .lp-slots { display: flex; flex-wrap: wrap; gap: 6px; }
 .lp-modes svg { width: 22px; height: 22px; flex: none; color: var(--blue-500); }
 .lp-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+
+/* ───────────────────────── Coaching: onboarding journey, client page, progress chart ───────────────────────── */
+.co-reports { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
+@media (max-width: 1000px) { .co-reports { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .co-reports { grid-template-columns: 1fr; } }
+.co-report-n { font-size: 26px; font-weight: 800; color: var(--blue-700); margin: 4px 0 6px; font-variant-numeric: tabular-nums; }
+.co-report ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13px; }
+.co-report a { font-weight: 700; }
+.co-list { margin-bottom: 16px; }
+.co-row { display: flex; align-items: center; gap: 16px; padding: 12px 6px; border-bottom: 1px solid var(--line-soft); color: inherit; text-decoration: none; border-radius: 8px; }
+.co-row:last-child { border-bottom: 0; }
+.co-row:hover { background: var(--blue-50); }
+.co-row:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 2px; }
+.co-row > .grow { flex: 1; min-width: 0; }
+.co-row:hover, .co-row:hover * { text-decoration: none; }
+.co-last { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.co-row-side { display: grid; justify-items: end; gap: 6px; min-width: 150px; }
+.co-row-side .progress { width: 140px; }
+@media (max-width: 640px) { .co-row { flex-wrap: wrap; } .co-row-side { justify-items: start; min-width: 0; } }
+.co-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); align-items: start; }
+@media (max-width: 1000px) { .co-layout { grid-template-columns: 1fr; } }
+.co-phase + .co-phase { margin-top: 16px; }
+.co-phase .cp-steps { margin-top: 8px; }
+.co-step-act { display: grid; gap: 8px; margin-top: 8px; }
+.co-step-act .row input { flex: 1; min-width: 0; }
+.co-intake summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--blue-700); margin-top: 6px; }
+
+/* The steps (shared by the coach's screen and the client's page) */
+.cp-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.cp-step { display: flex; gap: 12px; padding: 10px 0; position: relative; }
+.cp-step:not(:last-child)::before { content: ""; position: absolute; left: 11px; top: 34px; bottom: -6px; width: 2px; background: var(--line); }
+.cp-step.done:not(:last-child)::before { background: var(--blue-300); }
+.cp-dot { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line); background: #fff; display: grid; place-items: center; position: relative; z-index: 1; }
+.cp-dot svg { width: 14px; height: 14px; }
+.cp-step.done .cp-dot { background: var(--blue-500); border-color: var(--blue-500); color: #fff; }
+.cp-step.open .cp-dot { border-color: var(--blue-500); box-shadow: 0 0 0 4px var(--blue-100); }
+.cp-step.locked { opacity: .62; }
+.cp-step.yours { background: var(--blue-50); border-radius: 12px; padding: 12px; margin: 4px -12px; }
+.cp-step.yours::before { left: 23px; }
+.cp-step .grow { min-width: 0; }
+.cp-step-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cp-action { margin-top: 12px; padding: 14px; background: #fff; border: 1px solid var(--blue-200); border-radius: 12px; }
+.cp-action ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.cp-agreement { font-size: 14px; line-height: 1.6; background: var(--line-soft); border-radius: 10px; padding: 12px 14px; white-space: pre-wrap; }
+.cp-two { grid-template-columns: 1fr 1fr; }
+@media (max-width: 560px) { .cp-two { grid-template-columns: 1fr; } }
+
+/* The client's page */
+.cp { display: grid; gap: 16px; }
+.cp-hero { display: grid; gap: 8px; }
+.cp-hero h1 { margin: 0; }
+.cp-meter { height: 8px; border-radius: 99px; background: var(--blue-100); overflow: hidden; }
+.cp-meter span { display: block; height: 100%; background: var(--blue-500); border-radius: 99px; }
+.cp-status { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 14px; margin-top: 4px; }
+.cp-status svg { flex: none; width: 20px; height: 20px; margin-top: 2px; }
+.cp-status.turn { background: var(--blue-500); color: #fff; }
+.cp-status.turn .small { color: rgba(255,255,255,.9); }
+.cp-status.wait { background: var(--line-soft); }
+.cp-status.good { background: var(--green-bg); color: #14532d; }
+.cp-tabs { display: flex; gap: 6px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg, #fff); padding: 8px 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.cp-tabs button { font: inherit; font-weight: 700; font-size: 14px; padding: 9px 14px; border-radius: 10px; border: 1px solid transparent; background: transparent; color: var(--ink-2); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.cp-tabs button.on { background: var(--blue-50); border-color: var(--blue-200); color: var(--blue-700); }
+.cp-tabs button:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 2px; }
+.cp-count { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 99px; background: var(--line-soft); color: var(--muted); }
+.cp-phase-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cp-phase-head h2 { margin: 0; }
+.cp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.cp-stats > div { background: var(--line-soft); border-radius: 12px; padding: 10px 12px; }
+.cp-stats b { font-size: 20px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.cp-note { margin: 0; font-size: 14px; color: var(--ink-2); background: var(--blue-50); border-radius: 12px; padding: 12px 14px; }
+.cp-checkin { display: grid; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line-soft); }
+.cp-reply { font-size: 14px; background: var(--blue-50); border-radius: 10px; padding: 10px 12px; margin-top: 4px; }
+.cp-thread { display: grid; gap: 10px; max-height: 460px; overflow-y: auto; padding-right: 4px; }
+.cp-msg { max-width: 86%; padding: 10px 12px; border-radius: 14px; font-size: 14px; line-height: 1.45; background: var(--line-soft); justify-self: start; display: grid; gap: 2px; }
+.cp-msg.client { justify-self: end; background: var(--blue-500); color: #fff; }
+.cp-msg.client .muted { color: rgba(255,255,255,.85); }
+.cp-msg.system { justify-self: center; background: transparent; border: 1px dashed var(--line); font-size: 13px; text-align: center; }
+
+/* Progress chart */
+.pchart { display: grid; gap: 8px; min-width: 0; }
+.pchart-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; font-weight: 600; align-items: center; }
+.pchart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { display: inline-block; width: 18px; height: 0; border-top: 2px solid; }
+.sw.you { border-color: #1e6a9e; }
+.sw.expected { border-top-style: dashed; border-color: #c2700f; }
+.pchart-plot { position: relative; }
+.pchart-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.pchart-tick { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.pchart-band { font-size: 11px; font-weight: 700; fill: var(--blue-600); }
+.pchart-label { font-size: 12px; font-weight: 700; fill: var(--ink-2); }
+.pchart-label.strong { fill: var(--ink); }
+.pchart-tip { position: absolute; top: 8px; transform: translateX(-50%); background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 12px; box-shadow: var(--shadow); pointer-events: none; display: grid; gap: 3px; white-space: nowrap; z-index: 2; }
+.pchart-tip div { display: flex; align-items: center; gap: 6px; }
+.pchart-empty { padding: 28px 16px; text-align: center; color: var(--muted); background: var(--line-soft); border-radius: 12px; font-size: 14px; }
+.pchart-table summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--blue-700); }
+.pchart-table table { margin-top: 8px; font-size: 13px; }
+
+.cp-older summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--blue-700); padding: 10px 0; border-top: 1px solid var(--line-soft); }
